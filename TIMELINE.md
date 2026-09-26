@@ -1,54 +1,80 @@
-# Timeline
+# Timeline / Project Status
 
-## 预计总周期
-约 2–3 周。
+> Last synced: 2026-09-26
 
-### Phase 1 — Requirement & Reference
-- 梳理业务流程
-- 确认 category / product / payment
-- 收集品牌素材
-- 收集参考网站
+## Current Status
+- Requirements discussion: ✅ substantially complete
+- Homepage structure: ✅ confirmed
+- Core categories: ✅ confirmed
+- Online payment requirement: ✅ confirmed
+- Admin requirement: ✅ confirmed
+- Approx. image usage: ✅ clarified (up to ~10 images/product, flexible)
+- Initial storage approach: ✅ Supabase Free at launch
+- Project price: ✅ RM1500 agreed
+- Colour / visual exploration: ✅ completed
+- First Homepage UI: **NEXT**
+- 50% deposit: pending UI direction approval
 
-### Phase 2 — UI Design
-- 页面结构
-- Homepage
-- Category
+## Phase 1 — Requirement / Commercial
+**Status: Complete**
+
+Completed:
+- Business structure
+- Homepage hierarchy
+- Product flows
+- Corporate enquiry flow
+- Payment scope
+- Admin scope
+- Budget agreement
+
+## Phase 2 — UI Direction
+**Status: In progress**
+
+Next:
+1. Build first detailed Homepage UI
+2. Show client
+3. Collect only key visual feedback
+4. Lock design direction
+
+After client confirms the direction:
+- Collect **RM750 deposit**
+- Start formal detailed design + development
+
+## Phase 3 — Detailed Design + Development
+Planned:
+- Homepage refinement
+- Category / listing
 - Product detail
+- Engraving / personalisation
 - Cart
 - Checkout
-- 关键 mobile screens
-
-UI direction 通过后：
-- 客户支付 50% deposit
-- 进入正式开发
-
-### Phase 3 — Development
-- Frontend
-- Product data
+- Corporate pages
 - Admin
-- Cart / Checkout
-- WhatsApp integration
+- Product / order data
+- Responsive implementation
 
-### Phase 4 — Payment Gateway
-- Gateway integration
-- Payment success flow
-- Payment failure flow
-- Order creation
-- Amount verification
+## Phase 4 — Payment Integration
+- Gateway setup
+- Success / failure flows
+- Amount / order verification
+- FPX / Card / E-wallet depending on final provider
 
-### Phase 5 — QA / Acceptance
-重点测试：
-- Product / variant
+## Phase 5 — QA / Acceptance
+Test:
+- Products
+- Images
+- Variants
+- Personalisation
 - Cart
 - Checkout
 - Payment
-- Success / fail states
-- Mobile responsive
+- Orders
 - Admin editing
+- Mobile responsiveness
 
-客户实际体验并确认无问题后：
-- 支付剩余 50%
-- 正式交付
+After client confirms everything works:
+- Collect remaining **RM750**
+- Final handover / launch
 
-## 注意
-第三方 Payment Gateway 商户审核时间不计入开发周期。
+## External Dependency
+Payment gateway merchant approval / third-party review time is not part of the development timeline.
