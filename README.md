@@ -1,26 +1,46 @@
-# 9.16 Gift Box Custom Website
+# Moire Co. — Premium Gifting Ecommerce
 
-KL 高端礼盒定制电商网站项目。
+KL / Malaysia premium gifting ecommerce website project.
 
-## 当前目标
-为客户开发一个可长期自行维护的高端礼盒电商网站，支持：
-- Corporate Premium Gift
-- Festive Premium Gift Box
-- Seasonal homepage switching
-- Product management
-- Shopping cart
-- Online payment
-- WhatsApp contact
-- Mobile-first custom UI
+## Current Stage
+**Homepage UI direction refinement**
 
-## 当前阶段
-需求确认中，下一步先确认品牌风格与参考页面，输出第一版 UI 方向，再进入正式开发。
+The project has completed the main requirement / commercial phase. Current work is focused on creating one strong Homepage UI direction for client approval.
 
-## 预计周期
-约 2–3 周：
-1. 需求确认与参考收集
-2. UI / 页面设计
-3. 前端与后台开发
-4. Payment Gateway 接入
-5. 下单与支付流程测试
-6. 客户验收与交付
+After Homepage UI approval:
+- collect **RM750 (50%) deposit**
+- continue detailed UI + development
+
+Agreed total development fee:
+**RM1500**
+
+## Confirmed Homepage IA
+1. Header
+2. Simple Hero
+3. Festive Collection
+4. Fixed Gift Collection
+5. Wine & Spirits
+6. Corporate Orders
+7. Footer
+
+## Latest Design Direction
+Working direction:
+**LINE & LIGHT**
+
+Key client clarification:
+- client supplied an AI-generated black/gold logo reference
+- client explicitly said she **does not want a black website**
+- website remains light / warm / refined
+
+The next Stitch design pass should use the client's UI reference image as the primary visual benchmark while preserving confirmed ecommerce requirements.
+
+## Start Here
+Read:
+- `CURRENT-STATUS-2026-09-26.md`
+- `PROJECT-BRIEF.md`
+- `REQUIREMENTS.md`
+- `DESIGN-DIRECTION.md`
+- `TIMELINE.md`
+
+Working logo assets are under:
+- `design-assets/`
