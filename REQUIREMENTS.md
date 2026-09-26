@@ -1,100 +1,171 @@
 # Requirements
 
-## Core Features
+> Last synced: 2026-09-26  
+> Status: pricing agreed; entering UI design. Latest confirmed requirements below take precedence over older notes.
 
-### Storefront
-- 高端礼盒品牌首页
-- Corporate / Festive 两大 category
+## 1. Brand / Positioning
+- Brand: **Moire Co.**
+- Business: premium gift boxes / festive gifting / fixed gifts / wine & spirits / corporate gifting
+- Website: custom-designed, mobile-first e-commerce website
+- Visual target: **Luxury + Clean**
+- Avoid generic Shopify/template look
+- Avoid overly decorative, overly pink, overly dark, or poster-like UI
+
+## 2. Final Homepage Information Architecture
+
+### Header
+- Moire Co. logo / wordmark
+- Menu
+- Search
+- Cart
+
+### Simple Hero
+- Restrained premium gift imagery
+- Short copy / CTA
+- Supports future image rotation / subtle animation
+
+### Festive Collection
+- Priority section during festive season
+- Appears directly below Hero
+- Horizontal featured product row
+- Approx. 3–4 products visible as a collection
+- Product image + name + price
+- Should feel like real e-commerce UI, not a campaign poster
+
+### Remaining homepage sections
+Displayed vertically below Festive Collection:
+1. Fixed Gift Collection
+2. Wine & Spirits
+3. Corporate Orders
+
+### Seasonal logic
+- During festive season: Festive Collection is homepage priority
+- Outside festive season: homepage can shift emphasis back to regular / corporate / fixed categories
+
+## 3. Main Categories
+
+### Festive Collection
+Includes examples such as:
+- CNY
+- Mid-Autumn Festival
+- Dragon Boat Festival
+- Hari Raya
+
+Purchase flow:
+Product listing → Product detail → Quantity → Cart → Checkout → Online payment
+
+Historical pricing example:
+- RM188 / RM288 / RM388 / RM588
+- RM988 / RM1188 / RM1288 / RM2388 as upgraded versions with different liquor options
+
+### Fixed Gift Collection
+Purchase flow:
+Product listing → Product detail → Quantity → Cart → Checkout → Online payment
+
+Additional requirement:
+- Optional personalisation / engraving
+- Customer can add a name for selected products
+- Personalisation value must be stored with the order
+
+### Wine & Spirits
+Purchase flow:
+Product listing → Product detail → Cart → Checkout → Online payment
+
+### Corporate Orders
+Contains:
+- Semi-curated
+- Fully Customised
+
+#### Semi-curated
+Latest direction:
+- Based on existing / fixed products
+- Supports lighter customisation rather than fully bespoke work
+- Exact option set should be confirmed during detailed UI / functional design
+- Do **not** treat the older “Enquiry Now → WhatsApp only” interpretation as final
+
+#### Fully Customised
+Dedicated enquiry flow.
+
+Suggested page heading:
+**MADE FOR YOUR BRAND**
+
+Process:
+1. Choose style, quantity, date, address
+2. Proposal prepared
+3. Client reviews / confirms proposal
+4. Production
+5. Delivery
+
+CTA:
+**Enquiry Now → WhatsApp**
+
+## 4. E-commerce Functions
 - Product listing
-- Product detail
-- Product variants / price options
-- Shopping cart
+- Product details
+- Product variants / upgrade options where needed
+- Quantity selector
+- Optional engraving / customisation
+- Cart
 - Checkout
-- Website online payment
-- WhatsApp contact button
+- Online payment
+- Order creation
+- WhatsApp contact / enquiry entry
 
-### Seasonal Content
-后台可自行：
-- 切换首页主推 category
-- 更新 festive campaign
-- 更换 hero 图片
-- 上下架产品
-- 修改产品图片
-- 修改 details
-- 修改 price
-- 管理 variant / upgrade option
-
-### Admin
-目标是客户交付后可自行维护，不依赖持续人工代管。
-
-### Payment
-需要接入 Payment Gateway。
-待确认：
+Payment methods discussed:
 - FPX
 - Card
 - E-wallet
-- 指定 gateway / provider
 
-### Design
-- Custom design
-- Mobile-first
-- 高端礼盒品牌感
-- 具体视觉风格待客户给 reference 后确认
+Actual gateway provider: **TBD**
 
----
+## 5. Admin / CMS
+Client should be able to manage the store after handover.
 
-## Client Original Brief — 2026-09-16
+Required:
+- Product management
+- Category management
+- Product image upload
+- Product details
+- Price
+- Product status / availability
+- Festive content / homepage featured products
+- Orders
+- Customisation / engraving data
 
-> 这一节用于保留客户最初的需求原文/原始逻辑，后续若需求变化，以最新确认版本为准。
+### Product images
+Client expects up to about **10 images per product**, but image count is flexible per product.
 
-### Brand / Product Positioning
-- 我们主要做高端礼盒
-- 我们没有固定的 product
-- Product 数量通常为每个 category 约 1–4 款
+Implementation direction:
+- Multi-image upload
+- Automatically optimise / compress images on upload where practical
+- Prefer WebP/optimised delivery
+- No fixed requirement that every product has exactly 10 images
 
-### Original Category Structure
+## 6. Storage / Database Direction
+Initial plan:
+- Supabase Free tier is sufficient for launch / early-stage usage
+- No need for client to purchase paid database/storage at project start
+- Upgrade only if product count, image storage, or traffic grows beyond free limits
 
-#### 1. Corporate Premium Gift
-- 里面有 3 个 standard 方案
-- Standard 方案仍然可以 bespoke / 定制
+## 7. Technical / External Costs
+Not included in development fee:
+- Domain
+- Hosting / deployment paid upgrades
+- Paid database / storage upgrades
+- Payment gateway fees / transaction fees
+- Other third-party services
 
-#### 2. Festive Premium Gift Box
-包括：
-- CNY
-- 中秋节
-- 端午节
-- Hari Raya
+Developer can assist with setup; client pays actual third-party costs.
 
-### Homepage Logic
-- 如果正在跑 festive campaign，Homepage 主推 festive product
-- 如果不是 festive season，Homepage 主推 Corporate Gift Box
-- Homepage 下方可以选择 / 进入 category
+## 8. Historical Requirement Record
+Original 2026-09-16 structure was:
+- Corporate Premium Gift
+- Festive Premium Gift Box
 
-### Festive Pricing Example
-示例价格结构：
-- Box A — RM188
-- Box B — RM288
-- Box C — RM388
-- Box D — RM588
-- RM988 — 基于 Box D 更换酒类
-- RM1188 — 基于 Box D 更换酒类
-- RM1288 — 基于 Box D 更换酒类
-- RM2388 — 基于 Box D 更换酒类
-
-说明：
-- RM988 / RM1188 / RM1288 / RM2388 并不是完全独立的新 Box
-- 核心逻辑是以 Box D 为基础，通过更换不同酒类形成更高价 variant / upgrade option
-
-### Ordering / Contact
-- 网站支持下单
-- 保留 WhatsApp contact 入口
-
-### Change Tracking Note
-后续客户在 2026-09-22 又提出了新的 Homepage / Category 草图，包括：
+The newer confirmed structure supersedes it:
 - Festive Collection
 - Fixed Gift Collection
 - Wine & Spirits
 - Corporate Orders
-- Corporate Orders 下再区分 Semi-Curated / Fully Customised
 
-该新结构与本节“原始需求”存在一定演进关系，设计和开发时应以双方最新确认的 IA / scope 为准，不直接覆盖这份原始记录。
+Keep the historical notes for traceability, but design/development must use the latest structure above.
