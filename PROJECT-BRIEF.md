@@ -1,38 +1,83 @@
-# Project Brief
+# Moire Co. — Project Brief
 
-## 客户背景
-- 地点：Kuala Lumpur
-- 项目：高端礼盒品牌电商网站
-- 业务特征：产品非固定 SKU，节日与企业礼盒会动态切换
-- 网站需要定制设计，不使用普通模板直接替换内容
+> Updated: 2026-09-26
 
-## 业务结构
+## Project
+Custom premium gifting e-commerce website for **Moire Co.**
 
-### 1. Corporate Premium Gift
-- 3 个 standard 产品
-- 支持 bespoke 定制
+Location / client market:
+- Kuala Lumpur, Malaysia
 
-### 2. Festive Premium Gift Box
-节日包括：
-- CNY
-- Mid-Autumn Festival
-- Dragon Boat Festival
-- Hari Raya
+Positioning:
+- Premium Gift Boxes
+- Festive Gifting
+- Fixed Gift Collection
+- Wine & Spirits
+- Corporate Gifting / Bespoke Orders
 
-每个 festive category 约 1–4 个主产品。
+## Commercial Status
+- Agreed development price: **RM1500**
+- First payment: **RM750 after initial UI direction approval**
+- Final payment: **RM750 after completion + testing + acceptance**
+- Domain / hosting / paid infrastructure / gateway fees excluded
 
-示例价格结构：
-- Box A — RM188
-- Box B — RM288
-- Box C — RM388
-- Box D — RM588
-- Box D 酒类升级版本：
-  - RM988
-  - RM1188
-  - RM1288
-  - RM2388
+## Homepage
+During festive season:
+- Festive Collection is the priority section
+- Display festive products in a horizontal row
 
-## 首页逻辑
-- Festive season：主页优先展示对应节日系列
-- 非 festive season：主页优先展示 Corporate Premium Gift
-- 下方继续提供 category 入口
+Below it:
+- Fixed Gift Collection
+- Wine & Spirits
+- Corporate Orders
+
+These lower category sections stack vertically.
+
+## Store Logic
+Festive / Fixed Gift / Wine & Spirits:
+- Browse
+- Product detail
+- Cart
+- Checkout
+- Online payment
+
+Fixed Gift:
+- Supports optional name engraving / simple personalisation
+
+Corporate Orders:
+- Semi-curated
+- Fully customised
+
+Fully customised:
+- Process-led page
+- Enquiry Now → WhatsApp
+
+## Admin
+Client should independently manage:
+- Products
+- Images
+- Categories
+- Prices
+- Festive content
+- Orders
+
+Expected product imagery:
+- Up to roughly 10 images per product
+- Flexible, not mandatory
+- Initial free Supabase storage/database expected to be sufficient
+
+## Design
+Target:
+**Luxury + Clean**
+
+Current chosen synthesis:
+- Warm light base
+- Champagne / ivory feeling
+- Restrained black / gold brand details
+- Minimal, refined, independent-brand aesthetic
+
+## Immediate Next Step
+Create the first detailed **Homepage UI**.
+
+Goal:
+Get client approval on overall design direction, then collect the 50% deposit and enter full design/development.
