@@ -1,26 +1,66 @@
 # Design Direction
 
-## 当前状态
-客户尚未确认具体视觉方向。
+> Last synced: 2026-09-26  
+> Status: colour exploration completed; moving into first Homepage UI.
 
-## 下一步
-向客户收集：
-- 喜欢的网站 reference
-- 喜欢的颜色
-- 品牌 logo / VI
-- 包装设计
-- 产品摄影方向
-- 想要的 premium 感受
+## Client Preference
+Core direction:
+**Luxury + Clean**
 
-## 设计流程
-1. 根据品牌与需求整理参考网站
-2. 客户挑喜欢的版式 / 部件 / 风格
-3. 快速输出第一版 UI
-4. 客户确认 UI direction
-5. 确认后进入正式开发
+Current interpretation from client feedback:
+- Use a light, refined base
+- Warm ivory / cream / champagne direction is preferred
+- Add controlled black / gold brand accents
+- Do not make the entire site dark
+- Do not make it overly pink / feminine
+- Keep it mature, clean, premium, and commercially usable
 
-## 已展示参考
-- MAYBE LOVI：偏品牌 / product showcase
-- JOM Demo：偏功能型网站结构与 mobile experience
+Working design synthesis:
+**Clean warm luxury base + restrained black/gold brand details**
 
-客户自己的礼盒网站不固定为以上任何一种风格，将根据 branding 与偏好重新设计。
+## Avoid
+- Generic Shopify template look
+- Ordinary gift shop aesthetic
+- Poster / campaign-heavy homepage
+- Excessive flowers / ribbons / decoration
+- Full-page black
+- Excessive gold
+- Wedding-like / overly romantic styling
+- Overuse of gradients, glow, rounded cards, or visual effects
+- UI where photography overwhelms functionality
+
+## Homepage UI Structure — Locked
+1. Header
+2. Simple Hero
+3. Festive Collection — horizontal featured product row
+4. Fixed Gift Collection
+5. Wine & Spirits
+6. Corporate Orders
+
+The final three sections should stack vertically.
+
+## Design Principles
+- Structure first
+- Clear e-commerce hierarchy
+- Strong whitespace
+- Premium typography
+- Restrained product photography
+- Editorial quality without sacrificing usability
+- Mobile-first
+- Real independent-brand website feeling
+
+## Current UI Objective
+Produce **one high-quality Homepage UI direction**, not the whole site.
+
+The first Homepage UI should be detailed enough to confirm:
+- colour system
+- typography
+- header
+- hero
+- festive product cards
+- category section treatment
+- buttons / CTA
+- spacing rhythm
+- overall premium feeling
+
+Once approved, request 50% deposit and then continue detailed screens + development.
