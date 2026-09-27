@@ -15,12 +15,6 @@ function pick(list: Product[], n: number) {
   return [...featured, ...rest].slice(0, n);
 }
 
-/** "Chinese New Year 2027" → ["Chinese New Year", "2027"] */
-function splitYear(title: string): [string, string | null] {
-  const m = title.match(/^(.*?)\s*(\d{4})$/);
-  return m ? [m[1], m[2]] : [title, null];
-}
-
 export default async function HomePage() {
   const store = await getStore();
   const [products, settings] = await Promise.all([store.listProducts(), store.getSettings()]);
@@ -28,38 +22,32 @@ export default async function HomePage() {
 
   const festive = pick(visible.filter((p) => p.category === "festive" && p.occasion === settings.activeOccasion && p.status === "active"), 4);
   const wine = pick(visible.filter((p) => p.category === "wine-spirits" && p.status === "active"), 1);
-  const [festiveName, festiveYear] = splitYear(settings.festiveTitle);
   const fixedImage = siteImages.brand;
-  const wineImage = wine[0]?.images[0] ?? siteImages.brand;
+  const wineImage = wine[0]?.images[2] ?? wine[0]?.images[0] ?? siteImages.brand;
 
   return (
     <>
       <Hero eyebrow={settings.heroEyebrow} title={settings.heroTitle} text={settings.heroText} slides={siteImages.hero} />
 
-      {/* 1 · Festive — the seasonal chapter */}
+      {/* 1 · Festive — direct seasonal shopping */}
       {festive.length > 0 && (
-        <section className="bg-paper py-16 md:py-24" aria-labelledby="festive-heading">
+        <section className="bg-paper py-12 md:py-16" aria-labelledby="festive-heading">
           <div className="shell">
-            <div className="grid gap-8 md:grid-cols-12 md:items-end">
-              <div className="md:col-span-7">
-                <p className="eyebrow">Festive Collection</p>
-                <h2 id="festive-heading" className="display mt-4 leading-[0.95] tracking-[-0.02em]">
-                  <span className="block text-[2.35rem] md:text-[3.6rem]">{festiveName}</span>
-                  {festiveYear && <span className="display-italic block text-[3.8rem] text-bronze/90 md:text-[6.5rem]">{festiveYear}</span>}
-                </h2>
+            <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+              <div>
+                <p className="eyebrow">{settings.festiveTitle}</p>
+                <h2 id="festive-heading" className="display mt-3 text-[2.2rem] leading-tight tracking-[-0.01em] md:text-[2.8rem]">Festive Collection</h2>
+                <p className="mt-2 text-[14px] text-ink-2 md:text-[15px]">Joyful gifts for the season, ready to choose and send.</p>
               </div>
-              <div className="md:col-span-4 md:col-start-9 md:pb-5">
-                <p className="text-[15px] leading-relaxed text-ink-2">{settings.festiveIntro}</p>
-                <Link href={`/festive?occasion=${settings.activeOccasion}`} className="link-line mt-7">
-                  Shop the collection <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.25} />
-                </Link>
-              </div>
+              <Link href={`/festive?occasion=${settings.activeOccasion}`} className="link-line flex-none sm:mb-1">
+                View all <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.25} />
+              </Link>
             </div>
-            <div className="mt-10 md:mt-14">
+            <div className="mt-8 md:mt-10">
               <ProductRail label={settings.festiveTitle}>
                 {festive.map((p, i) => (
                   <RailItem key={p.id}>
-                    <ProductCard product={p} priority={i < 2} reveal={false} sizes="(min-width: 1024px) 24vw, (min-width: 640px) 40vw, 72vw" />
+                    <ProductCard product={p} compact priority={i < 2} ratio={0.92} reveal={false} sizes="(min-width: 1024px) 24vw, (min-width: 640px) 40vw, 72vw" />
                   </RailItem>
                 ))}
               </ProductRail>
@@ -78,7 +66,6 @@ export default async function HomePage() {
         cta="Explore fixed gifts"
         image={fixedImage}
         tone="cream"
-        imageSide="right"
       />
       <CollectionGateway
         id="wine-heading"
@@ -88,8 +75,7 @@ export default async function HomePage() {
         href="/wine-spirits"
         cta="Explore wine & spirits"
         image={wineImage}
-        tone="sand"
-        imageSide="left"
+        tone="walnut"
       />
       <CollectionGateway
         id="corporate-heading"
@@ -99,8 +85,7 @@ export default async function HomePage() {
         href="/corporate"
         cta="Explore corporate gifting"
         image={siteImages.corporateBespoke}
-        tone="stone"
-        imageSide="right"
+        tone="paper"
       />
     </>
   );
@@ -115,7 +100,6 @@ function CollectionGateway({
   cta,
   image,
   tone,
-  imageSide,
 }: {
   id: string;
   eyebrow: string;
@@ -124,32 +108,49 @@ function CollectionGateway({
   href: string;
   cta: string;
   image: ProductImageData;
-  tone: "cream" | "sand" | "stone";
-  imageSide: "left" | "right";
+  tone: "cream" | "walnut" | "paper";
 }) {
   const tones = {
-    cream: "bg-cream",
-    sand: "bg-sand",
-    stone: "bg-stone",
+    cream: {
+      section: "bg-cream text-ink",
+      eyebrow: "text-bronze",
+      body: "text-ink-2",
+      button: "bg-bronze text-ivory hover:bg-champagne hover:text-ink",
+    },
+    walnut: {
+      section: "bg-walnut text-ivory",
+      eyebrow: "text-champagne",
+      body: "text-ivory/75",
+      button: "bg-champagne text-ink hover:bg-ivory",
+    },
+    paper: {
+      section: "bg-paper text-ink",
+      eyebrow: "text-bronze",
+      body: "text-ink-2",
+      button: "bg-bronze text-ivory hover:bg-champagne hover:text-ink",
+    },
   };
-  const imageOrder = imageSide === "right" ? "lg:col-start-7" : "lg:col-start-1 lg:row-start-1";
-  const copyOrder = imageSide === "right" ? "lg:col-start-1 lg:row-start-1" : "lg:col-start-8 lg:row-start-1";
+  const style = tones[tone];
 
   return (
-    <section className={`${tones[tone]} border-t border-line`} aria-labelledby={id}>
-      <div className="shell grid items-center gap-8 py-12 sm:py-14 lg:grid-cols-12 lg:gap-12 lg:py-20">
-        <div className={`lg:col-span-6 ${imageOrder}`}>
-          <ProductImage src={image.src} alt={image.alt} ratio={0.58} sizes="(min-width: 1024px) 48vw, 100vw" imgClassName="grade" />
-        </div>
-        <div className={`py-2 lg:col-span-5 ${copyOrder}`}>
-          <p className="eyebrow">{eyebrow}</p>
-          <h2 id={id} className="display mt-4 max-w-[15ch] text-[2.25rem] leading-[1.02] tracking-[-0.015em] md:text-[3rem] lg:text-[3.4rem]">
-            {title}
-          </h2>
-          <p className="mt-5 max-w-[42ch] text-[15px] leading-relaxed text-ink-2">{text}</p>
-          <Link href={href} className="link-line mt-7">
-            {cta} <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.25} />
-          </Link>
+    <section className={`${style.section} border-t border-line`} aria-labelledby={id}>
+      <div className="shell py-4 md:py-5">
+        <div className="grid overflow-hidden lg:min-h-[340px] lg:grid-cols-12">
+          <div className="order-1 lg:order-2 lg:col-span-7">
+            <ProductImage src={image.src} alt={image.alt} ratio={0.44} sizes="(min-width: 1024px) 58vw, 100vw" className="lg:h-full" imgClassName="grade" />
+          </div>
+          <div className="order-2 flex items-center py-6 sm:py-8 lg:order-1 lg:col-span-5 lg:py-10 lg:pr-12">
+            <div>
+              <p className={`text-[11px] font-medium uppercase tracking-[0.18em] ${style.eyebrow}`}>{eyebrow}</p>
+              <h2 id={id} className="display mt-3 text-[2rem] leading-tight tracking-[-0.01em] md:text-[2.45rem]">
+                {title}
+              </h2>
+              <p className={`mt-3 max-w-[38ch] text-[14px] leading-relaxed md:text-[15px] ${style.body}`}>{text}</p>
+              <Link href={href} className={`btn mt-6 ${style.button}`}>
+                {cta}
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </section>

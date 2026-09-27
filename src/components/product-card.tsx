@@ -19,6 +19,7 @@ export function ProductCard({
   frame = "mount",
   ratio = 1.25,
   size = "md",
+  compact = false,
   reveal = true,
   revealDelay = 0,
 }: {
@@ -29,6 +30,7 @@ export function ProductCard({
   frame?: "mount" | "bare";
   ratio?: number;
   size?: "md" | "lg";
+  compact?: boolean;
   reveal?: boolean;
   revealDelay?: number;
 }) {
@@ -89,16 +91,18 @@ export function ProductCard({
             {priceLabel(product)}
           </p>
         </div>
-        <p className={`mt-1.5 line-clamp-2 leading-relaxed text-ink-2 ${size === "lg" ? "max-w-[46ch] text-[14px] md:text-[15px]" : "text-[13px]"}`}>{product.summary}</p>
+        {!compact && <p className={`mt-1.5 line-clamp-2 leading-relaxed text-ink-2 ${size === "lg" ? "max-w-[46ch] text-[14px] md:text-[15px]" : "text-[13px]"}`}>{product.summary}</p>}
         <p className="mt-2 text-[14px] tabular-nums sm:hidden">{priceLabel(product)}</p>
-        <div className="mt-auto flex items-center justify-between gap-3 pt-2.5">
-          {note ? (
-            <p className={`text-[11px] uppercase tracking-[0.14em] ${soldOut ? "text-ink-3" : "text-bronze"}`}>{note}</p>
-          ) : (
-            <span />
-          )}
-          {simple && !soldOut && <QuickAdd product={product} />}
-        </div>
+        {(!compact || (simple && !soldOut)) && (
+          <div className="mt-auto flex items-center justify-between gap-3 pt-2.5">
+            {!compact && note ? (
+              <p className={`text-[11px] uppercase tracking-[0.14em] ${soldOut ? "text-ink-3" : "text-bronze"}`}>{note}</p>
+            ) : (
+              <span />
+            )}
+            {simple && !soldOut && <QuickAdd product={product} />}
+          </div>
+        )}
       </div>
     </article>
   );
