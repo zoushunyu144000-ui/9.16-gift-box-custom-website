@@ -23,10 +23,15 @@ assert.doesNotMatch(hero, /animate-fade-up/, "Critical hero copy should be visib
 assert.match(source, /slides=\{\[siteImages\.homeHero\]\}/, "Hero should use the unbranded warm gift-box scene selected for the homepage");
 assert.match(source, /fixedImage = siteImages\.homeFixed/, "Fixed Gifts gateway should use its unbranded homepage photograph");
 assert.match(source, /image=\{siteImages\.homeCorporate\}/, "Corporate gateway should use its unbranded homepage photograph");
+assert.match(source, /wineImage = siteImages\.homeWine/, "Wine gateway should use its dedicated unbranded homepage photograph");
 assert.match(hero, /home-cta/, "Hero should use the quieter homepage-specific CTA treatment");
+assert.doesNotMatch(hero, /home-cta--quiet/, "Hero should remain the homepage's single primary CTA");
+assert.match(source, /home-cta home-cta--quiet/, "Category gateways should use the quieter CTA modifier");
 assert.match(layout, /@fontsource-variable\/lora/, "Homepage display typography should use the screen-readable Lora variable font");
 assert.doesNotMatch(layout, /@fontsource-variable\/bodoni-moda/, "Bodoni Moda should no longer load as the site display font");
 assert.match(styles, /--font-display: "Lora Variable"/, "The global display token should use Lora Variable");
+assert.match(styles, /--color-walnut: #6b513d;/, "Wine should use the approved warmer walnut tone");
+assert.match(styles, /\.home-cta--quiet\s*\{/, "The homepage should define a restrained category CTA modifier");
 
 for (const route of ["/fixed-gifts", "/wine-spirits", "/corporate"]) {
   assert.match(source, new RegExp(`href=[{]?["]${route.replace("/", "\\/")}`), `Homepage should keep a direct CTA to ${route}`);

@@ -21,9 +21,8 @@ export default async function HomePage() {
   const visible = sortProducts(products.filter((p) => p.status !== "hidden"));
 
   const festive = pick(visible.filter((p) => p.category === "festive" && p.occasion === settings.activeOccasion && p.status === "active"), 4);
-  const wine = pick(visible.filter((p) => p.category === "wine-spirits" && p.status === "active"), 1);
   const fixedImage = siteImages.homeFixed;
-  const wineImage = wine[0]?.images[2] ?? wine[0]?.images[0] ?? siteImages.brand;
+  const wineImage = siteImages.homeWine;
 
   return (
     <>
@@ -146,7 +145,7 @@ function CollectionGateway({
                 {title}
               </h2>
               <p className={`mt-3 max-w-[38ch] text-[14px] leading-relaxed md:text-[15px] ${style.body}`}>{text}</p>
-              <Link href={href} className={`home-cta mt-6 ${style.button}`}>
+              <Link href={href} className={`home-cta home-cta--quiet mt-6 ${style.button}`}>
                 {cta}
               </Link>
             </div>

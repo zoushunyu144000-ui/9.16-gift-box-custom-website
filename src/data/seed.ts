@@ -665,6 +665,12 @@ export const siteImages = {
     width: 1672,
     height: 941,
   },
+  homeWine: {
+    src: "/images/moire-home-wine-v1.webp",
+    alt: "Unbranded wine bottle and glass beside a warm taupe presentation box",
+    width: 1672,
+    height: 941,
+  },
   homeCorporate: {
     src: "/images/moire-home-corporate-v1.webp",
     alt: "Warm taupe corporate gift boxes with tissue, a blank card and an olive branch",
