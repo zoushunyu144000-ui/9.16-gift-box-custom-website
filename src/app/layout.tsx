@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   },
   description: "Festive gift boxes, everyday gifts, wine & spirits and corporate gifting from Kuala Lumpur.",
   icons: { icon: "/icon.svg" },
+  other: { google: "notranslate" },
   openGraph: {
     type: "website",
     siteName: "Moire Co.",
@@ -28,7 +29,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en-MY">
+    <html lang="en-MY" translate="no">
       <body className="min-h-dvh">{children}</body>
     </html>
   );
