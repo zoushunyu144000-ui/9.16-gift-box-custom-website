@@ -3,7 +3,11 @@
 KL / Malaysia premium gifting ecommerce website project.
 
 ## Current Stage
-**Homepage UI direction refinement**
+**Website v1 built — client preview** (see `CURRENT-STATUS-2026-09-27.md` and `WEBSITE-README.md`)
+
+The working website (Next.js + Supabase-ready) lives in this repository. Run `npm install && npm run dev`, then open http://localhost:3000 (admin: `/admin`, preview password `moire-preview`).
+
+Previous stage: Homepage UI direction refinement
 
 The project has completed the main requirement / commercial phase. Current work is focused on creating one strong Homepage UI direction for client approval.
 
@@ -36,6 +40,8 @@ The next Stitch design pass should use the client's UI reference image as the pr
 
 ## Start Here
 Read:
+- `CURRENT-STATUS-2026-09-27.md`
+- `WEBSITE-README.md`
 - `CURRENT-STATUS-2026-09-26.md`
 - `PROJECT-BRIEF.md`
 - `REQUIREMENTS.md`
