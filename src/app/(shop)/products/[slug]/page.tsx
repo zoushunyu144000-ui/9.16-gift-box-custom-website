@@ -69,7 +69,7 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
 
       <div className="grid gap-8 lg:mt-8 lg:grid-cols-12 lg:gap-12 xl:gap-16">
         <div className="min-w-0 lg:col-span-7">
-          <Gallery images={product.images} name={product.name} soldOut={product.status !== "active"} />
+          <Gallery images={product.images} name={product.name} soldOut={product.status !== "active"} mobileRatio={product.category === "wine-spirits" ? 1.25 : 1.05} />
         </div>
 
         <div className="min-w-0 lg:col-span-5">

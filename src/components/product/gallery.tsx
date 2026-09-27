@@ -11,7 +11,7 @@ import { ProductImage } from "../product-image";
  * Mobile: swipeable, full-width, with a counter. Desktop: thumbnails + main image, click to zoom.
  * Handles 1–10+ images.
  */
-export function Gallery({ images, name, soldOut }: { images: Img[]; name: string; soldOut?: boolean }) {
+export function Gallery({ images, name, soldOut, mobileRatio = 1.25 }: { images: Img[]; name: string; soldOut?: boolean; mobileRatio?: number }) {
   const [active, setActive] = useState(0);
   const [zoom, setZoom] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
@@ -57,7 +57,7 @@ export function Gallery({ images, name, soldOut }: { images: Img[]; name: string
         <div ref={scroller} className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto" aria-label={`${name} images`}>
           {list.map((img, i) => (
             <div key={img.src + i} className="w-full flex-none snap-center">
-              <ProductImage src={img.src} alt={img.alt} ratio={1.25} sizes="100vw" priority={i === 0} imgClassName={soldOut ? "grade-muted" : "grade"} />
+              <ProductImage src={img.src} alt={img.alt} ratio={mobileRatio} sizes="100vw" priority={i === 0} imgClassName={soldOut ? "grade-muted" : "grade"} />
             </div>
           ))}
         </div>

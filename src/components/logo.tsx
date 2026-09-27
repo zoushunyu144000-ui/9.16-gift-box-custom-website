@@ -16,7 +16,7 @@ export function Monogram({ className = "", title = "Moire Co." }: { className?: 
 export function Logo({ className = "", compact = false }: { className?: string; compact?: boolean }) {
   return (
     <span className={`inline-flex items-center ${compact ? "gap-2" : "gap-3"} ${className}`}>
-      <Monogram className={compact ? "h-8" : "h-10"} />
+      <Monogram className={compact ? "h-7 lg:h-8" : "h-10"} />
       <Image
         src="/brand/moire-wordmark.png"
         alt="MOIRE CO."
