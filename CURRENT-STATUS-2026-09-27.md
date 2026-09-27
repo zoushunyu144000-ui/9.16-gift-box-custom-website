@@ -39,3 +39,13 @@ The full website (v1) has been built in this repository (branch `website-v1`) as
 
 ## Next milestone
 Client reviews the preview → confirms direction and the items above → RM750 deposit (per SCOPE-AND-PRICING.md) → connect Supabase + gateway, load real products → QA → launch.
+
+## Update — brand art-direction pass (v1.1)
+Visual upgrade only; routes, data, cart, checkout, search, admin and product states unchanged.
+- Brand device: **the moiré** — two offset sets of fine rings (the watered-silk pattern the name refers to), tone-on-tone champagne, used only in the hero, the Festive chapter, and the footer.
+- One photographic grade across all imagery (`.grade` in globals.css) so mixed placeholder photos read as one body of work; product photos sit in a paper mount (`.mount`) in collections.
+- Bodoni italic for one emphasis per headline; `*word*` in admin settings text renders italic.
+- Homepage rhythm: hero (photo bled to the edge) → one-line pause → Festive as a seasonal chapter (large year numeral) → Fixed Gift editorial spread + engraving strip → Wine & Spirits as a wine list → Corporate on cream with the process line.
+- Festive page: campaign opening, typographic occasion tabs, editorial spread for the current season, a useful pause (gift message / delivery date), other occasions grouped below.
+- Cards: badges removed from photographs; notes set as a quiet text line; quick add appears on hover (desktop only).
+- Copy: plainer product names and summaries; removed the hero image that showed third-party text.

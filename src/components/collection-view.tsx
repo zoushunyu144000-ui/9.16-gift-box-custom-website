@@ -1,9 +1,12 @@
 import Link from "next/link";
-import { OCCASION_ORDER, OCCASIONS, priceRange, sortProducts } from "@/lib/catalog";
+import { OCCASION_ORDER, priceRange, sortProducts } from "@/lib/catalog";
 import type { Occasion, Product } from "@/lib/types";
 import { Breadcrumbs } from "./breadcrumbs";
+import { EditorialGrid } from "./editorial-grid";
+import { Emph } from "./moire";
 import { ProductCard } from "./product-card";
 import { SortSelect } from "./sort-select";
+import { WineList } from "./wine-list";
 
 export type SortKey = "featured" | "price-asc" | "price-desc" | "name";
 
@@ -16,16 +19,20 @@ export function sortBy(list: Product[], sort: SortKey) {
   return [...base].sort((a, b) => avail(a) - avail(b) || Number(b.featured) - Number(a.featured) || a.sort - b.sort);
 }
 
+/**
+ * Category page (Fixed Gift Collection, Wine & Spirits).
+ * `layout="editorial"` lays products out as a spread; `layout="list"` reads like a wine list.
+ * Titles accept *italic* markup.
+ */
 export function CollectionView({
-  basePath,
+
   title,
   eyebrow,
   intro,
   products,
   sort,
-  occasions,
-  activeOccasion,
   note,
+  layout = "editorial",
 }: {
   basePath: string;
   title: string;
@@ -33,89 +40,64 @@ export function CollectionView({
   intro: string;
   products: Product[];
   sort: SortKey;
-  /** Festive only: occasions that have products, plus the currently selected one. */
-  occasions?: Occasion[];
-  activeOccasion?: Occasion | "all";
   note?: string;
+  layout?: "editorial" | "list" | "grid";
 }) {
   const list = sortBy(products, sort);
-  const qs = (o: Occasion | "all") => {
-    const p = new URLSearchParams();
-    if (o !== "all") p.set("occasion", o);
-    if (sort !== "featured") p.set("sort", sort);
-    const s = p.toString();
-    return s ? `${basePath}?${s}` : basePath;
-  };
+  const available = list.filter((p) => p.status === "active").length;
+  const plainTitle = title.replace(/\*/g, "");
 
   return (
-    <div className="shell pt-6 md:pt-10">
-      <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: title }]} />
-      <header className="mt-8 grid gap-6 border-b border-line pb-10 md:mt-12 md:grid-cols-12 md:pb-14">
-        <div className="md:col-span-7">
-          {eyebrow && <p className="eyebrow mb-4">{eyebrow}</p>}
-          <h1 className="display text-[2.5rem] leading-[1.02] md:text-[4rem]">{title}</h1>
-        </div>
-        <div className="flex flex-col justify-end md:col-span-5">
-          <p className="max-w-[48ch] text-[15px] leading-relaxed text-ink-2">{intro}</p>
-          {note && <p className="mt-3 text-[13px] text-ink-3">{note}</p>}
+    <div>
+      <header className="bg-paper">
+        <div className="shell pb-14 pt-6 md:pb-20 md:pt-10">
+          <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: plainTitle }]} />
+          <div className="mt-12 grid gap-8 md:mt-20 md:grid-cols-12 md:items-end">
+            <div className="md:col-span-7">
+              {eyebrow && <p className="eyebrow mb-5">{eyebrow}</p>}
+              <h1 className="display text-[2.8rem] leading-[0.98] tracking-[-0.02em] md:text-[5rem]">
+                <Emph text={title} />
+              </h1>
+            </div>
+            <div className="md:col-span-4 md:col-start-9">
+              <p className="max-w-[44ch] text-[15px] leading-relaxed text-ink-2">{intro}</p>
+              {note && <p className="mt-3 text-[13px] leading-relaxed text-ink-3">{note}</p>}
+            </div>
+          </div>
         </div>
       </header>
 
-      <div className="sticky top-16 z-20 -mx-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-line bg-ivory/95 px-5 py-3 backdrop-blur-md md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:py-6 md:backdrop-blur-none lg:top-[76px]">
-        {occasions && occasions.length > 0 ? (
-          <nav className="no-scrollbar -my-1 flex w-full min-w-0 gap-2 overflow-x-auto py-1 md:w-auto md:flex-1" aria-label="Filter by occasion">
-            {(["all", ...occasions] as const).map((o) => {
-              const active = (activeOccasion ?? "all") === o;
-              return (
-                <Link
-                  key={o}
-                  href={qs(o)}
-                  scroll={false}
-                  aria-current={active ? "true" : undefined}
-                  className={`inline-flex h-9 flex-none items-center border px-4 text-[12px] tracking-wide transition-colors ${
-                    active ? "border-ink bg-ink text-ivory" : "border-line-strong hover:border-ink"
-                  }`}
-                >
-                  {o === "all" ? "All occasions" : OCCASIONS[o].name}
-                </Link>
-              );
-            })}
-          </nav>
-        ) : (
+      <div className="sticky top-16 z-20 border-b border-line bg-ivory/95 backdrop-blur-md lg:top-[76px]">
+        <div className="shell flex h-14 items-center justify-between gap-4">
           <p className="text-[13px] text-ink-2">
-            {list.length} {list.length === 1 ? "gift" : "gifts"}
+            {available} {available === 1 ? "gift" : "gifts"}
+            {list.length > available ? <span className="text-ink-3"> · {list.length - available} unavailable</span> : null}
           </p>
-        )}
-        <SortSelect value={sort} />
+          <SortSelect value={sort} />
+        </div>
       </div>
 
-      {occasions && (
-        <p className="mb-6 mt-4 text-[13px] text-ink-2 md:mt-0">
-          {list.length} {list.length === 1 ? "gift" : "gifts"}
-        </p>
-      )}
-
-      {list.length === 0 ? (
-        <div className="border border-line px-6 py-20 text-center">
-          <p className="display text-2xl">Nothing here yet</p>
-          <p className="mx-auto mt-2 max-w-[40ch] text-ink-2">There are no gifts in this selection at the moment. Please check back soon or browse another collection.</p>
-          <Link href={basePath} className="btn btn-outline mt-8">
-            View all
-          </Link>
-        </div>
-      ) : (
-        <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-12 md:mt-2 md:grid-cols-3 md:gap-x-6 md:gap-y-16 xl:grid-cols-4">
-          {list.map((p, i) => (
-            <ProductCard
-              key={p.id}
-              product={p}
-              priority={i < 4}
-              showOccasion={Boolean(occasions)}
-              sizes="(min-width: 1280px) 23vw, (min-width: 768px) 31vw, 50vw"
-            />
-          ))}
-        </div>
-      )}
+      <div className="shell pt-12 md:pt-20">
+        {list.length === 0 ? (
+          <div className="border border-line px-6 py-20 text-center">
+            <p className="display text-2xl">Nothing here yet</p>
+            <p className="mx-auto mt-2 max-w-[40ch] text-ink-2">There are no gifts in this collection at the moment. Please check back soon.</p>
+            <Link href="/" className="btn btn-outline mt-8">
+              Back to home
+            </Link>
+          </div>
+        ) : layout === "list" ? (
+          <WineList products={list} />
+        ) : layout === "grid" ? (
+          <div className="grid grid-cols-2 gap-x-4 gap-y-12 md:grid-cols-3 md:gap-x-6 xl:grid-cols-4">
+            {list.map((p, i) => (
+              <ProductCard key={p.id} product={p} priority={i < 4} sizes="(min-width: 1280px) 23vw, (min-width: 768px) 31vw, 50vw" />
+            ))}
+          </div>
+        ) : (
+          <EditorialGrid products={list} />
+        )}
+      </div>
     </div>
   );
 }

@@ -6,6 +6,8 @@
   --color-cream: #f3ede3;
   --color-stone: #e9e2d6;
   --color-sand: #ddd3c3;
+  --color-mount: #efe8dc;
+  --color-paper: #f6f1e8;
   --color-ink: #1f1c18;
   --color-ink-2: #5e574e;
   --color-ink-3: #8c8276;
@@ -311,6 +313,48 @@
   }
 
   .hairline { border-color: var(--color-line); }
+
+  /* ── Art direction ─────────────────────────────────────────────
+     One consistent grade for all photography, so images from different
+     sources read as one body of work: warmer, softer, slightly muted.
+     Tune or remove (--grade: none) once Moire Co.'s own photography is in. */
+  .grade {
+    filter: var(--grade, saturate(0.76) contrast(0.94) brightness(1.025) sepia(0.08));
+  }
+  .grade-muted {
+    filter: saturate(0.3) contrast(0.9) brightness(1.06) sepia(0.1);
+    opacity: 0.85;
+  }
+  /* Passe-partout: product photographs sit inside a paper mount, like prints. */
+  .mount {
+    background: var(--color-mount);
+    padding: 7% 7% 8.5%;
+  }
+  .display-italic,
+  .display em {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  /* Scroll reveal (progressive: content is visible without JS) */
+  .js [data-reveal] {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 1s var(--ease-out-soft), transform 1.2s var(--ease-out-soft);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  .js [data-reveal].is-in {
+    opacity: 1;
+    transform: none;
+  }
+  .js [data-reveal="line"] {
+    transform: scaleX(0);
+    transform-origin: left;
+    opacity: 1;
+    transition: transform 1.6s var(--ease-out-soft);
+  }
+  .js [data-reveal="line"].is-in { transform: scaleX(1); }
 
   .skeleton {
     background: linear-gradient(90deg, var(--color-cream) 0%, var(--color-stone) 50%, var(--color-cream) 100%);

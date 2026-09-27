@@ -2,6 +2,7 @@ import { CartDrawer } from "@/components/cart/cart-drawer";
 import { CartProvider } from "@/components/cart/cart-context";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import { RevealObserver } from "@/components/reveal";
 import { formatRM } from "@/lib/catalog";
 import { getStore } from "@/lib/store";
 
@@ -21,6 +22,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
       <main id="main">{children}</main>
       <Footer settings={settings} />
       <CartDrawer deliveryNote={deliveryNote} />
+      <RevealObserver />
     </CartProvider>
   );
 }

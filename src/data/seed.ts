@@ -36,7 +36,7 @@ export const seedProducts: Product[] = [
   p({
     id: "p_cny_blessings",
     slug: "spring-blessings-box",
-    name: "Spring Blessings Box",
+    name: "New Year Cookie Box",
     category: "festive",
     occasion: "chinese-new-year",
     status: "active",
@@ -63,7 +63,7 @@ export const seedProducts: Product[] = [
   p({
     id: "p_cny_harvest",
     slug: "golden-harvest-basket",
-    name: "Golden Harvest Basket",
+    name: "Mandarin Basket",
     category: "festive",
     occasion: "chinese-new-year",
     status: "active",
@@ -95,7 +95,7 @@ export const seedProducts: Product[] = [
     price: 388,
     featured: true,
     sort: 30,
-    summary: "Pu'er tea, porcelain cups and festive sweets. Wine upgrade available.",
+    summary: "Pu'er tea, porcelain cups, pineapple tarts and mandarins.",
     description:
       "Built around tea for the reunion table: pressed pu'er tea, a pair of porcelain cups and festive sweets. Choose the wine version to add a bottle of red wine to the box.",
     contents: ["Mini pu'er tea cakes, 10 pieces", "Porcelain teacups, set of 2", "Pineapple tarts, 12 pieces", "Mandarin oranges, 4 pieces", "Moire Co. greeting card"],
@@ -125,7 +125,7 @@ export const seedProducts: Product[] = [
     price: 588,
     featured: true,
     sort: 40,
-    summary: "Our fuller festive box. Champagne or single malt upgrades available.",
+    summary: "Mandarins, pineapple tarts, festive cookies, oolong and XO sauce.",
     description:
       "A generous Chinese New Year box for close family and valued clients. Festive delicacies, tea and fresh mandarins, with the option to add champagne or single malt whisky.",
     contents: [
@@ -166,7 +166,7 @@ export const seedProducts: Product[] = [
     featured: true,
     sort: 50,
     containsAlcohol: true,
-    summary: "The complete festive hamper, with cognac and premium delicacies.",
+    summary: "Cognac, abalone, dried scallops and aged pu'er, in one hamper.",
     description:
       "Our most complete Chinese New Year hamper, intended for senior clients and family elders. It brings together premium delicacies, tea, fresh fruit and a bottle of cognac.",
     contents: [
@@ -195,7 +195,7 @@ export const seedProducts: Product[] = [
   p({
     id: "p_raya_dates",
     slug: "raya-dates-collection",
-    name: "Raya Dates Collection",
+    name: "Raya Dates Box",
     category: "festive",
     occasion: "hari-raya",
     status: "active",
@@ -245,7 +245,7 @@ export const seedProducts: Product[] = [
   p({
     id: "p_ma_moonlight",
     slug: "moonlight-mooncake-box",
-    name: "Moonlight Mooncake Box",
+    name: "Mooncake Box",
     category: "festive",
     occasion: "mid-autumn",
     status: "sold_out",
@@ -343,7 +343,7 @@ export const seedProducts: Product[] = [
     price: 268,
     featured: true,
     sort: 20,
-    summary: "A pair of cut-crystal tumblers. Optional name engraving.",
+    summary: "A pair of cut-crystal tumblers, about 300 ml each.",
     description:
       "A pair of heavy, cut-crystal tumblers for whisky or water. Add a name or short message and we will engrave it on both glasses.",
     contents: ["Crystal tumblers, set of 2", "Gift box with insert"],
@@ -373,7 +373,7 @@ export const seedProducts: Product[] = [
     price: 198,
     featured: true,
     sort: 30,
-    summary: "Full-grain leather wrap journal. Optional name engraving.",
+    summary: "Full-grain leather wrap journal with a 120-page refill.",
     description:
       "A refillable wrap journal in full-grain leather that softens with use. Add a name to be engraved on the front cover.",
     contents: ["Leather wrap journal", "Refill notebook, 120 pages", "Gift box"],
@@ -399,7 +399,7 @@ export const seedProducts: Product[] = [
     price: 288,
     featured: true,
     sort: 40,
-    summary: "Solid wood box with an engraved lid.",
+    summary: "Solid wood box with a sliding lid.",
     description:
       "A solid wood box with a sliding lid, for keepsakes, letters or small treasures. Add a name, date or short message to be engraved on the lid.",
     contents: ["Solid wood keepsake box", "Linen pouch"],
@@ -427,7 +427,7 @@ export const seedProducts: Product[] = [
     status: "active",
     price: 168,
     sort: 50,
-    summary: "Linen-bound notebook with a brass pen. Optional pen engraving.",
+    summary: "Linen-bound notebook with a weighted brass pen.",
     description: "A linen-bound notebook paired with a weighted brass pen. The pen can be engraved with a name.",
     contents: ["Linen-bound notebook, 192 pages", "Brass ballpoint pen", "Gift box"],
     specs: [
@@ -549,7 +549,7 @@ export const seedProducts: Product[] = [
   p({
     id: "p_ws_white",
     slug: "crisp-white",
-    name: "Crisp White",
+    name: "Dry White",
     category: "wine-spirits",
     status: "active",
     price: 148,
@@ -637,10 +637,10 @@ export const seedProducts: Product[] = [
 export const seedSettings: SiteSettings = {
   activeOccasion: "chinese-new-year",
   festiveTitle: "Chinese New Year 2027",
-  festiveIntro: "Gift boxes and hampers for the Year of the Goat, for family, friends and business partners.",
+  festiveIntro: "Boxes and hampers for the first visits of the year — to parents and grandparents, to friends, and to the people you work with.",
   heroEyebrow: "Chinese New Year 2027",
-  heroTitle: "Gifts, thoughtfully composed.",
-  heroText: "Festive gift boxes, everyday gifts, wine & spirits and corporate gifting from Kuala Lumpur.",
+  heroTitle: "Gift boxes for the *Year of the Goat*",
+  heroText: "Festive boxes, year-round gifts, wine & spirits and corporate orders — from Moire Co. in Kuala Lumpur.",
   deliveryFee: 20,
   freeDeliveryThreshold: null,
   deliveryLeadDays: 2,
@@ -655,7 +655,6 @@ export const seedSettings: SiteSettings = {
 export const siteImages = {
   hero: [
     unsplash("7KKy7-TeeVs", "Open sand-coloured gift box with tissue paper"),
-    unsplash("UEmIPBBwT9U", "Gift box with folded tissue on white linen"),
   ],
   corporateSemi: unsplash("Ce1caUmTpvQ", "Stack of white gift boxes"),
   corporateBespoke: unsplash("fMveBTz2qWw", "Two sand-coloured gift boxes with a small gold mark"),

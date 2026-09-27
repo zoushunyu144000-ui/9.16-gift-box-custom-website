@@ -57,7 +57,7 @@ export function Gallery({ images, name, soldOut }: { images: Img[]; name: string
         <div ref={scroller} className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto" aria-label={`${name} images`}>
           {list.map((img, i) => (
             <div key={img.src + i} className="w-full flex-none snap-center">
-              <ProductImage src={img.src} alt={img.alt} ratio={1.25} sizes="100vw" priority={i === 0} imgClassName={soldOut ? "grayscale-[35%]" : ""} />
+              <ProductImage src={img.src} alt={img.alt} ratio={1.25} sizes="100vw" priority={i === 0} imgClassName={soldOut ? "grade-muted" : "grade"} />
             </div>
           ))}
         </div>
@@ -88,7 +88,7 @@ export function Gallery({ images, name, soldOut }: { images: Img[]; name: string
                   aria-label={`Show image ${i + 1}`}
                   aria-current={i === active}
                 >
-                  <ProductImage src={img.src} alt="" ratio={1.25} sizes="80px" />
+                  <ProductImage src={img.src} alt="" ratio={1.25} sizes="80px" imgClassName="grade" />
                 </button>
               </li>
             ))}
@@ -103,7 +103,7 @@ export function Gallery({ images, name, soldOut }: { images: Img[]; name: string
               ratio={1.25}
               sizes="(min-width: 1280px) 48vw, 55vw"
               priority
-              imgClassName={soldOut ? "grayscale-[35%]" : ""}
+              imgClassName={soldOut ? "grade-muted" : "grade"}
             />
           </button>
           {list.length > 1 && (
@@ -124,7 +124,7 @@ export function Gallery({ images, name, soldOut }: { images: Img[]; name: string
         <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto lg:hidden">
           {list.map((img, i) => (
             <button key={img.src + i} type="button" onClick={() => go(i)} className={`w-14 flex-none border ${i === active ? "border-ink" : "border-transparent"}`} aria-label={`Show image ${i + 1}`}>
-              <ProductImage src={img.src} alt="" ratio={1.25} sizes="60px" />
+              <ProductImage src={img.src} alt="" ratio={1.25} sizes="60px" imgClassName="grade" />
             </button>
           ))}
         </div>

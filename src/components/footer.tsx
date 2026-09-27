@@ -2,12 +2,14 @@ import Link from "next/link";
 import { whatsappLink } from "@/lib/catalog";
 import type { SiteSettings } from "@/lib/types";
 import { Monogram } from "./logo";
+import { MoireField } from "./moire";
 
 export function Footer({ settings }: { settings: SiteSettings }) {
   const year = new Date().getFullYear();
   return (
-    <footer className="mt-24 border-t border-line bg-cream md:mt-32">
-      <div className="shell grid gap-12 py-14 md:grid-cols-12 md:gap-8 md:py-20">
+    <footer className="relative mt-24 overflow-hidden border-t border-line bg-cream md:mt-32">
+      <MoireField className="pointer-events-none absolute -bottom-[420px] -right-[260px] h-[760px] w-[760px] text-champagne" opacity={0.28} />
+      <div className="shell relative grid gap-12 py-14 md:grid-cols-12 md:gap-8 md:py-20">
         <div className="md:col-span-4">
           <Link href="/" aria-label="Moire Co. — home" className="inline-flex items-center gap-3">
             <Monogram className="h-11 w-auto text-champagne" />
@@ -53,7 +55,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
           ]}
         />
       </div>
-      <div className="border-t border-line">
+      <div className="relative border-t border-line">
         <div className="shell flex flex-col gap-3 py-6 text-[12px] text-ink-3 md:flex-row md:items-center md:justify-between">
           <p>© {year} Moire Co. All rights reserved.</p>
           <p className="flex flex-wrap gap-x-4 gap-y-1">
