@@ -17,40 +17,28 @@ export function EditorialGrid({ products, priorityCount = 2, showOccasion = fals
         const flip = gi % 2 === 1;
         const [lead, companion, ...row] = g;
         return (
-          <div key={gi} className="space-y-12 md:space-y-24">
-            <div className="grid grid-cols-2 gap-x-4 gap-y-12 md:grid-cols-12 md:gap-x-6">
-              <div className={`col-span-2 md:col-span-7 ${flip ? "md:order-2 md:col-start-6" : ""}`}>
-                <ProductCard
-                  product={lead}
-                  frame="bare"
-                  size="lg"
-                  ratio={1.2}
-                  priority={gi === 0 && priorityCount > 0}
-                  showOccasion={showOccasion}
-                  sizes="(min-width: 768px) 56vw, 100vw"
-                />
-              </div>
-              {companion && (
-                <div className={`col-span-1 md:col-span-4 md:self-end ${flip ? "md:order-1 md:col-start-1" : "md:col-start-9"}`}>
-                  <ProductCard product={companion} priority={gi === 0 && priorityCount > 1} showOccasion={showOccasion} revealDelay={120} sizes="(min-width: 768px) 30vw, 50vw" />
-                </div>
-              )}
-              {/* On mobile, the first item of the row joins the companion to make a pair */}
-              {row[0] && (
-                <div className="col-span-1 md:hidden">
-                  <ProductCard product={row[0]} showOccasion={showOccasion} sizes="50vw" />
-                </div>
-              )}
+          <div key={gi} className="grid grid-cols-2 gap-x-4 gap-y-12 md:grid-cols-12 md:gap-x-6 md:gap-y-0">
+            <div className={`col-span-2 md:col-span-7 ${flip ? "md:order-2 md:col-start-6" : ""}`}>
+              <ProductCard
+                product={lead}
+                frame="bare"
+                size="lg"
+                ratio={1.2}
+                priority={gi === 0 && priorityCount > 0}
+                showOccasion={showOccasion}
+                sizes="(min-width: 768px) 56vw, 100vw"
+              />
             </div>
-            {row.length > 0 && (
-              <div className="grid grid-cols-2 gap-x-4 gap-y-12 md:grid-cols-3 md:gap-x-6">
-                {row.map((p, i) => (
-                  <div key={p.id} className={`${i === 0 ? "hidden md:block" : ""} ${i === 1 ? "md:mt-20" : ""}`}>
-                    <ProductCard product={p} showOccasion={showOccasion} revealDelay={i * 90} sizes="(min-width: 768px) 30vw, 50vw" />
-                  </div>
-                ))}
+            {companion && (
+              <div className={`col-span-1 md:col-span-4 md:self-end ${flip ? "md:order-1 md:col-start-1" : "md:col-start-9"}`}>
+                <ProductCard product={companion} priority={gi === 0 && priorityCount > 1} showOccasion={showOccasion} revealDelay={120} sizes="(min-width: 768px) 30vw, 50vw" />
               </div>
             )}
+            {row.map((p, i) => (
+              <div key={p.id} className={`col-span-1 md:order-3 md:col-span-4 md:mt-24 ${i === 1 ? "md:mt-44" : ""}`}>
+                <ProductCard product={p} showOccasion={showOccasion} revealDelay={i * 90} sizes="(min-width: 768px) 30vw, 50vw" />
+              </div>
+            ))}
           </div>
         );
       })}

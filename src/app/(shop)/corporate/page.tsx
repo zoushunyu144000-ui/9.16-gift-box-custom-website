@@ -29,7 +29,7 @@ export default async function CorporatePage() {
           </p>
         </div>
         <div className="lg:col-span-7">
-          <ProductImage src={siteImages.corporateHero.src} alt={siteImages.corporateHero.alt} ratio={0.66} sizes="(min-width: 1024px) 56vw, 100vw" priority />
+          <ProductImage src={siteImages.corporateHero.src} alt={siteImages.corporateHero.alt} ratio={0.66} sizes="(min-width: 1024px) 56vw, 100vw" priority imgClassName="grade" />
         </div>
       </header>
 

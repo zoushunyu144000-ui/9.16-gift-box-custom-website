@@ -6,6 +6,7 @@ const logo = readFileSync(new URL("src/components/logo.tsx", root), "utf8");
 const header = readFileSync(new URL("src/components/header.tsx", root), "utf8");
 const footer = readFileSync(new URL("src/components/footer.tsx", root), "utf8");
 const productImage = readFileSync(new URL("src/components/product-image.tsx", root), "utf8");
+const gateway = readFileSync(new URL("src/components/checkout/test-gateway.tsx", root), "utf8");
 const monogram = logo.match(/export function Monogram[\s\S]*?(?=export function Logo)/)?.[0] ?? "";
 const mobileMenu = header.slice(header.indexOf("function MobileMenu"));
 
@@ -15,6 +16,8 @@ assert.match(logo, /moire-wordmark\.png/, "the approved wordmark source must be 
 assert.match(header, /<Logo compact\s*\/>/, "the site header must use the shared logo lockup");
 assert.match(mobileMenu, /<Logo compact\s*\/>/, "mobile navigation must use the shared logo lockup");
 assert.match(footer, /<Logo(?:\s|\/>)/, "the footer must use the shared logo lockup");
+assert.match(gateway, /<Logo compact\s*\/>/, "the hosted payment preview must use the shared logo lockup");
+assert.doesNotMatch(gateway, /MOIRÉ\s+CO\./, "the hosted payment preview must not use an accented brand spelling");
 assert.match(productImage, /<Monogram/, "failed product images must use the shared approved monogram");
 
 for (const asset of ["public/brand/moire-monogram.png", "public/brand/moire-wordmark.png"]) {
