@@ -53,7 +53,7 @@ export function Header() {
           scrolled ? "border-line bg-ivory/95 backdrop-blur-md" : "border-transparent bg-ivory"
         }`}
       >
-        <div className="shell grid h-16 grid-cols-[1fr_auto_1fr] items-center lg:h-[76px] lg:grid-cols-[auto_1fr_auto] lg:gap-10">
+        <div className="shell grid h-16 grid-cols-[auto_1fr_auto] items-center gap-3 lg:h-[76px] lg:gap-10">
           {/* Mobile: menu */}
           <div className="flex items-center lg:hidden">
             <button
@@ -67,7 +67,7 @@ export function Header() {
             </button>
           </div>
 
-          <Link href="/" className="justify-self-center lg:justify-self-start" aria-label="Moire Co. — home">
+          <Link href="/" className="justify-self-start" aria-label="Moire Co. — home">
             <Logo compact />
           </Link>
 

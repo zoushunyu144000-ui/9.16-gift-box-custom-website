@@ -62,16 +62,16 @@ export function Hero({
       {/* Type */}
       <div className="shell relative lg:flex lg:min-h-[min(calc(100svh-76px),880px)] lg:items-center">
         <MoireField className="pointer-events-none absolute -bottom-[38%] -left-[18%] hidden h-[620px] w-[620px] text-champagne lg:block" opacity={0.28} />
-        <div className="relative pb-12 pt-7 md:pb-20 md:pt-12 lg:w-[40%] lg:py-24">
+        <div className="relative pb-12 pt-5 md:pb-20 md:pt-12 lg:w-[40%] lg:py-24">
           <p className="flex items-center gap-4 text-[11px] font-medium uppercase tracking-[0.24em] text-bronze animate-fade-up">
             <span className="h-px w-10 bg-champagne" aria-hidden="true" />
             {eyebrow}
           </p>
-          <h1 className="display mt-4 text-[2.9rem] leading-[0.98] tracking-[-0.02em] animate-fade-up [animation-delay:120ms] xs:text-[3.3rem] md:mt-6 md:text-[4.4rem] lg:text-[4.6rem] xl:text-[5.6rem]">
+          <h1 className="display mt-3 text-[2.5rem] leading-[0.98] tracking-[-0.02em] animate-fade-up [animation-delay:120ms] xs:text-[2.8rem] md:mt-6 md:text-[4.4rem] lg:text-[4.6rem] xl:text-[5.6rem]">
             <Emph text={title} />
           </h1>
-          <p className="mt-5 max-w-[34ch] text-[15px] leading-relaxed text-ink-2 animate-fade-up [animation-delay:240ms] md:mt-7 md:text-[16px]">{text}</p>
-          <div className="mt-7 flex flex-wrap items-center gap-x-8 gap-y-5 animate-fade-up [animation-delay:360ms] md:mt-10">
+          <p className="mt-4 max-w-[34ch] text-[15px] leading-relaxed text-ink-2 animate-fade-up [animation-delay:240ms] md:mt-7 md:text-[16px]">{text}</p>
+          <div className="mt-5 flex flex-wrap items-center gap-x-8 gap-y-5 animate-fade-up [animation-delay:360ms] md:mt-10">
             <Link href="/festive" className="btn btn-primary">
               Shop the collection
             </Link>
