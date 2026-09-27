@@ -49,9 +49,9 @@ export function FestiveView({
   const [name, year] = isSeason ? splitYear(settings.festiveTitle) : [OCCASIONS[focus].name, null];
   const intro = isSeason ? settings.festiveIntro : OCCASION_NOTES[focus] || "";
   const available = focusList.filter((p) => p.status === "active");
-  // Campaign image: from the most complete gift of the season, so it differs from the first product in the grid
+  // The primary scene image is campaign artwork; secondary product-detail shots are not collection heroes.
   const lead = [...available].filter((p) => p.images.length > 1).sort((a, b) => b.price - a.price)[0] ?? focusList[0];
-  const campaign = lead?.images[1] ?? lead?.images[0];
+  const campaign = lead?.images[0];
   const others = occasion === "all" ? order.filter((o) => o !== focus) : [];
 
   const tab = (o: Occasion | "all") => {

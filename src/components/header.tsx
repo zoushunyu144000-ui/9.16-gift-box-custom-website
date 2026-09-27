@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Menu, Search, X } from "lucide-react";
-import { Logo, Monogram } from "./logo";
+import { Logo } from "./logo";
 import { useCart } from "./cart/cart-context";
 import { SearchOverlay } from "./search-overlay";
 
@@ -141,7 +141,7 @@ function MobileMenu({ open, onClose, isActive }: { open: boolean; onClose: () =>
         }`}
       >
         <div className="flex h-16 items-center justify-between px-5">
-          <Monogram className="h-8 w-auto text-champagne" />
+          <Logo compact />
           <button type="button" onClick={onClose} className="-mr-2 grid h-11 w-11 place-items-center" aria-label="Close menu">
             <X className="h-5 w-5" strokeWidth={1.25} />
           </button>

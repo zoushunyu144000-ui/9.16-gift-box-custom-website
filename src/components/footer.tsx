@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { whatsappLink } from "@/lib/catalog";
 import type { SiteSettings } from "@/lib/types";
-import { Monogram } from "./logo";
+import { Logo } from "./logo";
 import { MoireField } from "./moire";
 
 export function Footer({ settings }: { settings: SiteSettings }) {
@@ -11,9 +11,8 @@ export function Footer({ settings }: { settings: SiteSettings }) {
       <MoireField className="pointer-events-none absolute -bottom-[420px] -right-[260px] h-[760px] w-[760px] text-champagne" opacity={0.28} />
       <div className="shell relative grid gap-12 py-14 md:grid-cols-12 md:gap-8 md:py-20">
         <div className="md:col-span-4">
-          <Link href="/" aria-label="Moire Co. — home" className="inline-flex items-center gap-3">
-            <Monogram className="h-11 w-auto text-champagne" />
-            <span className="text-[13px] tracking-[0.34em] text-bronze">MOIRE CO.</span>
+          <Link href="/" aria-label="Moire Co. — home">
+            <Logo />
           </Link>
           <p className="mt-5 max-w-[34ch] text-[14px] leading-relaxed text-ink-2">
             Festive gift boxes, everyday gifts, wine & spirits and corporate gifting from Kuala Lumpur.
