@@ -29,13 +29,12 @@ export function ProductImage({
   imgClassName?: string;
 }) {
   const [failed, setFailed] = useState(false);
-  const [loaded, setLoaded] = useState(false);
 
   return (
     <div className={`relative overflow-hidden bg-cream ${className}`} style={ratio ? { aspectRatio: `1 / ${ratio}` } : undefined}>
       {!src || failed ? (
         <div className="absolute inset-0 grid place-items-center bg-cream" aria-label={alt} role="img">
-          <Monogram className="h-10 w-auto text-sand" />
+          <Monogram className="h-10 w-auto text-champagne" />
         </div>
       ) : (
         /* eslint-disable-next-line @next/next/no-img-element -- placeholder CDN handles resizing; uploads are pre-optimised */
@@ -47,12 +46,8 @@ export function ProductImage({
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : undefined}
           decoding="async"
-          onLoad={() => setLoaded(true)}
           onError={() => setFailed(true)}
-          ref={(el) => {
-            if (el?.complete && el.naturalWidth > 0) setLoaded(true);
-          }}
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${loaded ? "opacity-100" : "opacity-0"} ${imgClassName}`}
+          className={`absolute inset-0 h-full w-full object-cover ${imgClassName}`}
         />
       )}
     </div>

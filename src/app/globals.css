@@ -339,7 +339,7 @@
 
   /* Scroll reveal (progressive: content is visible without JS) */
   .js [data-reveal] {
-    opacity: 0;
+    opacity: 0.92;
     transform: translateY(18px);
     transition: opacity 1s var(--ease-out-soft), transform 1.2s var(--ease-out-soft);
     transition-delay: var(--reveal-delay, 0ms);

@@ -13,7 +13,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
         <div className="md:col-span-4">
           <Link href="/" aria-label="Moire Co. — home" className="inline-flex items-center gap-3">
             <Monogram className="h-11 w-auto text-champagne" />
-            <span className="text-[13px] tracking-[0.34em]">MOIRE CO.</span>
+            <span className="text-[13px] tracking-[0.34em] text-bronze">MOIRE CO.</span>
           </Link>
           <p className="mt-5 max-w-[34ch] text-[14px] leading-relaxed text-ink-2">
             Festive gift boxes, everyday gifts, wine & spirits and corporate gifting from Kuala Lumpur.

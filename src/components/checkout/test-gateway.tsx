@@ -52,7 +52,7 @@ export function TestGateway({ orderId, token }: { orderId: string; token: string
           <div className="flex items-center gap-3 border-b border-line px-6 py-5">
             <Monogram className="h-7 w-auto text-champagne" />
             <div>
-              <p className="text-[13px] tracking-[0.2em]">MOIRE CO.</p>
+              <p className="text-[13px] tracking-[0.2em] text-bronze">MOIRE CO.</p>
               <p className="text-[12px] text-ink-3">Order {orderId}</p>
             </div>
           </div>

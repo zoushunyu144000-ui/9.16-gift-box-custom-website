@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:content-visibility": "node scripts/test-content-visibility.mjs",
     "test:translation-guard": "node scripts/test-translation-guard.mjs",
     "seed:supabase": "npx tsx scripts/seed-supabase.ts"
   },

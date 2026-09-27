@@ -1,8 +1,4 @@
-/**
- * Moire Co. mark — paths taken directly from design-assets/moire-monogram-clean-v2.svg
- * (manually rebuilt working vector). The wordmark is set in the site's sans at the same
- * wide tracking as the supplied horizontal lockup.
- */
+/** Working reconstruction from the internal design asset; replace with the approved client master when supplied. */
 export function Monogram({ className = "", title = "Moire Co." }: { className?: string; title?: string }) {
   return (
     <svg viewBox="55 15 710 505" className={className} role="img" aria-label={title} fill="currentColor">
@@ -25,7 +21,7 @@ export function Logo({ className = "", compact = false }: { className?: string; 
   return (
     <span className={`inline-flex items-center gap-3 ${className}`}>
       <Monogram className={compact ? "h-8 w-auto text-champagne" : "h-9 w-auto text-champagne md:h-10"} />
-      <span className="whitespace-nowrap text-[13px] font-normal tracking-[0.34em] text-ink md:text-[14px]">MOIRE CO.</span>
+      <span className="whitespace-nowrap text-[13px] font-normal tracking-[0.34em] text-bronze md:text-[14px]">MOIRE CO.</span>
     </span>
   );
 }
