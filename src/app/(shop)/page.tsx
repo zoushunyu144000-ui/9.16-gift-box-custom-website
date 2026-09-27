@@ -22,12 +22,12 @@ export default async function HomePage() {
 
   const festive = pick(visible.filter((p) => p.category === "festive" && p.occasion === settings.activeOccasion && p.status === "active"), 4);
   const wine = pick(visible.filter((p) => p.category === "wine-spirits" && p.status === "active"), 1);
-  const fixedImage = siteImages.brand;
+  const fixedImage = siteImages.homeFixed;
   const wineImage = wine[0]?.images[2] ?? wine[0]?.images[0] ?? siteImages.brand;
 
   return (
     <>
-      <Hero eyebrow={settings.heroEyebrow} title={settings.heroTitle} text={settings.heroText} slides={siteImages.hero} />
+      <Hero eyebrow={settings.heroEyebrow} title={settings.heroTitle} text={settings.heroText} slides={[siteImages.homeHero]} />
 
       {/* 1 · Festive — direct seasonal shopping */}
       {festive.length > 0 && (
@@ -84,7 +84,7 @@ export default async function HomePage() {
         text="Semi-curated and fully customised gifting for clients, partners and teams."
         href="/corporate"
         cta="Explore corporate gifting"
-        image={siteImages.corporateBespoke}
+        image={siteImages.homeCorporate}
         tone="paper"
       />
     </>
@@ -115,19 +115,19 @@ function CollectionGateway({
       section: "bg-cream text-ink",
       eyebrow: "text-bronze",
       body: "text-ink-2",
-      button: "bg-bronze text-ivory hover:bg-champagne hover:text-ink",
+      button: "border-bronze/45 text-ink hover:bg-bronze hover:text-ivory",
     },
     walnut: {
       section: "bg-walnut text-ivory",
       eyebrow: "text-champagne",
       body: "text-ivory/75",
-      button: "bg-champagne text-ink hover:bg-ivory",
+      button: "border-champagne/65 text-ivory hover:bg-champagne hover:text-ink",
     },
     paper: {
       section: "bg-paper text-ink",
       eyebrow: "text-bronze",
       body: "text-ink-2",
-      button: "bg-bronze text-ivory hover:bg-champagne hover:text-ink",
+      button: "border-bronze/45 text-ink hover:bg-bronze hover:text-ivory",
     },
   };
   const style = tones[tone];
@@ -146,7 +146,7 @@ function CollectionGateway({
                 {title}
               </h2>
               <p className={`mt-3 max-w-[38ch] text-[14px] leading-relaxed md:text-[15px] ${style.body}`}>{text}</p>
-              <Link href={href} className={`btn mt-6 ${style.button}`}>
+              <Link href={href} className={`home-cta mt-6 ${style.button}`}>
                 {cta}
               </Link>
             </div>

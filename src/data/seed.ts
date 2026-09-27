@@ -653,6 +653,24 @@ export const seedSettings: SiteSettings = {
 
 /** Imagery used by site sections (not products). */
 export const siteImages = {
+  homeHero: {
+    src: "/images/moire-home-hero-v2.webp",
+    alt: "Ivory gift box tied with champagne ribbon beside white flowers",
+    width: 1672,
+    height: 941,
+  },
+  homeFixed: {
+    src: "/images/moire-home-fixed-v1.webp",
+    alt: "Ivory gift box with champagne ribbon beside linen and a crystal tumbler",
+    width: 1672,
+    height: 941,
+  },
+  homeCorporate: {
+    src: "/images/moire-home-corporate-v1.webp",
+    alt: "Warm taupe corporate gift boxes with tissue, a blank card and an olive branch",
+    width: 1672,
+    height: 941,
+  },
   hero: [
     unsplash("7KKy7-TeeVs", "Open sand-coloured gift box with tissue paper"),
   ],

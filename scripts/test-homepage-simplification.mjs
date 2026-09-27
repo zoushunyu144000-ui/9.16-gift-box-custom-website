@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 
 const source = await readFile(new URL("../src/app/(shop)/page.tsx", import.meta.url), "utf8");
 const hero = await readFile(new URL("../src/components/hero.tsx", import.meta.url), "utf8");
+const layout = await readFile(new URL("../src/app/layout.tsx", import.meta.url), "utf8");
+const styles = await readFile(new URL("../src/app/globals.css", import.meta.url), "utf8");
 
 assert.match(source, /category === "festive"[^\n]+, 4\)/, "Homepage should show four representative Festive products");
 assert.doesNotMatch(source, /<WineList\b|<ProcessLine\b|function CorporatePath/, "Detailed inner-page presentations should not remain on the homepage");
@@ -16,6 +18,15 @@ assert.match(source, /<ProductCard[\s\S]{0,300}\bcompact\b/, "Festive cards shou
 assert.doesNotMatch(hero, /<MoireField\b|<Emph\b/, "Hero should not depend on decorative editorial treatments");
 assert.doesNotMatch(hero, /href="\/corporate"/, "Hero should have one clear primary action");
 assert.equal((hero.match(/href="\/festive"/g) ?? []).length, 1, "Hero should expose one collection CTA");
+assert.doesNotMatch(hero, /border border-line/, "Hero should read as one integrated brand scene, not a bordered UI card");
+assert.doesNotMatch(hero, /animate-fade-up/, "Critical hero copy should be visible immediately without delayed entrance animation");
+assert.match(source, /slides=\{\[siteImages\.homeHero\]\}/, "Hero should use the unbranded warm gift-box scene selected for the homepage");
+assert.match(source, /fixedImage = siteImages\.homeFixed/, "Fixed Gifts gateway should use its unbranded homepage photograph");
+assert.match(source, /image=\{siteImages\.homeCorporate\}/, "Corporate gateway should use its unbranded homepage photograph");
+assert.match(hero, /home-cta/, "Hero should use the quieter homepage-specific CTA treatment");
+assert.match(layout, /@fontsource-variable\/lora/, "Homepage display typography should use the screen-readable Lora variable font");
+assert.doesNotMatch(layout, /@fontsource-variable\/bodoni-moda/, "Bodoni Moda should no longer load as the site display font");
+assert.match(styles, /--font-display: "Lora Variable"/, "The global display token should use Lora Variable");
 
 for (const route of ["/fixed-gifts", "/wine-spirits", "/corporate"]) {
   assert.match(source, new RegExp(`href=[{]?["]${route.replace("/", "\\/")}`), `Homepage should keep a direct CTA to ${route}`);

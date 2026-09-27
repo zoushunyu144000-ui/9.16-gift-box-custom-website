@@ -5,10 +5,7 @@ import { useEffect, useState } from "react";
 import type { ProductImage as Img } from "@/lib/types";
 import { ProductImage } from "./product-image";
 
-/**
- * Homepage opening. A direct premium-gifting message beside one clear photograph.
- * Supports several slides (slow cross-fade) so seasonal imagery can rotate later.
- */
+/** Homepage opening: one integrated gifting scene, one message and one action. */
 export function Hero({
   eyebrow,
   title,
@@ -32,19 +29,18 @@ export function Hero({
   const plainTitle = title.replaceAll("*", "");
 
   return (
-    <section className="bg-cream py-4 sm:py-5 lg:py-7" aria-label="Introduction">
-      <div className="shell">
-        <div className="grid overflow-hidden border border-line bg-ivory lg:min-h-[520px] lg:grid-cols-12">
-          <div className="relative aspect-[16/10] overflow-hidden bg-mount lg:order-2 lg:col-span-7 lg:aspect-auto">
+    <section className="overflow-hidden bg-ivory" aria-label="Introduction">
+      <div className="relative">
+        <div className="relative aspect-[16/10] overflow-hidden bg-mount sm:aspect-[16/9] lg:absolute lg:inset-0 lg:aspect-auto">
             {slides.map((s, i) => (
               <div key={s.src} className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${i === index ? "opacity-100" : "opacity-0"}`} aria-hidden={i !== index}>
                 <ProductImage
                   src={s.src}
                   alt={s.alt}
                   className="!absolute inset-0 h-full w-full"
-                  sizes="(min-width: 1024px) 58vw, 100vw"
+                  sizes="100vw"
                   priority={i === 0}
-                  imgClassName="grade"
+                  imgClassName="grade object-[55%_center] lg:object-center"
                 />
               </div>
             ))}
@@ -57,21 +53,21 @@ export function Hero({
                 ))}
               </div>
             )}
-          </div>
+        </div>
+        <div className="hero-scrim pointer-events-none absolute inset-0 hidden lg:block" aria-hidden="true" />
 
-          <div className="flex items-center px-7 py-9 sm:px-10 sm:py-12 lg:order-1 lg:col-span-5 lg:px-12 xl:px-16">
-            <div className="max-w-[30rem]">
-              <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-bronze animate-fade-up">{eyebrow}</p>
-              <h1 className="display mt-4 text-[2.35rem] leading-[1.04] tracking-[-0.015em] animate-fade-up [animation-delay:100ms] sm:text-[2.8rem] lg:text-[3.4rem] xl:text-[3.8rem]">
+        <div className="shell relative flex items-center py-9 sm:py-11 lg:min-h-[570px] lg:py-16 xl:min-h-[610px]">
+          <div className="max-w-[31rem]">
+              <p className="text-[11px] font-medium uppercase tracking-[0.17em] text-bronze">{eyebrow}</p>
+              <h1 className="display mt-4 text-[2.3rem] leading-[1.08] sm:text-[2.65rem] lg:text-[3.25rem] xl:text-[3.55rem]">
                 {plainTitle}
               </h1>
-              <p className="mt-4 max-w-[36ch] text-[15px] leading-relaxed text-ink-2 animate-fade-up [animation-delay:180ms]">{text}</p>
-              <div className="mt-7 animate-fade-up [animation-delay:260ms]">
-                <Link href="/festive" className="btn bg-bronze text-ivory hover:bg-champagne hover:text-ink">
+              <p className="mt-4 max-w-[36ch] text-[15px] leading-[1.65] text-ink-2">{text}</p>
+              <div className="mt-7">
+                <Link href="/festive" className="home-cta bg-bronze text-ivory hover:bg-champagne hover:text-ink">
                   Explore the collection
                 </Link>
               </div>
-            </div>
           </div>
         </div>
       </div>

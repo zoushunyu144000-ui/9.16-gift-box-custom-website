@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import "@fontsource-variable/bodoni-moda/opsz.css";
-import "@fontsource-variable/bodoni-moda/opsz-italic.css";
 import "@fontsource-variable/jost";
+import "@fontsource-variable/lora";
+import "@fontsource-variable/lora/wght-italic.css";
 import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
