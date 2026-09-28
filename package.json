@@ -11,6 +11,7 @@
     "test:brand-assets": "node scripts/test-brand-assets.mjs",
     "test:content-visibility": "node scripts/test-content-visibility.mjs",
     "test:homepage-simplification": "node scripts/test-homepage-simplification.mjs",
+    "test:grand-prosperity-gallery": "node scripts/test-grand-prosperity-gallery.mjs",
     "test:translation-guard": "node scripts/test-translation-guard.mjs",
     "seed:supabase": "npx tsx scripts/seed-supabase.ts"
   },

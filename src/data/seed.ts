@@ -186,8 +186,24 @@ export const seedProducts: Product[] = [
     allergens: "Contains wheat, egg, milk, shellfish and soy. Contains alcohol.",
     storage: foodStorage,
     images: [
-      unsplash("koKOb3Tp_V4", "Festive table with tea, oranges and red decorations"),
-      unsplash("s_ETXTQ9J00", "Red envelope with a gold seal"),
+      {
+        src: "/images/grand-prosperity-hamper-hero-v1.webp",
+        alt: "Grand Prosperity Hamper in ivory and warm taupe with champagne ribbon",
+        width: 1122,
+        height: 1402,
+      },
+      {
+        src: "/images/grand-prosperity-hamper-open-v1.webp",
+        alt: "Open Grand Prosperity Hamper with cognac, tea, delicacies and mandarins",
+        width: 1448,
+        height: 1086,
+      },
+      {
+        src: "/images/grand-prosperity-hamper-detail-v1.webp",
+        alt: "Grand Prosperity Hamper packaging and premium contents detail",
+        width: 1448,
+        height: 1086,
+      },
     ],
   }),
 

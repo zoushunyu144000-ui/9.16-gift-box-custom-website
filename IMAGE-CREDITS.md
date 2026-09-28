@@ -23,8 +23,6 @@ Each photo is used once — no image is shared between products. Replace with Mo
 | [BwPniSkkmNk](https://unsplash.com/photos/BwPniSkkmNk) | CHUTTERSNAP (@chuttersnap) | Prosperity Box |
 | [1_vxqCH2HIw](https://unsplash.com/photos/1_vxqCH2HIw) | CHUTTERSNAP (@chuttersnap) | Prosperity Box |
 | [cshuzpKPG1s](https://unsplash.com/photos/cshuzpKPG1s) | CHUTTERSNAP (@chuttersnap) | Prosperity Box |
-| [koKOb3Tp_V4](https://unsplash.com/photos/koKOb3Tp_V4) | Taan Huyn (@taanhuyn) | Grand Prosperity Hamper |
-| [s_ETXTQ9J00](https://unsplash.com/photos/s_ETXTQ9J00) | 愚木混株 Yumu (@cdd20) | Grand Prosperity Hamper |
 | [A6grvGdBAJ0](https://unsplash.com/photos/A6grvGdBAJ0) | ANNIE HATUANH (@anniehatuanh) | Moonlight Mooncake Box |
 | [VutNCQBxkc4](https://unsplash.com/photos/VutNCQBxkc4) | ANNIE HATUANH (@anniehatuanh) | Moonlight Mooncake Box |
 | [ZmetGmUSVyw](https://unsplash.com/photos/ZmetGmUSVyw) | ANNIE HATUANH (@anniehatuanh) | Moonlight Mooncake Box |
