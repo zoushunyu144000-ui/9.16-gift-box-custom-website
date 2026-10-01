@@ -3,7 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-/** Horizontal, scroll-snapping product row. Native scrolling on touch; arrow buttons on desktop. */
+/**
+ * Horizontal product row ("Explore the collection" on the homepage).
+ * Mobile: native horizontal swipe with gentle snapping and the next card peeking in.
+ * Desktop: four across with quiet arrow buttons once there are more than fit.
+ */
 export function ProductRail({ children, label }: { children: React.ReactNode; label: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({ start: true, end: false });
@@ -36,7 +40,7 @@ export function ProductRail({ children, label }: { children: React.ReactNode; la
     <div className="relative">
       <div
         ref={ref}
-        className="no-scrollbar -mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-5 px-5 md:-mx-8 md:gap-6 md:scroll-px-8 md:px-8 xl:-mx-12 xl:scroll-px-12 xl:px-12"
+        className="no-scrollbar -mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-px-5 px-5 md:-mx-8 md:gap-6 md:scroll-px-8 md:px-8 xl:-mx-12 xl:scroll-px-12 xl:px-12"
         role="list"
         aria-label={label}
       >
@@ -73,7 +77,7 @@ export function RailItem({ children }: { children: React.ReactNode }) {
     <div
       data-rail-item
       role="listitem"
-      className="w-[68%] flex-none snap-start xs:w-[58%] sm:w-[40%] md:w-[calc((100%-3*1.5rem)/3.35)] lg:w-[calc((100%-3*1.5rem)/4)]"
+      className="w-[78%] flex-none snap-start xs:w-[66%] sm:w-[44%] md:w-[calc((100%-3*1.5rem)/3.35)] lg:w-[calc((100%-3*1.5rem)/4)]"
     >
       {children}
     </div>

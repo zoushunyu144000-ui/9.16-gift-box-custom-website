@@ -3,6 +3,8 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 
 const root = new URL("../", import.meta.url);
 const logo = readFileSync(new URL("src/components/logo.tsx", root), "utf8");
+// Logo files are configured in one place (src/lib/brand.ts) so a new logo is a one-file swap.
+const brand = readFileSync(new URL("src/lib/brand.ts", root), "utf8");
 const header = readFileSync(new URL("src/components/header.tsx", root), "utf8");
 const footer = readFileSync(new URL("src/components/footer.tsx", root), "utf8");
 const productImage = readFileSync(new URL("src/components/product-image.tsx", root), "utf8");
@@ -11,8 +13,10 @@ const monogram = logo.match(/export function Monogram[\s\S]*?(?=export function 
 const mobileMenu = header.slice(header.indexOf("function MobileMenu"));
 
 assert.doesNotMatch(monogram, /working reconstruction|<svg/i, "the hand-reconstructed SVG must not remain the rendered logo");
-assert.match(logo, /moire-monogram\.png/, "the approved transparent monogram must be used");
-assert.match(logo, /moire-wordmark\.png/, "the approved wordmark source must be used");
+assert.match(logo, /BRAND\.monogram\.src/, "the monogram must come from the brand config");
+assert.match(logo, /BRAND\.wordmark\.src/, "the wordmark must come from the brand config");
+assert.match(brand, /moire-monogram\.png/, "the approved transparent monogram must be used");
+assert.match(brand, /moire-wordmark\.png/, "the approved wordmark source must be used");
 assert.match(header, /<Logo compact\s*\/>/, "the site header must use the shared logo lockup");
 assert.match(mobileMenu, /<Logo compact\s*\/>/, "mobile navigation must use the shared logo lockup");
 assert.match(footer, /<Logo(?:\s|\/>)/, "the footer must use the shared logo lockup");

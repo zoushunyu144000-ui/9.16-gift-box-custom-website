@@ -4,11 +4,11 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { ArrowDown, ArrowUp, Plus, Trash2, Upload } from "lucide-react";
 import { deleteProductAction, saveProductAction, type ProductInputType } from "@/lib/admin/actions";
-import { CATEGORIES, OCCASIONS, slugify } from "@/lib/catalog";
-import type { Product } from "@/lib/types";
+import { CATEGORIES, slugify, sortFestivals } from "@/lib/catalog";
+import type { Festival, Product } from "@/lib/types";
 import { ProductImage } from "../product-image";
 
-type Form = ProductInputType & { contentsText: string; specsText: string; priceText: string };
+type Form = ProductInputType & { contentsText: string; specsText: string; priceText: string; stockText: string; persOptionsText: string };
 
 function toForm(p: Product | null): Form {
   return {
@@ -16,8 +16,10 @@ function toForm(p: Product | null): Form {
     name: p?.name ?? "",
     slug: p?.slug ?? "",
     category: p?.category ?? "fixed-gifts",
-    occasion: p?.occasion ?? null,
+    festivalId: p?.festivalId ?? null,
     status: p?.status ?? "hidden",
+    stock: p?.stock ?? null,
+    stockText: typeof p?.stock === "number" ? String(p.stock) : "",
     availabilityNote: p?.availabilityNote ?? "",
     price: p?.price ?? 0,
     priceText: p ? String(p.price) : "",
@@ -32,6 +34,7 @@ function toForm(p: Product | null): Form {
     images: p?.images ?? [],
     variants: p?.variants ?? [],
     personalisation: p?.personalisation ?? null,
+    persOptionsText: (p?.personalisation?.options ?? []).join(", "),
     containsAlcohol: p?.containsAlcohol ?? false,
     featured: p?.featured ?? false,
     sort: p?.sort ?? 100,
@@ -55,7 +58,7 @@ async function downscale(file: File, max = 2400): Promise<Blob> {
   }
 }
 
-export function ProductEditor({ product }: { product: Product | null }) {
+export function ProductEditor({ product, festivals }: { product: Product | null; festivals: Festival[] }) {
   const router = useRouter();
   const [f, setF] = useState<Form>(() => toForm(product));
   const [error, setError] = useState<string | null>(null);
@@ -108,8 +111,18 @@ export function ProductEditor({ product }: { product: Product | null }) {
   function save() {
     setError(null);
     const price = parseFloat(f.priceText);
+    const stockRaw = f.stockText.trim();
+    const stock = stockRaw === "" ? null : Number(stockRaw);
+    if (stock !== null && (!Number.isInteger(stock) || stock < 0)) return setError("Stock must be a whole number, 0 or more (or empty to not track stock).");
+    const { stockText: _s, persOptionsText: _o, ...rest } = f;
+    void _s;
+    void _o;
     const payload: ProductInputType = {
-      ...f,
+      ...rest,
+      stock,
+      personalisation: f.personalisation
+        ? { ...f.personalisation, options: f.persOptionsText.split(",").map((s) => s.trim()).filter(Boolean) }
+        : null,
       price: Number.isFinite(price) ? price : 0,
       contents: f.contentsText.split("\n").map((s) => s.trim()).filter(Boolean),
       specs: f.specsText
@@ -210,7 +223,7 @@ export function ProductEditor({ product }: { product: Product | null }) {
           </div>
         </Box>
 
-        <Box title="Options & upgrades" hint="Use for versions with different prices, e.g. “With red wine”. Leave empty if the product has one price.">
+        <Box title="Options & upgrades" hint="Use for versions with different prices, e.g. “Gift box with red wine”. Leave empty if the product has one price.">
           {f.variants.length > 0 && (
             <ul className="mb-4 space-y-3">
               {f.variants.map((v, i) => (
@@ -255,17 +268,28 @@ export function ProductEditor({ product }: { product: Product | null }) {
       </div>
 
       <div className="space-y-6">
+        <Box title="Inventory" hint="Website orders deduct stock automatically once paid. For WhatsApp, Instagram or in-person sales, adjust the number here (e.g. 10 → 9) and save.">
+          <L label="Stock quantity" hint="0 shows the product as Sold Out (it stays on the website). Leave empty to not track stock.">
+            <div className="flex items-stretch gap-2">
+              <button type="button" className="btn btn-outline !min-h-12 !px-4" aria-label="One less" onClick={() => set("stockText", String(Math.max(0, (parseInt(f.stockText || "0", 10) || 0) - 1)))}>−</button>
+              <input className="field text-center tabular-nums" inputMode="numeric" value={f.stockText} placeholder="Not tracked" onChange={(e) => set("stockText", e.target.value.replace(/[^0-9]/g, ""))} />
+              <button type="button" className="btn btn-outline !min-h-12 !px-4" aria-label="One more" onClick={() => set("stockText", String((parseInt(f.stockText || "0", 10) || 0) + 1))}>+</button>
+            </div>
+          </L>
+          {f.stockText.trim() === "0" && <p className="mt-3 text-[12px] text-warn">Shown on the website as Sold Out.</p>}
+        </Box>
+
         <Box title="Status">
           <div className="space-y-4">
             <L label="Availability">
               <select className="field" value={f.status} onChange={(e) => set("status", e.target.value as Form["status"])}>
                 <option value="active">On sale</option>
-                <option value="sold_out">Shown, not available to buy</option>
+                <option value="sold_out">Sold Out (shown, can’t be bought)</option>
                 <option value="hidden">Hidden from the website</option>
               </select>
             </L>
             {f.status === "sold_out" && (
-              <L label="Label shown" hint="e.g. Sold out, Season ended">
+              <L label="Extra note (optional)" hint="Shown under Sold Out, e.g. Season ended">
                 <input className="field" maxLength={60} value={f.availabilityNote} onChange={(e) => set("availabilityNote", e.target.value)} />
               </L>
             )}
@@ -289,11 +313,14 @@ export function ProductEditor({ product }: { product: Product | null }) {
               </select>
             </L>
             {f.category === "festive" && (
-              <L label="Occasion">
-                <select className="field" value={f.occasion ?? ""} onChange={(e) => set("occasion", (e.target.value || null) as Form["occasion"])}>
-                  <option value="">Choose occasion</option>
-                  {Object.entries(OCCASIONS).map(([k, o]) => (
-                    <option key={k} value={k}>{o.name}</option>
+              <L label="Festival" hint="Festival names are edited in Admin → Festivals">
+                <select className="field" value={f.festivalId ?? ""} onChange={(e) => set("festivalId", e.target.value || null)}>
+                  <option value="">Choose festival</option>
+                  {sortFestivals(festivals, true).map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {x.name}
+                      {x.active ? "" : " (hidden)"}
+                    </option>
                   ))}
                 </select>
               </L>
@@ -312,18 +339,21 @@ export function ProductEditor({ product }: { product: Product | null }) {
               className="check"
               checked={!!pers?.enabled}
               onChange={(e) =>
-                set("personalisation", e.target.checked ? { enabled: true, label: pers?.label || "Engraved name", helper: pers?.helper ?? "", maxLength: pers?.maxLength || 20, fee: pers?.fee ?? 0 } : pers ? { ...pers, enabled: false } : null)
+                set("personalisation", e.target.checked ? { enabled: true, label: pers?.label || "Personalised name", helper: pers?.helper ?? "", maxLength: pers?.maxLength || 20, fee: pers?.fee ?? 0, options: pers?.options ?? [] } : pers ? { ...pers, enabled: false } : null)
               }
             />
-            <span>Allow name engraving / personalisation</span>
+            <span>Offer a personalised name<span className="block text-[12px] text-ink-2">Customers choose whether they want it</span></span>
           </label>
           {pers?.enabled && (
             <div className="mt-4 space-y-4">
               <L label="Label"><input className="field" value={pers.label} onChange={(e) => set("personalisation", { ...pers, label: e.target.value })} /></L>
               <L label="Help text"><input className="field" value={pers.helper ?? ""} onChange={(e) => set("personalisation", { ...pers, helper: e.target.value })} /></L>
+              <L label="Materials customers choose from" hint="Comma separated, e.g. Leather, Acrylic. Leave empty for no choice.">
+                <input className="field" value={f.persOptionsText} placeholder="Leather, Acrylic" onChange={(e) => set("persOptionsText", e.target.value)} />
+              </L>
               <div className="grid grid-cols-2 gap-3">
                 <L label="Max characters"><input className="field" type="number" min={1} max={60} value={pers.maxLength} onChange={(e) => set("personalisation", { ...pers, maxLength: parseInt(e.target.value || "1", 10) })} /></L>
-                <L label="Extra fee (RM)"><input className="field" inputMode="decimal" value={pers.fee} onChange={(e) => set("personalisation", { ...pers, fee: parseFloat(e.target.value.replace(/[^0-9.]/g, "")) || 0 })} /></L>
+                <L label="Extra fee (RM)" hint="0 = no charge shown"><input className="field" inputMode="decimal" value={pers.fee} onChange={(e) => set("personalisation", { ...pers, fee: parseFloat(e.target.value.replace(/[^0-9.]/g, "")) || 0 })} /></L>
               </div>
             </div>
           )}

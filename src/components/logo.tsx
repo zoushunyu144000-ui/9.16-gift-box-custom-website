@@ -1,12 +1,14 @@
 import Image from "next/image";
+import { BRAND } from "@/lib/brand";
 
-export function Monogram({ className = "", title = "Moire Co." }: { className?: string; title?: string }) {
+/** All logo usages go through Monogram / Logo; the asset files are configured in src/lib/brand.ts. */
+export function Monogram({ className = "", title = BRAND.name }: { className?: string; title?: string }) {
   return (
     <Image
-      src="/brand/moire-monogram.png"
+      src={BRAND.monogram.src}
       alt={title}
-      width={1143}
-      height={594}
+      width={BRAND.monogram.width}
+      height={BRAND.monogram.height}
       className={`block w-auto shrink-0 ${className}`}
       unoptimized
     />
@@ -18,10 +20,10 @@ export function Logo({ className = "", compact = false }: { className?: string; 
     <span className={`inline-flex items-center ${compact ? "gap-1 lg:gap-2" : "gap-3"} ${className}`}>
       <Monogram className={compact ? "h-[18px] lg:h-8" : "h-10"} />
       <Image
-        src="/brand/moire-wordmark.png"
-        alt="MOIRE CO."
-        width={736}
-        height={65}
+        src={BRAND.wordmark.src}
+        alt={BRAND.wordmark.alt}
+        width={BRAND.wordmark.width}
+        height={BRAND.wordmark.height}
         className={`block w-auto shrink-0 ${compact ? "h-[7px] lg:h-[10px]" : "h-[11px]"}`}
         unoptimized
       />

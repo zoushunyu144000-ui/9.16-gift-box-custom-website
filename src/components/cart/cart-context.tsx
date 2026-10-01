@@ -48,8 +48,8 @@ function subscribe(listener: Listener) {
   };
 }
 
-export function lineKey(l: Pick<CartLine, "productId" | "variantId" | "personalisation" | "giftMessage">) {
-  return [l.productId, l.variantId ?? "", (l.personalisation ?? "").trim(), (l.giftMessage ?? "").trim()].join("|");
+export function lineKey(l: Pick<CartLine, "productId" | "variantId" | "personalisation" | "personalisationOption" | "giftMessage">) {
+  return [l.productId, l.variantId ?? "", (l.personalisation ?? "").trim(), l.personalisationOption ?? "", (l.giftMessage ?? "").trim()].join("|");
 }
 
 interface CartContextValue {

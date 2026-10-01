@@ -22,7 +22,7 @@ export default async function EnquiryDetail({ params }: PageProps<"/admin/enquir
   return (
     <>
       <Link href="/admin/enquiries" className="text-[13px] text-ink-2 hover:text-ink">← Enquiries</Link>
-      <PageTitle title={e.contact.company || e.contact.name} sub={`${e.type === "bespoke" ? "Fully customised" : "Semi-curated"} · ${e.id} · ${formatDateTime(e.createdAt)}`}>
+      <PageTitle title={e.contact.company || e.contact.name} sub={`${e.type === "bespoke" ? "Fully customised" : "Semi-customised"} · ${e.id} · ${formatDateTime(e.createdAt)}`}>
         <Pill tone={ENQUIRY_STATUS[e.status].tone}>{ENQUIRY_STATUS[e.status].label}</Pill>
       </PageTitle>
       <div className="grid gap-6 xl:grid-cols-3">

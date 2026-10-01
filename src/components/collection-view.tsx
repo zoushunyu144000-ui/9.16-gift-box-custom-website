@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { OCCASION_ORDER, priceRange, sortProducts } from "@/lib/catalog";
-import type { Occasion, Product } from "@/lib/types";
+import { isPurchasable, priceRange, sortProducts } from "@/lib/catalog";
+import type { Product } from "@/lib/types";
 import { Breadcrumbs } from "./breadcrumbs";
 import { EditorialGrid } from "./editorial-grid";
 import { Emph } from "./moire";
@@ -12,7 +12,7 @@ export type SortKey = "featured" | "price-asc" | "price-desc" | "name";
 
 export function sortBy(list: Product[], sort: SortKey) {
   const base = sortProducts(list);
-  const avail = (p: Product) => (p.status === "active" ? 0 : 1);
+  const avail = (p: Product) => (isPurchasable(p) ? 0 : 1);
   if (sort === "price-asc") return [...base].sort((a, b) => avail(a) - avail(b) || priceRange(a).min - priceRange(b).min);
   if (sort === "price-desc") return [...base].sort((a, b) => avail(a) - avail(b) || priceRange(b).min - priceRange(a).min);
   if (sort === "name") return [...base].sort((a, b) => a.name.localeCompare(b.name));
@@ -20,7 +20,7 @@ export function sortBy(list: Product[], sort: SortKey) {
 }
 
 /**
- * Category page (Fixed Gift Collection, Wine & Spirits).
+ * Category page (Fixed Gift Collection, Wine Gift Boxes).
  * `layout="editorial"` lays products out as a spread; `layout="list"` reads like a wine list.
  * Titles accept *italic* markup.
  */
@@ -44,7 +44,7 @@ export function CollectionView({
   layout?: "editorial" | "list" | "grid";
 }) {
   const list = sortBy(products, sort);
-  const available = list.filter((p) => p.status === "active").length;
+  const available = list.filter(isPurchasable).length;
   const plainTitle = title.replace(/\*/g, "");
 
   return (
@@ -71,7 +71,7 @@ export function CollectionView({
         <div className="shell flex h-14 items-center justify-between gap-4">
           <p className="text-[13px] text-ink-2">
             {available} {available === 1 ? "gift" : "gifts"}
-            {list.length > available ? <span className="text-ink-3"> · {list.length - available} unavailable</span> : null}
+            {list.length > available ? <span className="text-ink-3"> · {list.length - available} sold out</span> : null}
           </p>
           <SortSelect value={sort} />
         </div>
@@ -104,8 +104,4 @@ export function CollectionView({
 
 export function parseSort(v: string | string[] | undefined): SortKey {
   return v === "price-asc" || v === "price-desc" || v === "name" ? v : "featured";
-}
-
-export function parseOccasion(v: string | string[] | undefined): Occasion | "all" {
-  return typeof v === "string" && (OCCASION_ORDER as string[]).includes(v) ? (v as Occasion) : "all";
 }

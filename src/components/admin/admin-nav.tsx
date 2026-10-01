@@ -7,6 +7,7 @@ const ITEMS = [
   { href: "/admin", label: "Overview", exact: true },
   { href: "/admin/orders", label: "Orders", key: "orders" as const },
   { href: "/admin/products", label: "Products" },
+  { href: "/admin/festivals", label: "Festivals" },
   { href: "/admin/enquiries", label: "Corporate enquiries", key: "enquiries" as const },
   { href: "/admin/settings", label: "Settings" },
 ];

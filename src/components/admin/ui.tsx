@@ -39,7 +39,7 @@ export const ENQUIRY_STATUS: Record<EnquiryStatus, { label: string; tone: keyof 
 
 export const PRODUCT_STATUS: Record<ProductStatus, { label: string; tone: keyof typeof TONE }> = {
   active: { label: "On sale", tone: "good" },
-  sold_out: { label: "Unavailable", tone: "warn" },
+  sold_out: { label: "Sold Out", tone: "warn" },
   hidden: { label: "Hidden", tone: "neutral" },
 };
 

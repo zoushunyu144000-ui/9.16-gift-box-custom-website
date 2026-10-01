@@ -18,12 +18,13 @@ export function useQuote(lines: CartLine[], ready: boolean) {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
-            lines: lines.map(({ key, productId, variantId, quantity, personalisation, giftMessage }) => ({
+            lines: lines.map(({ key, productId, variantId, quantity, personalisation, personalisationOption, giftMessage }) => ({
               key,
               productId,
               variantId,
               quantity,
               personalisation,
+              personalisationOption,
               giftMessage,
             })),
           }),

@@ -34,7 +34,26 @@ export async function markOrderPaid(store: Store, order: Order, reference: strin
   const now = new Date().toISOString();
   const next: Order = { ...order, status: "paid", updatedAt: now, payment: { ...order.payment, reference, paidAt: now, failureReason: undefined } };
   await store.saveOrder(next);
+  await deductStock(store, next);
   return next;
+}
+
+/**
+ * Website orders deduct stock automatically once paid (runs once: an order that is already
+ * paid returns early above). Sales made on WhatsApp, Instagram or in person are adjusted by
+ * the client in Admin → Products → Inventory.
+ */
+async function deductStock(store: Store, order: Order) {
+  const perProduct = new Map<string, number>();
+  for (const i of order.items) perProduct.set(i.productId, (perProduct.get(i.productId) ?? 0) + i.quantity);
+  for (const [productId, qty] of perProduct) {
+    try {
+      await store.adjustStock(productId, -qty);
+    } catch (err) {
+      // Payment has succeeded; never fail the order over a stock update. Logged for follow-up.
+      console.error(`[stock] could not deduct ${qty} from ${productId} for order ${order.id}`, err);
+    }
+  }
 }
 
 export async function markOrderFailed(store: Store, order: Order, reason: string) {

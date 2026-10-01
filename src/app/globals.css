@@ -434,3 +434,13 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Floating WhatsApp button: sits above the safe area, and above the mobile add-to-bag bar when it shows. */
+.wa-float {
+  bottom: calc(max(1rem, env(safe-area-inset-bottom)) + var(--bottom-bar-h, 0px));
+}
+@media (min-width: 768px) {
+  .wa-float {
+    bottom: calc(1.5rem + var(--bottom-bar-h, 0px));
+  }
+}

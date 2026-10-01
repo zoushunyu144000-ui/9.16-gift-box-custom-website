@@ -1,6 +1,6 @@
 # Moire Co. — Website (v1, 2026-09-27)
 
-Custom e-commerce website for Moire Co. (Kuala Lumpur): Festive Collection, Fixed Gift Collection, Wine & Spirits and Corporate Orders, with cart, checkout, online payment flow and a store admin.
+Custom e-commerce website for Moire Co. (Kuala Lumpur): Festive Collection, Fixed Gift Collection, Wine Gift Boxes and Corporate Orders, with cart, checkout, online payment flow and a store admin.
 
 **Status:** complete working build, ready for client preview. Runs in *demo mode* (sample catalogue, test payments) until Supabase and a payment gateway are connected — see “Going live”.
 
@@ -29,22 +29,29 @@ Without Supabase variables the site runs in **demo mode**: the sample catalogue 
 
 | Route | Purpose |
 |---|---|
-| `/` | Homepage — Hero → Festive (current season) → Fixed Gift Collection → Wine & Spirits → Corporate Orders |
-| `/festive` | Festive Collection, filter by occasion (CNY / Hari Raya / Dragon Boat / Mid-Autumn), sort |
-| `/fixed-gifts`, `/wine-spirits` | Category listings with sort |
-| `/products/[slug]` | Product page: gallery (1–10+ images, zoom, swipe), options/upgrades, engraving, gift message, quantity, contents, specs, allergens, delivery, related |
+| `/` | Homepage — Hero → Festive (current season, horizontal row) → Fixed Gift Collection → Wine Gift Boxes → Corporate Orders |
+| `/festive` | Festive Collection level 1: one entry per festival (from Admin → Festivals) |
+| `/festive/[slug]` | Level 2: only that festival's gift boxes, sort. Old `/festive?occasion=…` links redirect here |
+| `/fixed-gifts`, `/wine-gift-boxes` | Category listings with sort (`/wine-spirits` redirects) |
+| `/products/[slug]` | Product page: Name → Price → options / personalised name (material + name) → Add to bag or disabled Sold Out → one Description (contents, specs, allergens, delivery) |
 | `/cart` + bag drawer | Server-validated prices, edit quantity/message, unavailable-item handling |
 | `/checkout` | Guest checkout: contact, recipient, Malaysian address, delivery date, payment method (FPX / card / e-wallet), 21+ confirmation for alcohol, terms |
 | `/pay/[id]` | **Test-mode gateway** (simulates success / failure / cancel) — replaced by the real gateway |
 | `/order/[id]` | Confirmation / payment failed (retry) / awaiting payment |
-| `/corporate` | Corporate overview: Semi-curated vs Fully customised, 5-step process |
-| `/corporate/semi-curated` | Pick existing gifts + quantities + light customisation → saved request with reference → optional WhatsApp follow-up |
-| `/corporate/bespoke` | “MADE FOR YOUR BRAND”: style / quantity / date / address → Enquiry Now → WhatsApp (also saved in admin) |
+| `/corporate` | Corporate overview: two main entries, Semi-customised and Fully customised |
+| `/corporate/semi-curated` | Semi-customised: pick existing gifts + quantities + light customisation → saved request with reference → optional WhatsApp follow-up |
+| `/corporate/bespoke` | Fully customised “MADE FOR YOUR BRAND”: process + what to prepare → Enquire via WhatsApp (no web form) |
 | `/search` | Search (also live search overlay in header) |
 | `/delivery`, `/terms`, `/privacy` | Policy pages — **draft templates, need client confirmation** |
-| `/admin` | Orders (status, notes, engraving & gift messages), products (images upload, options, engraving, status, homepage feature), corporate enquiries, settings (festive season, hero copy, delivery fee, WhatsApp number) |
+| `/admin` | Orders, products (name, description, price, **stock**, festival, images, options, personalisation, status), **festivals** (rename / hide / reorder / add), corporate enquiries, settings |
 
 ## Key design / business decisions
+
+- **Inventory (2026-10):** each product can track `stock`. Paid website orders deduct it automatically; sales on WhatsApp / Instagram / in person are adjusted in Admin → Products (list or editor). Stock 0 → shown as **Sold Out**, never hidden; the product page stays open with a disabled Sold Out button.
+- **Festivals are data (2026-10):** `festivals` table (id, name, slug, cover, description, active, sort); products link with `festivalId`.
+- **Personalised name (2026-10):** per product — `personalisation.enabled` / `.options` (e.g. Leather, Acrylic) / `.fee`. Fee 0 = no charge shown; pricing and which products offer it are pending client confirmation.
+- **Logo:** asset paths live in `src/lib/brand.ts`; replace files there to swap the logo everywhere.
+- **Wine wording:** the site sells gift boxes — “Wine Gift Boxes”, never “Wine” on its own (internal category id stays `wine-spirits`).
 
 - Business logic follows REQUIREMENTS.md / PROJECT-BRIEF.md. Stitch content not backed by requirements was not carried over (cellar program, climate-controlled fleet, calligraphy cards, wax seals, PDF catalogue, client references, accounts, etc.).
 - Prices are always recalculated on the server from the catalogue; the browser only sends product IDs and quantities.
@@ -57,7 +64,7 @@ Without Supabase variables the site runs in **demo mode**: the sample catalogue 
 
 ## Going live — checklist
 
-1. **Supabase** (client’s own account, free tier): create project → run `supabase/schema.sql` in the SQL editor → set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` → `npm run seed:supabase` to load the starter catalogue (then edit in /admin).
+1. **Supabase** (client’s own account, free tier): create project → run `supabase/schema.sql` in the SQL editor (a database created from the v1 schema runs `supabase/migrations/20261001_festivals_inventory.sql` instead) → set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` → `npm run seed:supabase` to load the starter catalogue (then edit in /admin).
 2. **Payment gateway:** client chooses provider (e.g. Billplz, Stripe, iPay88, Curlec). Implement a provider in `src/lib/payments/index.ts` + a signed webhook route that calls `markOrderPaid` / `markOrderFailed` (`src/lib/orders.ts`). Set `PAYMENT_PROVIDER`.
 3. Set `APP_SECRET` (long random string), `ADMIN_PASSWORD`, `NEXT_PUBLIC_SITE_URL`.
 4. Replace sample products, prices, contents and photos in /admin.

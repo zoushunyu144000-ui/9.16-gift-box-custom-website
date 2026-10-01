@@ -8,7 +8,7 @@ import type { Product } from "@/lib/types";
 import { ProductImage } from "./product-image";
 
 /**
- * Wine & Spirits presented as a list — the way a wine list is read — with the
+ * Wine Gift Boxes presented as a list — the way a wine list is read — with the
  * bottle shown alongside. Desktop: hovering a row changes the photograph.
  * Mobile: each row carries its own small photograph.
  */

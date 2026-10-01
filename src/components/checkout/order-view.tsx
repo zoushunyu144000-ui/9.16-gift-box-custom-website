@@ -147,7 +147,8 @@ export function OrderView({ orderId, token, whatsappNumber }: { orderId: string;
                 </p>
                 {i.personalisation && (
                   <p className="mt-1 text-[13px] text-ink-2">
-                    {i.personalisationLabel}: “{i.personalisation}”
+                    {i.personalisationLabel}
+                    {i.personalisationOption ? ` (${i.personalisationOption})` : ""}: “{i.personalisation}”
                   </p>
                 )}
                 {i.giftMessage && <p className="mt-1 text-[13px] italic text-ink-2">Gift message: “{i.giftMessage}”</p>}

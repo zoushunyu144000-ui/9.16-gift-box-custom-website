@@ -1,7 +1,8 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { seedProducts, seedSettings } from "@/data/seed";
-import type { Enquiry, Order, Product, SiteSettings } from "@/lib/types";
+import { seedFestivals, seedProducts, seedSettings } from "@/data/seed";
+import type { Enquiry, Festival, Order, Product, SiteSettings } from "@/lib/types";
+import { normalizeProduct, normalizeSettings } from "./normalize";
 import type { Store } from "./types";
 
 /**
@@ -15,12 +16,13 @@ import type { Store } from "./types";
 interface State {
   version: number;
   products: Product[];
+  festivals: Festival[];
   settings: SiteSettings;
   orders: Order[];
   enquiries: Enquiry[];
 }
 
-const STATE_VERSION = 1;
+const STATE_VERSION = 2;
 
 export const DATA_DIR = process.env.DATA_DIR || (process.env.VERCEL ? "/tmp/moire-data" : path.join(process.cwd(), ".data"));
 const FILE = path.join(DATA_DIR, "store.json");
@@ -30,6 +32,7 @@ function fresh(): State {
   return {
     version: STATE_VERSION,
     products: structuredClone(seedProducts),
+    festivals: structuredClone(seedFestivals),
     settings: structuredClone(seedSettings),
     orders: [],
     enquiries: [],
@@ -43,6 +46,13 @@ async function load(): Promise<State> {
   try {
     const raw = await fs.readFile(FILE, "utf8");
     const parsed = JSON.parse(raw) as State;
+    if (parsed.version === 1) {
+      // v1 → v2: festivals become data; products keep their festival via festivalId.
+      parsed.products = parsed.products.map(normalizeProduct);
+      parsed.festivals = structuredClone(seedFestivals);
+      parsed.settings = { ...seedSettings, ...normalizeSettings(parsed.settings) };
+      parsed.version = STATE_VERSION;
+    }
     if (parsed.version !== STATE_VERSION) throw new Error("stale");
     memory = parsed;
   } catch {
@@ -102,9 +112,32 @@ export const demoStore: Store = {
       s.products = s.products.filter((p) => p.id !== id);
     });
   },
+  async adjustStock(productId, delta) {
+    await mutate((s) => {
+      const p = s.products.find((x) => x.id === productId);
+      if (!p || typeof p.stock !== "number") return;
+      p.stock = Math.max(0, p.stock + delta);
+      p.updatedAt = new Date().toISOString();
+    });
+  },
+
+  async listFestivals() {
+    return (await load()).festivals;
+  },
+  async saveFestival(festival) {
+    return mutate((s) => {
+      upsert(s.festivals, festival);
+      return festival;
+    });
+  },
+  async deleteFestival(id) {
+    await mutate((s) => {
+      s.festivals = s.festivals.filter((f) => f.id !== id);
+    });
+  },
 
   async getSettings() {
-    return { ...seedSettings, ...(await load()).settings };
+    return { ...seedSettings, ...normalizeSettings((await load()).settings) };
   },
   async saveSettings(settings) {
     return mutate((s) => {

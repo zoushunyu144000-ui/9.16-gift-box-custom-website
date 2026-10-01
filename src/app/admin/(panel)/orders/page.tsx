@@ -68,7 +68,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
                   <td className="px-4 py-3">{formatDate(o.deliveryDate, { day: "numeric", month: "short" })}</td>
                   <td className="px-4 py-3">
                     {o.items.reduce((n, i) => n + i.quantity, 0)}
-                    {o.items.some((i) => i.personalisation) && <span className="ml-2 text-[11px] text-bronze">Engraving</span>}
+                    {o.items.some((i) => i.personalisation) && <span className="ml-2 text-[11px] text-bronze">Personalised</span>}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">{formatRM(o.total, { decimals: true })}</td>
                   <td className="px-4 py-3"><OrderStatusPill status={o.status} /></td>

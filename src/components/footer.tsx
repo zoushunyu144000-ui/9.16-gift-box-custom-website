@@ -15,7 +15,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
             <Logo />
           </Link>
           <p className="mt-5 max-w-[34ch] text-[14px] leading-relaxed text-ink-2">
-            Festive gift boxes, everyday gifts, wine & spirits and corporate gifting from Kuala Lumpur.
+            Festive gift boxes, everyday gifts, wine gift boxes and corporate gifting from Kuala Lumpur.
           </p>
           <a
             href={whatsappLink(settings.whatsappNumber, "Hello Moire Co., I have a question about a gift.")}
@@ -32,7 +32,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
           links={[
             ["Festive Collection", "/festive"],
             ["Fixed Gift Collection", "/fixed-gifts"],
-            ["Wine & Spirits", "/wine-spirits"],
+            ["Wine Gift Boxes", "/wine-gift-boxes"],
             ["Search", "/search"],
           ]}
         />
@@ -40,7 +40,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
           title="Corporate Orders"
           links={[
             ["Overview", "/corporate"],
-            ["Semi-curated", "/corporate/semi-curated"],
+            ["Semi-customised", "/corporate/semi-curated"],
             ["Fully customised", "/corporate/bespoke"],
           ]}
         />

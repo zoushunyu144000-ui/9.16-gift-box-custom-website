@@ -44,7 +44,10 @@ export function CartLineRow({
           <dl className="mt-2 space-y-1 text-[13px] text-ink-2">
             {line.personalisation && (
               <div className="flex gap-1.5">
-                <dt className="flex-none">{s.personalisationLabel ?? "Personalisation"}:</dt>
+                <dt className="flex-none">
+                  {s.personalisationLabel ?? "Personalisation"}
+                  {line.personalisationOption ? ` (${line.personalisationOption})` : ""}:
+                </dt>
                 <dd className="min-w-0 break-words text-ink">“{line.personalisation}”</dd>
               </div>
             )}

@@ -28,7 +28,10 @@ export default async function OrderDetail({ params }: PageProps<"/admin/orders/[
                   </div>
                   {i.personalisation && (
                     <p className="mt-2 inline-block bg-[#fbf0dc] px-2 py-1 text-[13px]">
-                      <span className="text-ink-2">{i.personalisationLabel ?? "Engraving"}:</span> <strong className="font-medium">{i.personalisation}</strong>
+                      <span className="text-ink-2">
+                        {i.personalisationLabel ?? "Engraving"}
+                        {i.personalisationOption ? ` · ${i.personalisationOption}` : ""}:
+                      </span> <strong className="font-medium">{i.personalisation}</strong>
                     </p>
                   )}
                   {i.giftMessage && <p className="mt-2 border-l-2 border-champagne pl-3 text-[13px] italic text-ink-2">Card: “{i.giftMessage}”</p>}

@@ -137,12 +137,13 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
           paymentMethod: d.paymentMethod,
           ageConfirmed: age,
           termsAccepted: terms,
-          lines: lines.map(({ key, productId, variantId, quantity, personalisation, giftMessage }) => ({
+          lines: lines.map(({ key, productId, variantId, quantity, personalisation, personalisationOption, giftMessage }) => ({
             key,
             productId,
             variantId,
             quantity,
             personalisation,
+            personalisationOption,
             giftMessage,
           })),
         }),
@@ -192,7 +193,8 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
               {i.variantName && <p className="text-[12px] text-ink-2">{i.variantName}</p>}
               {i.personalisation && (
                 <p className="text-[12px] text-ink-2">
-                  {i.personalisationLabel}: “{i.personalisation}”
+                  {i.personalisationLabel}
+                  {i.personalisationOption ? ` (${i.personalisationOption})` : ""}: “{i.personalisation}”
                 </p>
               )}
               {i.giftMessage && <p className="line-clamp-1 text-[12px] italic text-ink-2">Message: “{i.giftMessage}”</p>}

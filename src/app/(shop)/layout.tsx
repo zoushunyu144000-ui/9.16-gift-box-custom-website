@@ -3,6 +3,7 @@ import { CartProvider } from "@/components/cart/cart-context";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { RevealObserver } from "@/components/reveal";
+import { WhatsAppButton } from "@/components/whatsapp-button";
 import { formatRM } from "@/lib/catalog";
 import { getStore } from "@/lib/store";
 
@@ -21,6 +22,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
       <Header />
       <main id="main">{children}</main>
       <Footer settings={settings} />
+      <WhatsAppButton number={settings.whatsappNumber} />
       <CartDrawer deliveryNote={deliveryNote} />
       <RevealObserver />
     </CartProvider>

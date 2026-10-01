@@ -117,7 +117,7 @@ export function SemiCuratedForm({ options, earliestDate, whatsappNumber }: { opt
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <a
-            href={whatsappLink(whatsappNumber, `Hello Moire Co., I've sent a semi-curated corporate request (${done}): ${summary}. Delivery ${c.deliveryDate}.`)}
+            href={whatsappLink(whatsappNumber, `Hello Moire Co., I've sent a semi-customised corporate request (${done}): ${summary}. Delivery ${c.deliveryDate}.`)}
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-primary"

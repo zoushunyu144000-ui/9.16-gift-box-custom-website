@@ -7,7 +7,7 @@ import { ProductCard } from "./product-card";
  * a spread rather than a spreadsheet. Every product still shows image, name and price.
  * Mobile: the large piece runs full width, the rest sit two across.
  */
-export function EditorialGrid({ products, priorityCount = 2, showOccasion = false }: { products: Product[]; priorityCount?: number; showOccasion?: boolean }) {
+export function EditorialGrid({ products, priorityCount = 2 }: { products: Product[]; priorityCount?: number }) {
   const groups: Product[][] = [];
   for (let i = 0; i < products.length; i += 5) groups.push(products.slice(i, i + 5));
 
@@ -25,18 +25,17 @@ export function EditorialGrid({ products, priorityCount = 2, showOccasion = fals
                 size="lg"
                 ratio={1.2}
                 priority={gi === 0 && priorityCount > 0}
-                showOccasion={showOccasion}
                 sizes="(min-width: 768px) 56vw, 100vw"
               />
             </div>
             {companion && (
               <div className={`col-span-1 md:col-span-4 md:self-end ${flip ? "md:order-1 md:col-start-1" : "md:col-start-9"}`}>
-                <ProductCard product={companion} priority={gi === 0 && priorityCount > 1} showOccasion={showOccasion} revealDelay={120} sizes="(min-width: 768px) 30vw, 50vw" />
+                <ProductCard product={companion} priority={gi === 0 && priorityCount > 1} revealDelay={120} sizes="(min-width: 768px) 30vw, 50vw" />
               </div>
             )}
             {row.map((p, i) => (
               <div key={p.id} className={`col-span-1 md:order-3 md:col-span-4 md:mt-24 ${i === 1 ? "md:mt-44" : ""}`}>
-                <ProductCard product={p} showOccasion={showOccasion} revealDelay={i * 90} sizes="(min-width: 768px) 30vw, 50vw" />
+                <ProductCard product={p} revealDelay={i * 90} sizes="(min-width: 768px) 30vw, 50vw" />
               </div>
             ))}
           </div>
