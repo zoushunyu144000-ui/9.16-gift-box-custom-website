@@ -20,7 +20,11 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
         Skip to content
       </a>
       <Header />
-      <main id="main">{children}</main>
+      {/* Space above the footer; a page that ends in a full-width band (the homepage) marks it
+          with data-flush-footer so no strip of background shows between that band and the footer. */}
+      <main id="main" className="pb-24 md:pb-32 has-[[data-flush-footer]]:pb-0">
+        {children}
+      </main>
       <Footer settings={settings} />
       <WhatsAppButton number={settings.whatsappNumber} />
       <CartDrawer deliveryNote={deliveryNote} />

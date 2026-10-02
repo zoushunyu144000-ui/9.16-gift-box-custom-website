@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Hero } from "@/components/hero";
+import { Star } from "@/components/logo";
 import { ProductCard } from "@/components/product-card";
 import { ProductImage } from "@/components/product-image";
 import { ProductRail, RailItem } from "@/components/product-rail";
@@ -59,13 +60,25 @@ export default async function HomePage() {
               </div>
             )}
             {otherFestivals.length > 0 && (
-              <nav className="mt-10 border-t border-line pt-6 md:mt-12" aria-label="Other festivals">
-                <p className="text-[12px] font-medium uppercase tracking-[0.16em] text-ink-3">Other festivals</p>
-                <ul className="mt-4 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
+              <nav className="mt-12 md:mt-14" aria-labelledby="other-festivals-heading">
+                <p id="other-festivals-heading" className="text-[11px] font-medium uppercase tracking-[0.18em] text-bronze">
+                  Other festivals
+                </p>
+                <ul className="mt-4 grid border-t border-line sm:grid-cols-3 sm:border-t-0 sm:gap-4">
                   {otherFestivals.map((f) => (
                     <li key={f.id}>
-                      <Link href={festivalHref(f)} className="btn btn-outline w-full px-4 text-center sm:w-auto sm:px-7">
-                        {f.name}
+                      <Link
+                        href={festivalHref(f)}
+                        className="group flex items-center justify-between gap-4 border-b border-line py-4 transition-colors sm:h-full sm:flex-col sm:items-start sm:border sm:border-line sm:bg-ivory/60 sm:px-6 sm:py-6 sm:hover:border-bronze/50 sm:hover:bg-ivory"
+                      >
+                        <span className="flex items-center gap-3">
+                          <Star className="h-2.5 w-2.5 flex-none text-champagne" />
+                          <span className="display text-[1.25rem] leading-tight md:text-[1.45rem]">{f.name}</span>
+                        </span>
+                        <span className="flex flex-none items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-ink-2 transition-colors group-hover:text-bronze sm:mt-6">
+                          <span className="hidden sm:inline">View gift boxes</span>
+                          <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" strokeWidth={1.25} aria-hidden="true" />
+                        </span>
                       </Link>
                     </li>
                   ))}
@@ -106,6 +119,7 @@ export default async function HomePage() {
         cta="Explore corporate gifting"
         image={siteImages.homeCorporate}
         tone="paper"
+        flushFooter
       />
     </>
   );
@@ -120,6 +134,7 @@ function CollectionGateway({
   cta,
   image,
   tone,
+  flushFooter = false,
 }: {
   id: string;
   eyebrow: string;
@@ -129,6 +144,7 @@ function CollectionGateway({
   cta: string;
   image: ProductImageData;
   tone: "cream" | "walnut" | "paper";
+  flushFooter?: boolean;
 }) {
   const tones = {
     cream: {
@@ -153,7 +169,7 @@ function CollectionGateway({
   const style = tones[tone];
 
   return (
-    <section className={`${style.section} border-t border-line`} aria-labelledby={id}>
+    <section className={`${style.section} border-t border-line`} aria-labelledby={id} data-flush-footer={flushFooter ? "" : undefined}>
       <div className="shell py-4 md:py-5">
         <div className="grid overflow-hidden lg:min-h-[340px] lg:grid-cols-12">
           <div className="order-1 lg:order-2 lg:col-span-7">

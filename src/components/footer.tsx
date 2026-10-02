@@ -7,7 +7,7 @@ import { MoireField } from "./moire";
 export function Footer({ settings }: { settings: SiteSettings }) {
   const year = new Date().getFullYear();
   return (
-    <footer className="relative mt-24 overflow-hidden border-t border-line bg-cream md:mt-32">
+    <footer className="relative overflow-hidden border-t border-line bg-cream">
       <MoireField className="pointer-events-none absolute -bottom-[420px] -right-[260px] h-[760px] w-[760px] text-champagne" opacity={0.28} />
       <div className="shell relative grid gap-12 py-14 md:grid-cols-12 md:gap-8 md:py-20">
         <div className="md:col-span-4">
