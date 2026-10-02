@@ -12,6 +12,7 @@ const Body = z.object({
         variantId: z.string().max(80).optional(),
         quantity: z.number(),
         personalisation: z.string().max(200).optional(),
+        personalisationOption: z.string().max(60).optional(),
         giftMessage: z.string().max(1000).optional(),
       }),
     )

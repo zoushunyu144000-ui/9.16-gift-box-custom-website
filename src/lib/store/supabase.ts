@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { seedSettings } from "@/data/seed";
-import type { Enquiry, Order, Product, SiteSettings } from "@/lib/types";
+import type { Enquiry, Festival, Order, Product, SiteSettings } from "@/lib/types";
+import { normalizeProduct, normalizeSettings } from "./normalize";
 import type { Store } from "./types";
 
 /**
@@ -38,15 +39,15 @@ export const supabaseStore: Store = {
 
   async listProducts() {
     const rows = check(await db().from("products").select("data").order("sort", { ascending: true })) as Row<Product>[];
-    return rows.map((r) => r.data);
+    return rows.map((r) => normalizeProduct(r.data));
   },
   async getProductBySlug(slug) {
     const row = check(await db().from("products").select("data").eq("slug", slug).maybeSingle()) as Row<Product> | null;
-    return row?.data ?? null;
+    return row ? normalizeProduct(row.data) : null;
   },
   async getProductById(id) {
     const row = check(await db().from("products").select("data").eq("id", id).maybeSingle()) as Row<Product> | null;
-    return row?.data ?? null;
+    return row ? normalizeProduct(row.data) : null;
   },
   async saveProduct(product) {
     check(
@@ -55,6 +56,8 @@ export const supabaseStore: Store = {
         slug: product.slug,
         category: product.category,
         status: product.status,
+        festival_id: product.festivalId ?? null,
+        stock: typeof product.stock === "number" ? product.stock : null,
         featured: product.featured,
         sort: product.sort,
         data: product,
@@ -66,10 +69,36 @@ export const supabaseStore: Store = {
   async deleteProduct(id) {
     check(await db().from("products").delete().eq("id", id));
   },
+  async adjustStock(productId, delta) {
+    // Atomic in the database (see adjust_product_stock in supabase/schema.sql).
+    check(await db().rpc("adjust_product_stock", { p_id: productId, p_delta: Math.trunc(delta) }));
+  },
+
+  async listFestivals() {
+    const rows = check(await db().from("festivals").select("data").order("sort", { ascending: true })) as Row<Festival>[];
+    return rows.map((r) => r.data);
+  },
+  async saveFestival(festival) {
+    check(
+      await db().from("festivals").upsert({
+        id: festival.id,
+        slug: festival.slug,
+        name: festival.name,
+        active: festival.active,
+        sort: festival.sort,
+        data: festival,
+        updated_at: festival.updatedAt ?? new Date().toISOString(),
+      }),
+    );
+    return festival;
+  },
+  async deleteFestival(id) {
+    check(await db().from("festivals").delete().eq("id", id));
+  },
 
   async getSettings() {
     const row = check(await db().from("settings").select("data").eq("key", "site").maybeSingle()) as Row<SiteSettings> | null;
-    return { ...seedSettings, ...(row?.data ?? {}) };
+    return { ...seedSettings, ...normalizeSettings(row?.data ?? {}) };
   },
   async saveSettings(settings) {
     check(await db().from("settings").upsert({ key: "site", data: settings, updated_at: new Date().toISOString() }));

@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { formatRM, ORDER_STATUS, PAYMENT_METHODS, whatsappLink } from "@/lib/catalog";
+import { formatRM, ORDER_STATUS, PAYMENT_METHODS } from "@/lib/catalog";
 import { formatDate } from "@/lib/dates";
 import { useCart } from "../cart/cart-context";
 import { Star } from "../logo";
 import { ProductImage } from "../product-image";
 import { useOrder } from "./use-order";
 
-export function OrderView({ orderId, token, whatsappNumber }: { orderId: string; token: string; whatsappNumber: string }) {
+export function OrderView({ orderId, token }: { orderId: string; token: string }) {
   const { order, state, token: t } = useOrder(orderId, token);
   const { clear } = useCart();
   const cleared = useRef(false);
@@ -45,10 +45,7 @@ export function OrderView({ orderId, token, whatsappNumber }: { orderId: string;
           The link may be incomplete. Please use the link from your confirmation, or contact us with your order number <strong>{orderId}</strong>.
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-          <a href={whatsappLink(whatsappNumber, `Hello Moire Co., I need help with order ${orderId}.`)} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-            Contact us on WhatsApp
-          </a>
-          <Link href="/" className="btn btn-outline">
+          <Link href="/" className="btn btn-primary">
             Back to home
           </Link>
         </div>
@@ -147,7 +144,8 @@ export function OrderView({ orderId, token, whatsappNumber }: { orderId: string;
                 </p>
                 {i.personalisation && (
                   <p className="mt-1 text-[13px] text-ink-2">
-                    {i.personalisationLabel}: “{i.personalisation}”
+                    {i.personalisationLabel}
+                    {i.personalisationOption ? ` (${i.personalisationOption})` : ""}: “{i.personalisation}”
                   </p>
                 )}
                 {i.giftMessage && <p className="mt-1 text-[13px] italic text-ink-2">Gift message: “{i.giftMessage}”</p>}
@@ -175,9 +173,6 @@ export function OrderView({ orderId, token, whatsappNumber }: { orderId: string;
       <div className="mt-14 flex flex-col items-center gap-4 border-t border-line pt-10 text-center">
         <p className="text-[14px] text-ink-2">Questions about your order? Message us with your order number.</p>
         <div className="flex flex-col gap-3 sm:flex-row">
-          <a href={whatsappLink(whatsappNumber, `Hello Moire Co., I have a question about order ${order.id}.`)} target="_blank" rel="noopener noreferrer" className="btn btn-outline">
-            WhatsApp us
-          </a>
           <Link href="/" className="btn btn-primary">
             Continue shopping
           </Link>

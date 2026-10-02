@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     default: "Moire Co. — Premium gift boxes, Kuala Lumpur",
     template: "%s · Moire Co.",
   },
-  description: "Festive gift boxes, everyday gifts, wine & spirits and corporate gifting from Kuala Lumpur.",
+  description: "Festive gift boxes, everyday gifts, wine gift boxes and corporate gifting from Kuala Lumpur.",
   icons: { icon: "/icon.svg" },
   other: { google: "notranslate" },
   openGraph: {

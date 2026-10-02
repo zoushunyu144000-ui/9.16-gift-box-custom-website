@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Card, Empty, OrderStatusPill, PageTitle, Pill, ENQUIRY_STATUS } from "@/components/admin/ui";
-import { formatRM } from "@/lib/catalog";
+import { formatRM, isPurchasable } from "@/lib/catalog";
 import { formatDateTime } from "@/lib/dates";
 import { getStore } from "@/lib/store";
 
@@ -21,7 +21,7 @@ export default async function AdminHome() {
 
   return (
     <>
-      <PageTitle title="Overview" sub={`Homepage season: ${settings.festiveTitle} · ${products.filter((p) => p.status === "active").length} products on sale`}>
+      <PageTitle title="Overview" sub={`Homepage season: ${settings.festiveTitle} · ${products.filter(isPurchasable).length} products on sale`}>
         <Link href="/admin/products/new" className="btn btn-primary">Add product</Link>
       </PageTitle>
       <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
@@ -65,7 +65,7 @@ export default async function AdminHome() {
                   <Link href={`/admin/enquiries/${e.id}`} className="flex items-center justify-between gap-4 py-3 hover:text-bronze">
                     <span className="min-w-0">
                       <span className="block text-[14px]">{e.contact.company || e.contact.name}</span>
-                      <span className="block text-[12px] text-ink-3">{e.type === "bespoke" ? "Fully customised" : "Semi-curated"} · {formatDateTime(e.createdAt)}</span>
+                      <span className="block text-[12px] text-ink-3">{e.type === "bespoke" ? "Fully customised" : "Semi-customised"} · {formatDateTime(e.createdAt)}</span>
                     </span>
                     <Pill tone={ENQUIRY_STATUS[e.status].tone}>{ENQUIRY_STATUS[e.status].label}</Pill>
                   </Link>

@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDate } from "@/lib/dates";
+import { DateSelect } from "../date-select";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Check } from "lucide-react";
@@ -117,7 +119,7 @@ export function SemiCuratedForm({ options, earliestDate, whatsappNumber }: { opt
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <a
-            href={whatsappLink(whatsappNumber, `Hello Moire Co., I've sent a semi-curated corporate request (${done}): ${summary}. Delivery ${c.deliveryDate}.`)}
+            href={whatsappLink(whatsappNumber, `Hello Moire Co., I've sent a semi-customised corporate request (${done}): ${summary}. Delivery ${formatDate(c.deliveryDate)}.`)}
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-primary"
@@ -212,7 +214,7 @@ export function SemiCuratedForm({ options, earliestDate, whatsappNumber }: { opt
         <FormSection n={3} title="Delivery">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field id="deliveryDate" label="Required by" error={errors.deliveryDate}>
-              <input id="deliveryDate" type="date" min={earliestDate} className="field" value={c.deliveryDate} onChange={(e) => set("deliveryDate", e.target.value)} aria-invalid={!!errors.deliveryDate} />
+              <DateSelect id="deliveryDate" min={earliestDate} value={c.deliveryDate} onChange={(v) => set("deliveryDate", v)} invalid={!!errors.deliveryDate} />
             </Field>
             <div className="flex items-end pb-3">
               <label className="flex items-start gap-3 text-[15px]">

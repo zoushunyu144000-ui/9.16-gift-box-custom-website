@@ -8,7 +8,7 @@
  * but names, contents and specs must be replaced with the client's actual products via /admin.
  */
 import { unsplash } from "@/lib/images";
-import type { Product, SiteSettings } from "@/lib/types";
+import type { Festival, Personalisation, Product, SiteSettings } from "@/lib/types";
 
 const now = "2026-09-27T00:00:00.000Z";
 
@@ -29,6 +29,20 @@ function p(d: Draft): Product {
   };
 }
 
+/**
+ * Personalised name (meeting 2026-10-01). Sample configuration only: the client has not yet
+ * confirmed which products offer it, whether it costs extra, or the material rules — so the fee is 0
+ * (no charge shown) and both materials are offered. Adjust per product in Admin → Products.
+ */
+const personalisedName: Personalisation = {
+  enabled: true,
+  label: "Personalised name",
+  helper: "Letters, numbers and basic punctuation only.",
+  maxLength: 20,
+  fee: 0,
+  options: ["Leather", "Acrylic"],
+};
+
 const foodStorage = "Store in a cool, dry place away from direct sunlight. Once opened, keep in an airtight container.";
 
 export const seedProducts: Product[] = [
@@ -38,8 +52,10 @@ export const seedProducts: Product[] = [
     slug: "spring-blessings-box",
     name: "New Year Cookie Box",
     category: "festive",
-    occasion: "chinese-new-year",
+    festivalId: "chinese-new-year",
     status: "active",
+    stock: 20,
+    personalisation: personalisedName,
     price: 188,
     featured: true,
     sort: 10,
@@ -65,8 +81,9 @@ export const seedProducts: Product[] = [
     slug: "golden-harvest-basket",
     name: "Mandarin Basket",
     category: "festive",
-    occasion: "chinese-new-year",
+    festivalId: "chinese-new-year",
     status: "active",
+    stock: 0,
     price: 288,
     featured: true,
     sort: 20,
@@ -90,14 +107,16 @@ export const seedProducts: Product[] = [
     slug: "reunion-tea-box",
     name: "Reunion Tea Box",
     category: "festive",
-    occasion: "chinese-new-year",
+    festivalId: "chinese-new-year",
     status: "active",
+    stock: 20,
+    personalisation: personalisedName,
     price: 388,
     featured: true,
     sort: 30,
     summary: "Pu'er tea, porcelain cups, pineapple tarts and mandarins.",
     description:
-      "Built around tea for the reunion table: pressed pu'er tea, a pair of porcelain cups and festive sweets. Choose the wine version to add a bottle of red wine to the box.",
+      "Built around tea for the reunion table: pressed pu'er tea, a pair of porcelain cups and festive sweets. Choose the gift box with red wine to add a bottle to the box.",
     contents: ["Mini pu'er tea cakes, 10 pieces", "Porcelain teacups, set of 2", "Pineapple tarts, 12 pieces", "Mandarin oranges, 4 pieces", "Moire Co. greeting card"],
     specs: [
       { label: "Box size", value: "Approx. 38 × 28 × 12 cm" },
@@ -120,8 +139,10 @@ export const seedProducts: Product[] = [
     slug: "prosperity-box",
     name: "Prosperity Box",
     category: "festive",
-    occasion: "chinese-new-year",
+    festivalId: "chinese-new-year",
     status: "active",
+    stock: 20,
+    personalisation: personalisedName,
     price: 588,
     featured: true,
     sort: 40,
@@ -160,8 +181,10 @@ export const seedProducts: Product[] = [
     slug: "grand-prosperity-hamper",
     name: "Grand Prosperity Hamper",
     category: "festive",
-    occasion: "chinese-new-year",
+    festivalId: "chinese-new-year",
     status: "active",
+    stock: 5,
+    personalisation: personalisedName,
     price: 2388,
     featured: true,
     sort: 50,
@@ -213,8 +236,9 @@ export const seedProducts: Product[] = [
     slug: "raya-dates-collection",
     name: "Raya Dates Box",
     category: "festive",
-    occasion: "hari-raya",
+    festivalId: "hari-raya",
     status: "active",
+    stock: 20,
     price: 188,
     sort: 110,
     summary: "Three varieties of dates in wooden cups. Alcohol-free.",
@@ -237,8 +261,9 @@ export const seedProducts: Product[] = [
     slug: "raya-open-house-hamper",
     name: "Raya Open House Hamper",
     category: "festive",
-    occasion: "hari-raya",
+    festivalId: "hari-raya",
     status: "active",
+    stock: 20,
     price: 388,
     sort: 120,
     summary: "Dates, festive cookies and tea for the Raya table. Alcohol-free.",
@@ -263,8 +288,9 @@ export const seedProducts: Product[] = [
     slug: "moonlight-mooncake-box",
     name: "Mooncake Box",
     category: "festive",
-    occasion: "mid-autumn",
+    festivalId: "mid-autumn",
     status: "sold_out",
+    stock: 0,
     availabilityNote: "Season ended",
     price: 288,
     sort: 210,
@@ -285,8 +311,9 @@ export const seedProducts: Product[] = [
     slug: "mid-autumn-tea-pairing",
     name: "Mid-Autumn Tea Pairing",
     category: "festive",
-    occasion: "mid-autumn",
+    festivalId: "mid-autumn",
     status: "sold_out",
+    stock: 0,
     availabilityNote: "Season ended",
     price: 388,
     sort: 220,
@@ -309,8 +336,9 @@ export const seedProducts: Product[] = [
     slug: "dragon-boat-dumpling-box",
     name: "Dragon Boat Dumpling Box",
     category: "festive",
-    occasion: "dragon-boat",
+    festivalId: "dragon-boat",
     status: "sold_out",
+    stock: 0,
     availabilityNote: "Currently unavailable",
     price: 188,
     sort: 310,
@@ -333,6 +361,7 @@ export const seedProducts: Product[] = [
     name: "Tea Ceremony Set",
     category: "fixed-gifts",
     status: "active",
+    stock: 20,
     price: 328,
     featured: true,
     sort: 10,
@@ -356,6 +385,7 @@ export const seedProducts: Product[] = [
     name: "Engraved Crystal Tumblers",
     category: "fixed-gifts",
     status: "active",
+    stock: 20,
     price: 268,
     featured: true,
     sort: 20,
@@ -386,6 +416,7 @@ export const seedProducts: Product[] = [
     name: "Leather Journal",
     category: "fixed-gifts",
     status: "active",
+    stock: 20,
     price: 198,
     featured: true,
     sort: 30,
@@ -412,6 +443,7 @@ export const seedProducts: Product[] = [
     name: "Engraved Keepsake Box",
     category: "fixed-gifts",
     status: "active",
+    stock: 20,
     price: 288,
     featured: true,
     sort: 40,
@@ -441,6 +473,7 @@ export const seedProducts: Product[] = [
     name: "Notebook & Pen Set",
     category: "fixed-gifts",
     status: "active",
+    stock: 20,
     price: 168,
     sort: 50,
     summary: "Linen-bound notebook with a weighted brass pen.",
@@ -469,6 +502,7 @@ export const seedProducts: Product[] = [
     name: "Artisan Chocolate Box",
     category: "fixed-gifts",
     status: "active",
+    stock: 20,
     price: 158,
     sort: 60,
     summary: "Twenty-four handmade chocolates and pralines.",
@@ -492,6 +526,7 @@ export const seedProducts: Product[] = [
     name: "Coffee Gift Set",
     category: "fixed-gifts",
     status: "active",
+    stock: 20,
     price: 138,
     sort: 70,
     summary: "Two single-origin coffees, whole bean or ground.",
@@ -512,19 +547,20 @@ export const seedProducts: Product[] = [
     ],
   }),
 
-  // ───────────────────────── Wine & Spirits ─────────────────────────
+  // ───────────────────────── Wine Gift Boxes (internal category id: wine-spirits) ─────────────────────────
   p({
     id: "p_ws_classic_red",
     slug: "classic-red",
-    name: "Classic Red",
+    name: "Classic Red Wine Gift Box",
     category: "wine-spirits",
     status: "active",
+    stock: 12,
     price: 168,
     featured: true,
     sort: 10,
     containsAlcohol: true,
-    summary: "Medium-bodied red blend, 750 ml.",
-    description: "A medium-bodied red blend with soft tannins. Suits roast meats, mushrooms and aged cheese. Presented in a gift box.",
+    summary: "Gift box with a medium-bodied red blend, 750 ml.",
+    description: "A gift box built around a medium-bodied red blend with soft tannins — a good match for roast meats, mushrooms and aged cheese.",
     contents: ["Red wine, 750 ml", "Gift box"],
     specs: [
       { label: "Volume", value: "750 ml" },
@@ -541,15 +577,16 @@ export const seedProducts: Product[] = [
   p({
     id: "p_ws_reserve_red",
     slug: "reserve-red",
-    name: "Reserve Red",
+    name: "Reserve Red Wine Gift Box",
     category: "wine-spirits",
     status: "active",
+    stock: 12,
     price: 288,
     featured: true,
     sort: 20,
     containsAlcohol: true,
-    summary: "Full-bodied oak-aged red, 750 ml.",
-    description: "A full-bodied red aged in oak, with dark fruit and a long finish. Decant for 30 minutes before serving.",
+    summary: "Gift box with a full-bodied, oak-aged red, 750 ml.",
+    description: "A gift box with a full-bodied red aged in oak, with dark fruit and a long finish. Decant for 30 minutes before serving.",
     contents: ["Red wine, 750 ml", "Gift box"],
     specs: [
       { label: "Volume", value: "750 ml" },
@@ -565,15 +602,16 @@ export const seedProducts: Product[] = [
   p({
     id: "p_ws_white",
     slug: "crisp-white",
-    name: "Dry White",
+    name: "Dry White Wine Gift Box",
     category: "wine-spirits",
     status: "active",
+    stock: 12,
     price: 148,
     featured: true,
     sort: 30,
     containsAlcohol: true,
-    summary: "Dry, fresh white wine, 750 ml.",
-    description: "A dry, fresh white with citrus and stone fruit. Serve well chilled with seafood and light dishes.",
+    summary: "Gift box with a dry, fresh white, 750 ml.",
+    description: "A gift box with a dry, fresh white showing citrus and stone fruit. Serve well chilled with seafood and light dishes.",
     contents: ["White wine, 750 ml", "Gift box"],
     specs: [
       { label: "Volume", value: "750 ml" },
@@ -589,6 +627,7 @@ export const seedProducts: Product[] = [
     name: "Wine Duo Gift Set",
     category: "wine-spirits",
     status: "active",
+    stock: 12,
     price: 318,
     sort: 40,
     containsAlcohol: true,
@@ -606,14 +645,15 @@ export const seedProducts: Product[] = [
   p({
     id: "p_ws_champagne",
     slug: "brut-champagne",
-    name: "Brut Champagne",
+    name: "Champagne Gift Box",
     category: "wine-spirits",
     status: "active",
+    stock: 12,
     price: 388,
     sort: 50,
     containsAlcohol: true,
-    summary: "Non-vintage Brut champagne, 750 ml.",
-    description: "A non-vintage Brut champagne with fine bubbles and a fresh, dry finish. For celebrations and toasts.",
+    summary: "Gift box with a non-vintage Brut champagne, 750 ml.",
+    description: "A celebration gift box with a non-vintage Brut champagne — fine bubbles and a fresh, dry finish, for toasts.",
     contents: ["Brut champagne, 750 ml", "Gift box"],
     specs: [
       { label: "Volume", value: "750 ml" },
@@ -629,14 +669,15 @@ export const seedProducts: Product[] = [
   p({
     id: "p_ws_whisky",
     slug: "single-malt-whisky",
-    name: "Single Malt Whisky",
+    name: "Single Malt Whisky Gift Box",
     category: "wine-spirits",
     status: "active",
+    stock: 12,
     price: 488,
     sort: 60,
     containsAlcohol: true,
-    summary: "Single malt Scotch whisky, 700 ml.",
-    description: "A single malt Scotch whisky with honeyed fruit and gentle oak. Enjoy neat or with a drop of water.",
+    summary: "Gift box with a single malt Scotch whisky, 700 ml.",
+    description: "A gift box with a single malt Scotch whisky of honeyed fruit and gentle oak. Enjoy neat or with a drop of water.",
     contents: ["Single malt whisky, 700 ml", "Gift box"],
     specs: [
       { label: "Volume", value: "700 ml" },
@@ -650,18 +691,62 @@ export const seedProducts: Product[] = [
   }),
 ];
 
+/**
+ * Starter festivals for the Festive Collection. Editable in Admin → Festivals (name, slug,
+ * cover, description, shown/hidden, order). Ids are stable and referenced by products.
+ * Cover images are placeholders taken from each festival's sample products.
+ */
+export const seedFestivals: Festival[] = [
+  {
+    id: "chinese-new-year",
+    name: "Chinese New Year",
+    slug: "chinese-new-year",
+    description: "Boxes and hampers for the first visits of the year.",
+    coverImage: { src: "/images/grand-prosperity-hamper-hero-v1.webp", alt: "Grand Prosperity Hamper in ivory and warm taupe with champagne ribbon", width: 1122, height: 1402 },
+    active: true,
+    sort: 10,
+  },
+  {
+    id: "hari-raya",
+    name: "Hari Raya",
+    slug: "hari-raya",
+    description: "Gifts for Hari Raya open houses.",
+    coverImage: unsplash("NjgXTtpH1fs", "Dates in wooden cups with small glasses of tea"),
+    active: true,
+    sort: 20,
+  },
+  {
+    id: "dragon-boat",
+    name: "Dragon Boat Festival",
+    slug: "dragon-boat",
+    description: "Rice dumplings for the Dragon Boat Festival.",
+    coverImage: unsplash("Vs1WWRnQris", "Rice dumplings wrapped in bamboo leaves"),
+    active: true,
+    sort: 30,
+  },
+  {
+    id: "mid-autumn",
+    name: "Mid-Autumn Festival",
+    slug: "mid-autumn",
+    description: "Mooncakes and tea for the Mid-Autumn Festival.",
+    coverImage: unsplash("A6grvGdBAJ0", "Square mooncake on a glass plate with petals"),
+    active: true,
+    sort: 40,
+  },
+];
+
 export const seedSettings: SiteSettings = {
-  activeOccasion: "chinese-new-year",
+  activeFestivalId: "chinese-new-year",
   festiveTitle: "Chinese New Year 2027",
   festiveIntro: "Boxes and hampers for the first visits of the year — to parents and grandparents, to friends, and to the people you work with.",
   heroEyebrow: "Chinese New Year 2027",
   heroTitle: "Gift boxes for the *Year of the Goat*",
-  heroText: "Festive boxes, year-round gifts, wine & spirits and corporate orders — from Moire Co. in Kuala Lumpur.",
+  heroText: "Festive boxes, year-round gifts, wine gift boxes and corporate orders — from Moire Co. in Kuala Lumpur.",
   deliveryFee: 20,
   freeDeliveryThreshold: null,
   deliveryLeadDays: 2,
   deliveryNote: "Choose your preferred delivery date at checkout. We will contact you if the date needs to change.",
-  whatsappNumber: "60123456789",
+  whatsappNumber: "601128691092",
   contactEmail: "",
   businessHours: "",
   showPreviewNotice: true,

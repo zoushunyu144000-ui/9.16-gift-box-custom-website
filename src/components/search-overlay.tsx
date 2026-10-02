@@ -16,9 +16,9 @@ interface Hit {
 }
 
 const SUGGESTIONS = [
-  { label: "Chinese New Year", href: "/festive?occasion=chinese-new-year" },
-  { label: "Engraved gifts", href: "/search?q=engraved" },
-  { label: "Wine & Spirits", href: "/wine-spirits" },
+  { label: "Festive Collection", href: "/festive" },
+  { label: "Personalised gifts", href: "/search?q=personalised" },
+  { label: "Wine Gift Boxes", href: "/wine-gift-boxes" },
   { label: "Corporate orders", href: "/corporate" },
 ];
 
@@ -92,7 +92,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
               value={q}
               onChange={(e) => setQ(e.target.value)}
               type="search"
-              placeholder="Search gifts, hampers, wine…"
+              placeholder="Search gift boxes, hampers…"
               className="display min-w-0 flex-1 bg-transparent text-[1.5rem] outline-none placeholder:text-ink-3 md:text-[2rem]"
               aria-label="Search products"
               enterKeyHint="search"
@@ -143,7 +143,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-[15px] group-hover:text-bronze">{h.name}</span>
                           <span className="block text-[12px] text-ink-3">
-                            {h.category} · {h.soldOut ? "Unavailable" : h.price}
+                            {h.category} · {h.soldOut ? "Sold Out" : h.price}
                           </span>
                         </span>
                       </Link>

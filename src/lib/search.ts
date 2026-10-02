@@ -1,12 +1,12 @@
-import { CATEGORIES, OCCASIONS, sortProducts } from "./catalog";
-import type { Product } from "./types";
+import { CATEGORIES, festivalName, isPurchasable, sortProducts } from "./catalog";
+import type { Festival, Product } from "./types";
 
 function norm(s: string) {
   return s.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "");
 }
 
 /** Simple weighted text search across the catalogue. Good for a few hundred products. */
-export function searchProducts(products: Product[], query: string) {
+export function searchProducts(products: Product[], query: string, festivals: Festival[] = []) {
   const terms = norm(query).split(/\s+/).filter(Boolean);
   if (!terms.length) return [];
   const scored = products
@@ -19,8 +19,10 @@ export function searchProducts(products: Product[], query: string) {
           p.description,
           p.contents.join(" "),
           CATEGORIES[p.category].name,
-          p.occasion ? OCCASIONS[p.occasion].name : "",
-          p.personalisation?.enabled ? "engraved engraving personalised personalized name" : "",
+          festivalName(festivals, p.festivalId) ?? "",
+          // Wine gift boxes are still found when customers type "wine", "champagne", "whisky"…
+          p.category === "wine-spirits" ? "wine spirits gift box set" : "",
+          p.personalisation?.enabled ? `engraved engraving personalised personalized name ${(p.personalisation.options ?? []).join(" ")}` : "",
           p.variants.map((v) => v.name).join(" "),
         ].join(" "),
       );
@@ -30,7 +32,7 @@ export function searchProducts(products: Product[], query: string) {
         else if (hay.includes(t)) score += 1;
         else return { p, score: 0 };
       }
-      if (p.status === "active") score += 0.5;
+      if (isPurchasable(p)) score += 0.5;
       return { p, score };
     })
     .filter((x) => x.score > 0)

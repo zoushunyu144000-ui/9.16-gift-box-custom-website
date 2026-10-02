@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { slugify } from "../catalog";
 import { getStore } from "../store";
-import type { Enquiry, EnquiryStatus, Order, OrderStatus, Product, SiteSettings } from "../types";
+import type { Enquiry, EnquiryStatus, Festival, Order, OrderStatus, Product, SiteSettings } from "../types";
 import { checkPassword, createSession, destroySession, requireAdmin } from "./auth";
 
 // ───────── Auth ─────────
@@ -29,8 +29,10 @@ const ProductInput = z.object({
   name: z.string().trim().min(2, "Name is required").max(120),
   slug: z.string().trim().max(120).optional(),
   category: z.enum(["festive", "fixed-gifts", "wine-spirits"]),
-  occasion: z.enum(["chinese-new-year", "mid-autumn", "dragon-boat", "hari-raya"]).nullable().optional(),
+  festivalId: z.string().trim().max(80).nullable().optional(),
   status: z.enum(["active", "sold_out", "hidden"]),
+  /** null = stock not tracked */
+  stock: z.number().int("Stock must be a whole number").min(0, "Stock can't be negative").max(1_000_000).nullable(),
   availabilityNote: z.string().trim().max(60).optional(),
   price: z.number().min(0).max(1_000_000),
   summary: z.string().trim().max(200),
@@ -46,7 +48,14 @@ const ProductInput = z.object({
     .array(z.object({ id: z.string().trim().max(60), name: z.string().trim().min(1).max(80), price: z.number().min(0).max(1_000_000), note: z.string().trim().max(160).optional(), containsAlcohol: z.boolean().optional() }))
     .max(12),
   personalisation: z
-    .object({ enabled: z.boolean(), label: z.string().trim().max(60), helper: z.string().trim().max(160).optional(), maxLength: z.number().int().min(1).max(60), fee: z.number().min(0).max(10000) })
+    .object({
+      enabled: z.boolean(),
+      label: z.string().trim().max(60),
+      helper: z.string().trim().max(160).optional(),
+      maxLength: z.number().int().min(1).max(60),
+      fee: z.number().min(0).max(10000),
+      options: z.array(z.string().trim().min(1).max(40)).max(8).optional(),
+    })
     .nullable(),
   containsAlcohol: z.boolean(),
   featured: z.boolean(),
@@ -66,6 +75,10 @@ export async function saveProductAction(input: ProductInputType): Promise<{ ok: 
   const slug = slugify(data.slug || data.name);
   if (!slug) return { ok: false, error: "Please enter a URL name (slug)." };
   if (all.some((p) => p.slug === slug && p.id !== existing?.id)) return { ok: false, error: `Another product already uses the URL “${slug}”.` };
+  if (data.category === "festive" && data.festivalId) {
+    const festivals = await store.listFestivals();
+    if (!festivals.some((f) => f.id === data.festivalId)) return { ok: false, error: "Please choose a festival from the list." };
+  }
   const variants = data.variants.map((v, i) => ({ ...v, id: v.id || slugify(v.name) || `option-${i + 1}` }));
   if (new Set(variants.map((v) => v.id)).size !== variants.length) return { ok: false, error: "Each option needs a different name." };
 
@@ -76,8 +89,9 @@ export async function saveProductAction(input: ProductInputType): Promise<{ ok: 
     slug,
     name: data.name,
     category: data.category,
-    occasion: data.category === "festive" ? (data.occasion ?? null) : null,
+    festivalId: data.category === "festive" ? (data.festivalId || null) : null,
     status: data.status,
+    stock: data.stock,
     availabilityNote: data.availabilityNote || undefined,
     price: variants.length ? variants[0].price : data.price,
     summary: data.summary,
@@ -88,7 +102,9 @@ export async function saveProductAction(input: ProductInputType): Promise<{ ok: 
     storage: data.storage || undefined,
     images: data.images,
     variants,
-    personalisation: data.personalisation?.enabled ? data.personalisation : null,
+    personalisation: data.personalisation?.enabled
+      ? { ...data.personalisation, options: [...new Set((data.personalisation.options ?? []).filter(Boolean))] }
+      : null,
     containsAlcohol: data.containsAlcohol,
     featured: data.featured,
     sort: data.sort,
@@ -114,6 +130,71 @@ export async function setProductStatusAction(id: string, status: Product["status
   if (!p || !["active", "sold_out", "hidden"].includes(status)) return;
   await store.saveProduct({ ...p, status, updatedAt: new Date().toISOString() });
   revalidatePath("/", "layout");
+}
+
+/** Quick inventory edit from the products list, e.g. after a WhatsApp or in-store sale (10 → 9). */
+export async function setProductStockAction(id: string, stock: number | null): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
+  if (stock !== null && (!Number.isInteger(stock) || stock < 0 || stock > 1_000_000)) return { ok: false, error: "Enter a whole number, 0 or more." };
+  const store = await getStore();
+  const p = await store.getProductById(id);
+  if (!p) return { ok: false, error: "Product not found." };
+  await store.saveProduct({ ...p, stock, updatedAt: new Date().toISOString() });
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+// ───────── Festivals ─────────
+const FestivalInput = z.object({
+  id: z.string().max(80).optional(),
+  name: z.string().trim().min(2, "Festival name is required").max(80),
+  slug: z.string().trim().max(80).optional(),
+  description: z.string().trim().max(300).optional(),
+  coverImage: z.object({ src: z.string().trim().min(1).max(1000), alt: z.string().trim().max(200), width: z.number().optional(), height: z.number().optional(), credit: z.string().max(200).optional() }).nullable(),
+  active: z.boolean(),
+  sort: z.number().int().min(0).max(100000),
+});
+
+export type FestivalInputType = z.infer<typeof FestivalInput>;
+
+export async function saveFestivalAction(input: FestivalInputType): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  await requireAdmin();
+  const parsed = FestivalInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid festival" };
+  const data = parsed.data;
+  const store = await getStore();
+  const all = await store.listFestivals();
+  const existing = data.id ? all.find((f) => f.id === data.id) : undefined;
+  const slug = slugify(data.slug || data.name);
+  if (!slug) return { ok: false, error: "Please enter a URL name (slug)." };
+  if (all.some((f) => f.slug === slug && f.id !== existing?.id)) return { ok: false, error: `Another festival already uses the URL “${slug}”.` };
+  let id = existing?.id ?? slug;
+  if (!existing && all.some((f) => f.id === id)) id = `${slug}-${Date.now().toString(36)}`;
+  const festival: Festival = {
+    id,
+    name: data.name,
+    slug,
+    description: data.description || undefined,
+    coverImage: data.coverImage,
+    active: data.active,
+    sort: data.sort,
+    updatedAt: new Date().toISOString(),
+  };
+  await store.saveFestival(festival);
+  revalidatePath("/", "layout");
+  return { ok: true, id: festival.id };
+}
+
+export async function deleteFestivalAction(id: string): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
+  const store = await getStore();
+  const [products, settings] = await Promise.all([store.listProducts(), store.getSettings()]);
+  const used = products.filter((p) => p.festivalId === id).length;
+  if (used) return { ok: false, error: `${used} product${used === 1 ? " is" : "s are"} still in this festival. Move them first, or hide the festival instead.` };
+  if (settings.activeFestivalId === id) return { ok: false, error: "This festival leads the homepage. Choose another one in Settings first." };
+  await store.deleteFestival(id);
+  revalidatePath("/", "layout");
+  return { ok: true };
 }
 
 // ───────── Orders ─────────
@@ -158,7 +239,7 @@ export async function updateEnquiryAction(id: string, patch: { status?: EnquiryS
 
 // ───────── Settings ─────────
 const SettingsInput = z.object({
-  activeOccasion: z.enum(["chinese-new-year", "mid-autumn", "dragon-boat", "hari-raya"]),
+  activeFestivalId: z.string().trim().min(1, "Choose the festival that leads the homepage").max(80),
   festiveTitle: z.string().trim().min(2).max(80),
   festiveIntro: z.string().trim().max(300),
   heroEyebrow: z.string().trim().max(60),

@@ -2,10 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { saveSettingsAction } from "@/lib/admin/actions";
-import { OCCASIONS } from "@/lib/catalog";
-import type { SiteSettings } from "@/lib/types";
+import { sortFestivals } from "@/lib/catalog";
+import type { Festival, SiteSettings } from "@/lib/types";
 
-export function SettingsForm({ settings }: { settings: SiteSettings }) {
+export function SettingsForm({ settings, festivals }: { settings: SiteSettings; festivals: Festival[] }) {
   const [s, setS] = useState(settings);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
@@ -22,10 +22,10 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
       }}
       className="grid max-w-5xl gap-6 lg:grid-cols-2"
     >
-      <Section title="Festive season" hint="Controls which occasion leads the homepage and Festive page.">
-        <F label="Current occasion">
-          <select className="field" value={s.activeOccasion} onChange={(e) => set("activeOccasion", e.target.value as SiteSettings["activeOccasion"])}>
-            {Object.entries(OCCASIONS).map(([k, o]) => <option key={k} value={k}>{o.name}</option>)}
+      <Section title="Festive season" hint="Which festival leads the homepage. Festival names are edited in Festivals.">
+        <F label="Current festival">
+          <select className="field" value={s.activeFestivalId} onChange={(e) => set("activeFestivalId", e.target.value)}>
+            {sortFestivals(festivals, true).map((f) => <option key={f.id} value={f.id}>{f.name}{f.active ? "" : " (hidden)"}</option>)}
           </select>
         </F>
         <F label="Section title"><input className="field" value={s.festiveTitle} onChange={(e) => set("festiveTitle", e.target.value)} /></F>

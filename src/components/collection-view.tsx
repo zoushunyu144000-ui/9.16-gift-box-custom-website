@@ -1,18 +1,16 @@
 import Link from "next/link";
-import { OCCASION_ORDER, priceRange, sortProducts } from "@/lib/catalog";
-import type { Occasion, Product } from "@/lib/types";
+import { isPurchasable, priceRange, sortProducts } from "@/lib/catalog";
+import type { Product } from "@/lib/types";
 import { Breadcrumbs } from "./breadcrumbs";
-import { EditorialGrid } from "./editorial-grid";
 import { Emph } from "./moire";
-import { ProductCard } from "./product-card";
+import { ProductGrid } from "./product-grid";
 import { SortSelect } from "./sort-select";
-import { WineList } from "./wine-list";
 
 export type SortKey = "featured" | "price-asc" | "price-desc" | "name";
 
 export function sortBy(list: Product[], sort: SortKey) {
   const base = sortProducts(list);
-  const avail = (p: Product) => (p.status === "active" ? 0 : 1);
+  const avail = (p: Product) => (isPurchasable(p) ? 0 : 1);
   if (sort === "price-asc") return [...base].sort((a, b) => avail(a) - avail(b) || priceRange(a).min - priceRange(b).min);
   if (sort === "price-desc") return [...base].sort((a, b) => avail(a) - avail(b) || priceRange(b).min - priceRange(a).min);
   if (sort === "name") return [...base].sort((a, b) => a.name.localeCompare(b.name));
@@ -20,8 +18,8 @@ export function sortBy(list: Product[], sort: SortKey) {
 }
 
 /**
- * Category page (Fixed Gift Collection, Wine & Spirits).
- * `layout="editorial"` lays products out as a spread; `layout="list"` reads like a wine list.
+ * Category page (Fixed Gift Collection, Wine Gift Boxes).
+ * Products always sit in the same even grid (ProductGrid) as every other shopping page.
  * Titles accept *italic* markup.
  */
 export function CollectionView({
@@ -32,7 +30,6 @@ export function CollectionView({
   products,
   sort,
   note,
-  layout = "editorial",
 }: {
   basePath: string;
   title: string;
@@ -41,10 +38,9 @@ export function CollectionView({
   products: Product[];
   sort: SortKey;
   note?: string;
-  layout?: "editorial" | "list" | "grid";
 }) {
   const list = sortBy(products, sort);
-  const available = list.filter((p) => p.status === "active").length;
+  const available = list.filter(isPurchasable).length;
   const plainTitle = title.replace(/\*/g, "");
 
   return (
@@ -71,7 +67,7 @@ export function CollectionView({
         <div className="shell flex h-14 items-center justify-between gap-4">
           <p className="text-[13px] text-ink-2">
             {available} {available === 1 ? "gift" : "gifts"}
-            {list.length > available ? <span className="text-ink-3"> · {list.length - available} unavailable</span> : null}
+            {list.length > available ? <span className="text-ink-3"> · {list.length - available} sold out</span> : null}
           </p>
           <SortSelect value={sort} />
         </div>
@@ -86,16 +82,8 @@ export function CollectionView({
               Back to home
             </Link>
           </div>
-        ) : layout === "list" ? (
-          <WineList products={list} />
-        ) : layout === "grid" ? (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-12 md:grid-cols-3 md:gap-x-6 xl:grid-cols-4">
-            {list.map((p, i) => (
-              <ProductCard key={p.id} product={p} priority={i < 4} sizes="(min-width: 1280px) 23vw, (min-width: 768px) 31vw, 50vw" />
-            ))}
-          </div>
         ) : (
-          <EditorialGrid products={list} />
+          <ProductGrid products={list} />
         )}
       </div>
     </div>
@@ -104,8 +92,4 @@ export function CollectionView({
 
 export function parseSort(v: string | string[] | undefined): SortKey {
   return v === "price-asc" || v === "price-desc" || v === "name" ? v : "featured";
-}
-
-export function parseOccasion(v: string | string[] | undefined): Occasion | "all" {
-  return typeof v === "string" && (OCCASION_ORDER as string[]).includes(v) ? (v as Occasion) : "all";
 }

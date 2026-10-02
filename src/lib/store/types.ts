@@ -1,4 +1,4 @@
-import type { Enquiry, Order, Product, SiteSettings } from "@/lib/types";
+import type { Enquiry, Festival, Order, Product, SiteSettings } from "@/lib/types";
 
 export interface Store {
   /** "supabase" in production; "demo" when no database is configured (preview only). */
@@ -9,6 +9,15 @@ export interface Store {
   getProductById(id: string): Promise<Product | null>;
   saveProduct(product: Product): Promise<Product>;
   deleteProduct(id: string): Promise<void>;
+  /**
+   * Add `delta` to a product's stock (negative to deduct), never below 0.
+   * No-op when the product doesn't track stock. Used after a website order is paid.
+   */
+  adjustStock(productId: string, delta: number): Promise<void>;
+
+  listFestivals(): Promise<Festival[]>;
+  saveFestival(festival: Festival): Promise<Festival>;
+  deleteFestival(id: string): Promise<void>;
 
   getSettings(): Promise<SiteSettings>;
   saveSettings(settings: SiteSettings): Promise<SiteSettings>;

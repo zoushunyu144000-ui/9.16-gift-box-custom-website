@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { StockCell } from "@/components/admin/stock-cell";
 import { PageTitle, Pill, PRODUCT_STATUS } from "@/components/admin/ui";
 import { ProductImage } from "@/components/product-image";
-import { CATEGORIES, OCCASIONS, priceLabel, sortProducts } from "@/lib/catalog";
+import { CATEGORIES, festivalName, isPurchasable, isSoldOut, priceLabel, sortProducts } from "@/lib/catalog";
 import { getStore } from "@/lib/store";
 import type { CategorySlug } from "@/lib/types";
 
@@ -9,12 +10,14 @@ export const metadata = { title: "Products" };
 
 export default async function ProductsAdmin({ searchParams }: PageProps<"/admin/products">) {
   const { category } = await searchParams;
-  const all = sortProducts(await (await getStore()).listProducts());
+  const store = await getStore();
+  const [products, festivals] = await Promise.all([store.listProducts(), store.listFestivals()]);
+  const all = sortProducts(products);
   const cat = typeof category === "string" && category in CATEGORIES ? (category as CategorySlug) : null;
   const list = cat ? all.filter((p) => p.category === cat) : all;
   return (
     <>
-      <PageTitle title="Products" sub={`${all.length} products · ${all.filter((p) => p.status === "active").length} on sale`}>
+      <PageTitle title="Products" sub={`${all.length} products · ${all.filter(isPurchasable).length} on sale · stock can be edited in the list`}>
         <Link href="/admin/products/new" className="btn btn-primary">Add product</Link>
       </PageTitle>
       <div className="no-scrollbar mb-5 flex gap-1.5 overflow-x-auto">
@@ -25,12 +28,13 @@ export default async function ProductsAdmin({ searchParams }: PageProps<"/admin/
         ))}
       </div>
       <div className="overflow-x-auto border border-line bg-ivory">
-        <table className="w-full min-w-[720px] text-left text-[14px]">
+        <table className="w-full min-w-[820px] text-left text-[14px]">
           <thead className="border-b border-line text-[11px] uppercase tracking-[0.12em] text-ink-3">
             <tr>
               <th className="px-4 py-3 font-medium">Product</th>
               <th className="px-4 py-3 font-medium">Collection</th>
               <th className="px-4 py-3 font-medium">Price</th>
+              <th className="px-4 py-3 font-medium">Stock</th>
               <th className="px-4 py-3 font-medium">Images</th>
               <th className="px-4 py-3 font-medium">Status</th>
             </tr>
@@ -44,15 +48,16 @@ export default async function ProductsAdmin({ searchParams }: PageProps<"/admin/
                     <span>
                       <span className="block font-medium underline-offset-4 hover:underline">{p.name}</span>
                       <span className="block text-[12px] text-ink-3">
-                        {p.featured ? "Homepage · " : ""}{p.personalisation?.enabled ? "Engraving · " : ""}{p.variants.length ? `${p.variants.length} options` : "No options"}
+                        {p.featured ? "Homepage · " : ""}{p.personalisation?.enabled ? "Personalisation · " : ""}{p.variants.length ? `${p.variants.length} options` : "No options"}
                       </span>
                     </span>
                   </Link>
                 </td>
-                <td className="px-4 py-2.5">{CATEGORIES[p.category].short}{p.occasion ? <div className="text-[12px] text-ink-3">{OCCASIONS[p.occasion].name}</div> : null}</td>
+                <td className="px-4 py-2.5">{CATEGORIES[p.category].short}{p.festivalId ? <div className="text-[12px] text-ink-3">{festivalName(festivals, p.festivalId) ?? "Unknown festival"}</div> : null}</td>
                 <td className="px-4 py-2.5 tabular-nums">{priceLabel(p)}</td>
+                <td className="px-4 py-2.5"><StockCell id={p.id} stock={p.stock} /></td>
                 <td className="px-4 py-2.5 tabular-nums">{p.images.length}</td>
-                <td className="px-4 py-2.5"><Pill tone={PRODUCT_STATUS[p.status].tone}>{PRODUCT_STATUS[p.status].label}</Pill></td>
+                <td className="px-4 py-2.5">{p.status === "active" && isSoldOut(p) ? <Pill tone="warn">Sold Out · no stock</Pill> : <Pill tone={PRODUCT_STATUS[p.status].tone}>{PRODUCT_STATUS[p.status].label}</Pill>}</td>
               </tr>
             ))}
           </tbody>

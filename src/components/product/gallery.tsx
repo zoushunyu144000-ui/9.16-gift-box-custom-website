@@ -61,6 +61,7 @@ export function Gallery({ images, name, soldOut, mobileRatio = 1.25 }: { images:
             </div>
           ))}
         </div>
+        {soldOut && <span className="pointer-events-none absolute left-4 top-4 bg-ivory/95 px-2.5 py-1.5 text-[11px] font-medium uppercase leading-none tracking-[0.18em] text-ink">Sold Out</span>}
         {list.length > 1 && (
           <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center gap-1.5">
             {list.map((_, i) => (
@@ -106,6 +107,7 @@ export function Gallery({ images, name, soldOut, mobileRatio = 1.25 }: { images:
               imgClassName={soldOut ? "grade-muted" : "grade"}
             />
           </button>
+          {soldOut && <span className="pointer-events-none absolute left-4 top-4 bg-ivory/95 px-2.5 py-1.5 text-[11px] font-medium uppercase leading-none tracking-[0.18em] text-ink">Sold Out</span>}
           {list.length > 1 && (
             <div className="absolute inset-x-4 top-1/2 flex -translate-y-1/2 justify-between opacity-0 transition-opacity group-hover:opacity-100">
               <button type="button" onClick={() => setActive((active - 1 + list.length) % list.length)} className="grid h-10 w-10 place-items-center bg-ivory/90" aria-label="Previous image">

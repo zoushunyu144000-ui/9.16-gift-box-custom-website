@@ -33,7 +33,7 @@ assert.match(styles, /--font-display: "Lora Variable"/, "The global display toke
 assert.match(styles, /--color-walnut: #6b513d;/, "Wine should use the approved warmer walnut tone");
 assert.match(styles, /\.home-cta--quiet\s*\{/, "The homepage should define a restrained category CTA modifier");
 
-for (const route of ["/fixed-gifts", "/wine-spirits", "/corporate"]) {
+for (const route of ["/fixed-gifts", "/wine-gift-boxes", "/corporate"]) {
   assert.match(source, new RegExp(`href=[{]?["]${route.replace("/", "\\/")}`), `Homepage should keep a direct CTA to ${route}`);
 }
 
