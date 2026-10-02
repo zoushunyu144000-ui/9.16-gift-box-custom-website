@@ -2,12 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
-import { formatRM, GIFT_MESSAGE_MAX, isSoldOut, lineContainsAlcohol, PERSONALISATION_PATTERN, tracksStock, unitPrice, whatsappLink } from "@/lib/catalog";
+import { formatRM, GIFT_MESSAGE_MAX, isSoldOut, lineContainsAlcohol, PERSONALISATION_PATTERN, tracksStock, unitPrice } from "@/lib/catalog";
 import type { Product } from "@/lib/types";
 import { useCart } from "../cart/cart-context";
 import { QuantityStepper } from "../quantity-stepper";
 
-export function PurchasePanel({ product, whatsappNumber }: { product: Product; whatsappNumber: string }) {
+export function PurchasePanel({ product }: { product: Product }) {
   const { add } = useCart();
   const soldOut = isSoldOut(product) || product.status !== "active";
   const hasVariants = product.variants.length > 0;
@@ -84,7 +84,6 @@ export function PurchasePanel({ product, whatsappNumber }: { product: Product; w
     setTimeout(() => setAdded(false), 2400);
   }
 
-  const waText = `Hello Moire Co., I'd like to ask about "${product.name}".`;
 
   return (
     <div>
@@ -100,11 +99,7 @@ export function PurchasePanel({ product, whatsappNumber }: { product: Product; w
           </button>
           <p className="mt-3 text-[13px] leading-relaxed text-ink-2">
             {product.status === "sold_out" && product.availabilityNote ? `${product.availabilityNote}. ` : ""}
-            This gift can’t be ordered right now.{" "}
-            <a href={whatsappLink(whatsappNumber, waText)} target="_blank" rel="noopener noreferrer" className="underline decoration-line-strong underline-offset-4 hover:text-ink">
-              Ask us on WhatsApp
-            </a>{" "}
-            to hear when it returns.
+            This gift can’t be ordered right now.
           </p>
         </div>
       )}

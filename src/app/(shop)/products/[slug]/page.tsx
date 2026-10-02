@@ -5,7 +5,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { ProductCard } from "@/components/product-card";
 import { Gallery } from "@/components/product/gallery";
 import { PurchasePanel } from "@/components/product/purchase-panel";
-import { CATEGORIES, festivalHref, formatRM, isSoldOut, sortProducts, whatsappLink } from "@/lib/catalog";
+import { CATEGORIES, festivalHref, formatRM, isSoldOut, sortProducts } from "@/lib/catalog";
 import { sizedSrc } from "@/lib/images";
 import { getStore } from "@/lib/store";
 
@@ -81,7 +81,7 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
           <p className="eyebrow mt-5 lg:mt-0">{festival ? festival.name : cat.name}</p>
           <h1 className="display mt-3 text-[2.25rem] leading-[1.05] md:text-[2.9rem]">{product.name}</h1>
           <div className="mt-4">
-            <PurchasePanel product={product} whatsappNumber={settings.whatsappNumber} />
+            <PurchasePanel product={product} />
           </div>
 
           {/* The one product description, after price and purchase. */}
@@ -147,17 +147,6 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
           </section>
 
           <ul className="mt-8 space-y-3 text-[13px] leading-relaxed text-ink-2">
-            <li className="flex gap-3">
-              <span className="w-20 flex-none text-ink">Questions</span>
-              <a
-                href={whatsappLink(settings.whatsappNumber, `Hello Moire Co., I have a question about "${product.name}".`)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline decoration-line-strong underline-offset-4 hover:text-ink"
-              >
-                Chat with us on WhatsApp
-              </a>
-            </li>
             <li className="flex gap-3">
               <span className="w-20 flex-none text-ink">Corporate</span>
               <Link href="/corporate" className="underline decoration-line-strong underline-offset-4 hover:text-ink">

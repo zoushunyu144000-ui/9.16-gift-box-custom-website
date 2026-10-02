@@ -4,8 +4,6 @@ import { ArrowRight } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { ProductImage } from "@/components/product-image";
 import { siteImages } from "@/data/seed";
-import { whatsappLink } from "@/lib/catalog";
-import { getStore } from "@/lib/store";
 import type { ProductImage as Img } from "@/lib/types";
 
 export const metadata: Metadata = {
@@ -17,8 +15,7 @@ export const metadata: Metadata = {
  * Corporate Orders — deliberately short: two main entries, details one click away
  * (/corporate/semi-curated and /corporate/bespoke).
  */
-export default async function CorporatePage() {
-  const settings = await (await getStore()).getSettings();
+export default function CorporatePage() {
   return (
     <div className="shell pt-6 md:pt-10">
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Corporate Orders" }]} />
@@ -44,18 +41,6 @@ export default async function CorporatePage() {
           image={siteImages.corporateBespoke}
         />
       </section>
-
-      <p className="mt-16 border-t border-line pt-8 text-[14px] text-ink-2 md:mt-24">
-        Not sure which suits you?{" "}
-        <a
-          href={whatsappLink(settings.whatsappNumber, "Hello Moire Co., I'd like to discuss a corporate gifting order.")}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-ink underline decoration-line-strong underline-offset-4 hover:decoration-ink"
-        >
-          Discuss on WhatsApp
-        </a>
-      </p>
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { whatsappLink } from "@/lib/catalog";
 import type { SiteSettings } from "@/lib/types";
 import { Logo } from "./logo";
 import { MoireField } from "./moire";
@@ -17,14 +16,6 @@ export function Footer({ settings }: { settings: SiteSettings }) {
           <p className="mt-5 max-w-[34ch] text-[14px] leading-relaxed text-ink-2">
             Festive gift boxes, everyday gifts, wine gift boxes and corporate gifting from Kuala Lumpur.
           </p>
-          <a
-            href={whatsappLink(settings.whatsappNumber, "Hello Moire Co., I have a question about a gift.")}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="link-line mt-6"
-          >
-            Chat on WhatsApp
-          </a>
         </div>
 
         <FooterCol
