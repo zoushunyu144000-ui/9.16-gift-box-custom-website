@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Hero } from "@/components/hero";
 import { ProductCard } from "@/components/product-card";
 import { ProductImage } from "@/components/product-image";
@@ -24,8 +24,7 @@ export default async function HomePage() {
   // available ones, via sortProducts) and are marked Sold Out on the card.
   const season = festivals.find((f) => f.id === settings.activeFestivalId && f.active);
   const festive = season ? pick(visible.filter((p) => p.category === "festive" && p.festivalId === season.id), 4) : [];
-  // Every other festival is only a simple text entry in a collapsed list under the row (no images,
-  // no prices); the customer opens it and clicks through when they need another season.
+  // Every other festival is a plain button under the row (no images, no prices) that leads to its page.
   const otherFestivals = sortFestivals(festivals).filter((f) => f.id !== season?.id);
   const fixedImage = siteImages.homeFixed;
   const wineImage = siteImages.homeWine;
@@ -60,22 +59,18 @@ export default async function HomePage() {
               </div>
             )}
             {otherFestivals.length > 0 && (
-              <details className="group mt-10 border-y border-line md:mt-12" open={festive.length === 0}>
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-[13px] font-medium uppercase tracking-[0.16em] text-ink-2 transition-colors hover:text-ink [&::-webkit-details-marker]:hidden">
-                  Other festivals
-                  <ChevronDown className="h-4 w-4 transition-transform duration-300 group-open:rotate-180" strokeWidth={1.25} aria-hidden="true" />
-                </summary>
-                <ul className="grid border-t border-line sm:grid-cols-2 sm:gap-x-6 lg:grid-cols-4">
+              <nav className="mt-10 border-t border-line pt-6 md:mt-12" aria-label="Other festivals">
+                <p className="text-[12px] font-medium uppercase tracking-[0.16em] text-ink-3">Other festivals</p>
+                <ul className="mt-4 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
                   {otherFestivals.map((f) => (
-                    <li key={f.id} className="border-b border-line last:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0 lg:border-b-0">
-                      <Link href={festivalHref(f)} className="flex items-center justify-between gap-4 py-4 text-[16px] transition-colors hover:text-bronze">
-                        <span className="display">{f.name}</span>
-                        <ArrowRight className="h-3.5 w-3.5 flex-none" strokeWidth={1.25} aria-hidden="true" />
+                    <li key={f.id}>
+                      <Link href={festivalHref(f)} className="btn btn-outline w-full px-4 text-center sm:w-auto sm:px-7">
+                        {f.name}
                       </Link>
                     </li>
                   ))}
                 </ul>
-              </details>
+              </nav>
             )}
           </div>
         </section>

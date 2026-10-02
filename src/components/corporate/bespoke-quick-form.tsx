@@ -1,5 +1,6 @@
 "use client";
 
+import { DateSelect } from "../date-select";
 import { useState } from "react";
 import { whatsappLink } from "@/lib/catalog";
 import { formatDate } from "@/lib/dates";
@@ -37,7 +38,7 @@ export function BespokeQuickForm({ earliestDate, whatsappNumber }: { earliestDat
         </select>
       </Field>
       <Field id="b-date" label="Approximate date" hint="Your best guess is fine.">
-        <input id="b-date" type="date" className="field" min={earliestDate} value={f.date} onChange={set("date")} />
+        <DateSelect id="b-date" min={earliestDate} value={f.date} onChange={(v) => setF((p) => ({ ...p, date: v }))} />
       </Field>
       <Field id="b-qty" label="Quantity" hint="Roughly how many gifts.">
         <input id="b-qty" type="number" inputMode="numeric" min={1} className="field" placeholder="e.g. 50" value={f.quantity} onChange={set("quantity")} />

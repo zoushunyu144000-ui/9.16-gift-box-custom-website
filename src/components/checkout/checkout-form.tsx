@@ -1,5 +1,6 @@
 "use client";
 
+import { DateSelect } from "../date-select";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -307,8 +308,8 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
                   ))}
                 </select>
               </Field>
-              <Field id="deliveryDate" label="Preferred delivery date" error={errors.deliveryDate} hint={`Earliest available: ${new Date(`${earliestDate}T00:00:00+08:00`).toLocaleDateString("en-MY", { day: "numeric", month: "short" })}`}>
-                <input id="deliveryDate" type="date" min={earliestDate} className="field" value={d.deliveryDate} onChange={(e) => set("deliveryDate", e.target.value)} aria-invalid={!!errors.deliveryDate} />
+              <Field id="deliveryDate" label="Preferred delivery date" error={errors.deliveryDate} hint={`Earliest available: ${new Date(`${earliestDate}T00:00:00+08:00`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`}>
+                <DateSelect id="deliveryDate" min={earliestDate} value={d.deliveryDate} onChange={(v) => set("deliveryDate", v)} invalid={!!errors.deliveryDate} />
               </Field>
               <Field id="deliveryNotes" label="Delivery notes (optional)" className="sm:col-span-2">
                 <textarea id="deliveryNotes" className="field !min-h-[4.5rem]" maxLength={300} placeholder="Gate code, leave with guard, preferred time…" value={d.deliveryNotes} onChange={(e) => set("deliveryNotes", e.target.value)} />

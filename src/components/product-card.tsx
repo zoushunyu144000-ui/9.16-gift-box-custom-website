@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { isSoldOut, priceLabel, soldOutLabel } from "@/lib/catalog";
+import { isSoldOut, priceLabel } from "@/lib/catalog";
 import type { Product } from "@/lib/types";
 import { ProductImage } from "./product-image";
 import { QuickAdd } from "./quick-add";
@@ -8,9 +8,8 @@ import { QuickAdd } from "./quick-add";
  * Product card.
  * `mount`  — photograph set in a paper mount (default; the collection look)
  * `bare`   — full-bleed photograph, used for the larger editorial features
- * Notes (engraving, upgrades) are set as a quiet line of text rather than badges on the
- * image, so the photograph stays clean. The one exception is Sold Out, which must be
- * unmistakable: a small ivory label on the photograph, in every card size.
+ * Cards show only the name and price (client request); details live on the product page.
+ * Sold Out is the one label: a small ivory tag on the photograph, in every card size.
  */
 export function ProductCard({
   product,
@@ -20,7 +19,6 @@ export function ProductCard({
   frame = "mount",
   ratio = 1.25,
   size = "md",
-  compact = false,
   reveal = true,
   revealDelay = 0,
 }: {
@@ -32,6 +30,7 @@ export function ProductCard({
   frame?: "mount" | "bare";
   ratio?: number;
   size?: "md" | "lg";
+  /** Kept for existing call sites; every card is now name + price only. */
   compact?: boolean;
   reveal?: boolean;
   revealDelay?: number;
@@ -39,20 +38,6 @@ export function ProductCard({
   const [first, second] = product.images;
   const soldOut = isSoldOut(product);
   const simple = !product.variants.length && !product.personalisation?.enabled;
-  const statusNote = soldOut ? soldOutLabel(product) : null;
-  const note = soldOut
-    ? statusNote !== "Sold Out"
-      ? statusNote
-      : null
-    : product.personalisation?.enabled
-      ? product.personalisation.options?.length
-        ? "Personalisation available"
-        : "Engraving available"
-      : product.variants.length > 1 && product.variants.some((v) => v.containsAlcohol)
-        ? "Wine gift box option"
-        : product.variants.length > 1
-          ? `${product.variants.length} options`
-          : null;
 
   const media = (
     <div className="relative overflow-hidden">
@@ -103,16 +88,10 @@ export function ProductCard({
             {priceLabel(product)}
           </p>
         </div>
-        {!compact && <p className={`mt-1.5 line-clamp-2 leading-relaxed text-ink-2 ${size === "lg" ? "max-w-[46ch] text-[14px] md:text-[15px]" : "text-[13px]"}`}>{product.summary}</p>}
         <p className={`mt-2 text-[14px] tabular-nums sm:hidden ${soldOut ? "text-ink-3" : ""}`}>{priceLabel(product)}</p>
-        {(!compact || (simple && !soldOut)) && (
-          <div className="mt-auto flex items-center justify-between gap-3 pt-2.5">
-            {!compact && note ? (
-              <p className={`text-[11px] uppercase tracking-[0.14em] ${soldOut ? "text-ink-3" : "text-bronze"}`}>{note}</p>
-            ) : (
-              <span />
-            )}
-            {simple && !soldOut && <QuickAdd product={product} />}
+        {simple && !soldOut && (
+          <div className="mt-auto flex justify-end pt-2.5">
+            <QuickAdd product={product} />
           </div>
         )}
       </div>
