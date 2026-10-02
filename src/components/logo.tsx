@@ -1,31 +1,32 @@
 import Image from "next/image";
 import { BRAND } from "@/lib/brand";
 
-/** All logo usages go through Monogram / Logo; the asset files are configured in src/lib/brand.ts. */
-export function Monogram({ className = "", title = BRAND.name }: { className?: string; title?: string }) {
+/** All logo usages go through Monogram / Logo; the asset file is configured in src/lib/brand.ts. */
+function BrandImage({ className, alt, sizes }: { className: string; alt: string; sizes: string }) {
   return (
     <Image
-      src={BRAND.monogram.src}
-      alt={title}
-      width={BRAND.monogram.width}
-      height={BRAND.monogram.height}
+      src={BRAND.logo.src}
+      alt={alt}
+      width={BRAND.logo.width}
+      height={BRAND.logo.height}
+      sizes={sizes}
       className={`block w-auto shrink-0 ${className}`}
-      unoptimized
     />
   );
 }
 
+/** The client's logo on its own, sized by the caller (admin sidebar, image fallbacks, 404). */
+export function Monogram({ className = "", title = BRAND.name }: { className?: string; title?: string }) {
+  return <BrandImage className={className} alt={title} sizes="160px" />;
+}
+
 export function Logo({ className = "", compact = false }: { className?: string; compact?: boolean }) {
   return (
-    <span className={`inline-flex items-center ${compact ? "gap-1 lg:gap-2" : "gap-3"} ${className}`}>
-      <Monogram className={compact ? "h-[18px] lg:h-8" : "h-10"} />
-      <Image
-        src={BRAND.wordmark.src}
-        alt={BRAND.wordmark.alt}
-        width={BRAND.wordmark.width}
-        height={BRAND.wordmark.height}
-        className={`block w-auto shrink-0 ${compact ? "h-[7px] lg:h-[10px]" : "h-[11px]"}`}
-        unoptimized
+    <span className={`inline-flex items-center ${className}`}>
+      <BrandImage
+        className={compact ? "h-9 lg:h-12" : "h-16"}
+        alt={BRAND.logo.alt}
+        sizes={compact ? "(min-width: 1024px) 104px, 78px" : "140px"}
       />
     </span>
   );

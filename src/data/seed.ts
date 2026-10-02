@@ -746,7 +746,7 @@ export const seedSettings: SiteSettings = {
   freeDeliveryThreshold: null,
   deliveryLeadDays: 2,
   deliveryNote: "Choose your preferred delivery date at checkout. We will contact you if the date needs to change.",
-  whatsappNumber: "60123456789",
+  whatsappNumber: "601128691092",
   contactEmail: "",
   businessHours: "",
   showPreviewNotice: true,

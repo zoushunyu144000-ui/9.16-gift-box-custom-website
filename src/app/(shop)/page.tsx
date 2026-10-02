@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import { Hero } from "@/components/hero";
 import { ProductCard } from "@/components/product-card";
 import { ProductImage } from "@/components/product-image";
 import { ProductRail, RailItem } from "@/components/product-rail";
 import { siteImages } from "@/data/seed";
-import { festivalHref, sortProducts } from "@/lib/catalog";
+import { festivalHref, sortFestivals, sortProducts } from "@/lib/catalog";
 import { getStore } from "@/lib/store";
 import type { Product, ProductImage as ProductImageData } from "@/lib/types";
 
@@ -24,6 +24,9 @@ export default async function HomePage() {
   // available ones, via sortProducts) and are marked Sold Out on the card.
   const season = festivals.find((f) => f.id === settings.activeFestivalId && f.active);
   const festive = season ? pick(visible.filter((p) => p.category === "festive" && p.festivalId === season.id), 4) : [];
+  // Every other festival is only a simple text entry in a collapsed list under the row (no images,
+  // no prices); the customer opens it and clicks through when they need another season.
+  const otherFestivals = sortFestivals(festivals).filter((f) => f.id !== season?.id);
   const fixedImage = siteImages.homeFixed;
   const wineImage = siteImages.homeWine;
 
@@ -32,7 +35,7 @@ export default async function HomePage() {
       <Hero eyebrow={settings.heroEyebrow} title={settings.heroTitle} text={settings.heroText} slides={[siteImages.homeHero]} />
 
       {/* 1 · Festive — direct seasonal shopping */}
-      {festive.length > 0 && (
+      {(festive.length > 0 || otherFestivals.length > 0) && (
         <section className="bg-paper py-12 md:py-16" aria-labelledby="festive-heading">
           <div className="shell">
             <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
@@ -41,19 +44,39 @@ export default async function HomePage() {
                 <h2 id="festive-heading" className="display mt-3 text-[2.2rem] leading-tight tracking-[-0.01em] md:text-[2.8rem]">Festive Collection</h2>
                 <p className="mt-2 text-[14px] text-ink-2 md:text-[15px]">Joyful gifts for the season, ready to choose and send.</p>
               </div>
-              <Link href={festivalHref(season!)} className="link-line flex-none sm:mb-1">
+              <Link href={season && festive.length > 0 ? festivalHref(season) : "/festive"} className="link-line flex-none sm:mb-1">
                 View all <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.25} />
               </Link>
             </div>
-            <div className="mt-8 md:mt-10">
-              <ProductRail label={settings.festiveTitle}>
-                {festive.map((p, i) => (
-                  <RailItem key={p.id}>
-                    <ProductCard product={p} compact priority={i < 2} ratio={0.92} reveal={false} sizes="(min-width: 1024px) 24vw, (min-width: 640px) 44vw, 78vw" />
-                  </RailItem>
-                ))}
-              </ProductRail>
-            </div>
+            {festive.length > 0 && (
+              <div className="mt-8 md:mt-10">
+                <ProductRail label={settings.festiveTitle}>
+                  {festive.map((p, i) => (
+                    <RailItem key={p.id}>
+                      <ProductCard product={p} compact priority={i < 2} ratio={0.92} reveal={false} sizes="(min-width: 1024px) 24vw, (min-width: 640px) 44vw, 78vw" />
+                    </RailItem>
+                  ))}
+                </ProductRail>
+              </div>
+            )}
+            {otherFestivals.length > 0 && (
+              <details className="group mt-10 border-y border-line md:mt-12" open={festive.length === 0}>
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-[13px] font-medium uppercase tracking-[0.16em] text-ink-2 transition-colors hover:text-ink [&::-webkit-details-marker]:hidden">
+                  Other festivals
+                  <ChevronDown className="h-4 w-4 transition-transform duration-300 group-open:rotate-180" strokeWidth={1.25} aria-hidden="true" />
+                </summary>
+                <ul className="grid border-t border-line sm:grid-cols-2 sm:gap-x-6 lg:grid-cols-4">
+                  {otherFestivals.map((f) => (
+                    <li key={f.id} className="border-b border-line last:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0 lg:border-b-0">
+                      <Link href={festivalHref(f)} className="flex items-center justify-between gap-4 py-4 text-[16px] transition-colors hover:text-bronze">
+                        <span className="display">{f.name}</span>
+                        <ArrowRight className="h-3.5 w-3.5 flex-none" strokeWidth={1.25} aria-hidden="true" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
           </div>
         </section>
       )}

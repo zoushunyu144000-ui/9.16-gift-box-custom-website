@@ -2,11 +2,9 @@ import Link from "next/link";
 import { isPurchasable, priceRange, sortProducts } from "@/lib/catalog";
 import type { Product } from "@/lib/types";
 import { Breadcrumbs } from "./breadcrumbs";
-import { EditorialGrid } from "./editorial-grid";
 import { Emph } from "./moire";
-import { ProductCard } from "./product-card";
+import { ProductGrid } from "./product-grid";
 import { SortSelect } from "./sort-select";
-import { WineList } from "./wine-list";
 
 export type SortKey = "featured" | "price-asc" | "price-desc" | "name";
 
@@ -21,7 +19,7 @@ export function sortBy(list: Product[], sort: SortKey) {
 
 /**
  * Category page (Fixed Gift Collection, Wine Gift Boxes).
- * `layout="editorial"` lays products out as a spread; `layout="list"` reads like a wine list.
+ * Products always sit in the same even grid (ProductGrid) as every other shopping page.
  * Titles accept *italic* markup.
  */
 export function CollectionView({
@@ -32,7 +30,6 @@ export function CollectionView({
   products,
   sort,
   note,
-  layout = "editorial",
 }: {
   basePath: string;
   title: string;
@@ -41,7 +38,6 @@ export function CollectionView({
   products: Product[];
   sort: SortKey;
   note?: string;
-  layout?: "editorial" | "list" | "grid";
 }) {
   const list = sortBy(products, sort);
   const available = list.filter(isPurchasable).length;
@@ -86,16 +82,8 @@ export function CollectionView({
               Back to home
             </Link>
           </div>
-        ) : layout === "list" ? (
-          <WineList products={list} />
-        ) : layout === "grid" ? (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-12 md:grid-cols-3 md:gap-x-6 xl:grid-cols-4">
-            {list.map((p, i) => (
-              <ProductCard key={p.id} product={p} priority={i < 4} sizes="(min-width: 1280px) 23vw, (min-width: 768px) 31vw, 50vw" />
-            ))}
-          </div>
         ) : (
-          <EditorialGrid products={list} />
+          <ProductGrid products={list} />
         )}
       </div>
     </div>

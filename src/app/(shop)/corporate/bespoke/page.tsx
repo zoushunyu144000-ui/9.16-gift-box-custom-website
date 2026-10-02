@@ -3,24 +3,17 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { ProcessLine } from "@/components/process-line";
 import { ProductImage } from "@/components/product-image";
 import { siteImages } from "@/data/seed";
-import { whatsappLink } from "@/lib/catalog";
+import { BespokeQuickForm } from "@/components/corporate/bespoke-quick-form";
+import { earliestDeliveryDate } from "@/lib/dates";
 import { getStore } from "@/lib/store";
 
 export const metadata: Metadata = {
   title: "Made for your brand — fully customised corporate gifts",
-  description: "Fully customised corporate gifts from Moire Co. Message us on WhatsApp with your style, budget, quantity and date, and we prepare a proposal.",
+  description: "Fully customised corporate gifts from Moire Co. Tell us your style, date and quantity and send it to us on WhatsApp, and we prepare a proposal.",
 };
-
-// What to have ready before messaging — no web form; the conversation happens on WhatsApp.
-const PREPARE = ["Preferred style", "Budget", "Quantity", "Required date", "Occasion", "Additional requirements"];
 
 export default async function BespokePage() {
   const settings = await (await getStore()).getSettings();
-  const message = [
-    "Hello Moire Co., I'd like to enquire about a fully customised corporate gift.",
-    "",
-    ...PREPARE.map((p) => `${p}: `),
-  ].join("\n");
 
   return (
     <div className="shell pt-6 md:pt-10">
@@ -45,22 +38,14 @@ export default async function BespokePage() {
       <section className="mt-16 grid gap-10 border-t border-line pt-12 md:mt-24 md:grid-cols-12 md:gap-8" aria-labelledby="prepare-heading">
         <div className="md:col-span-5">
           <h2 id="prepare-heading" className="display text-[2rem] leading-tight md:text-[2.5rem]">
-            Before you message us
+            Tell us a little
           </h2>
-          <p className="mt-3 max-w-[40ch] text-[15px] leading-relaxed text-ink-2">It helps to have these ready. Anything you’re unsure of, we can work out together.</p>
+          <p className="mt-3 max-w-[40ch] text-[15px] leading-relaxed text-ink-2">
+            Fill in what you know — it takes a few seconds — and send it to us on WhatsApp. Anything you’re unsure of, we can work out together.
+          </p>
         </div>
         <div className="md:col-span-6 md:col-start-7">
-          <ul className="border-t border-line">
-            {PREPARE.map((p) => (
-              <li key={p} className="flex items-baseline gap-4 border-b border-line py-3.5 text-[15px]">
-                <span className="h-px w-3 flex-none translate-y-[-4px] bg-champagne" aria-hidden="true" />
-                {p}
-              </li>
-            ))}
-          </ul>
-          <a href={whatsappLink(settings.whatsappNumber, message)} target="_blank" rel="noopener noreferrer" className="btn btn-primary mt-8 w-full sm:w-auto">
-            Enquire via WhatsApp
-          </a>
+          <BespokeQuickForm earliestDate={earliestDeliveryDate(settings.deliveryLeadDays)} whatsappNumber={settings.whatsappNumber} />
         </div>
       </section>
     </div>

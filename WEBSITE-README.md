@@ -68,7 +68,7 @@ Without Supabase variables the site runs in **demo mode**: the sample catalogue 
 2. **Payment gateway:** client chooses provider (e.g. Billplz, Stripe, iPay88, Curlec). Implement a provider in `src/lib/payments/index.ts` + a signed webhook route that calls `markOrderPaid` / `markOrderFailed` (`src/lib/orders.ts`). Set `PAYMENT_PROVIDER`.
 3. Set `APP_SECRET` (long random string), `ADMIN_PASSWORD`, `NEXT_PUBLIC_SITE_URL`.
 4. Replace sample products, prices, contents and photos in /admin.
-5. Settings: real WhatsApp number, delivery fee, lead days, contact email; turn off the preview notice.
+5. Settings: WhatsApp number (now defaults to the client’s 60 11-2869 1092; if the Supabase settings row was already saved with the old placeholder, change it here), delivery fee, lead days, contact email; turn off the preview notice.
 6. Confirm policy page wording (`src/app/(shop)/delivery|terms|privacy`).
 7. Optional: order confirmation emails need an email service (e.g. Resend) — not included; third-party cost.
 

@@ -16,7 +16,6 @@ export default async function WineGiftBoxesPage({ searchParams }: PageProps<"/wi
       basePath="/wine-gift-boxes"
       eyebrow="Gift boxes & gift sets"
       title="Wine *Gift Boxes*"
-      layout="list"
       intro="Gift boxes and gift sets with wine, champagne or spirits — presented ready to give on their own or alongside a festive hamper."
       note="Gift boxes containing alcohol are sold only to customers aged 21 and above. You'll be asked to confirm your age at checkout."
       products={products.filter((p) => p.category === "wine-spirits" && p.status !== "hidden")}

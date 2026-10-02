@@ -6,7 +6,7 @@ import { getStore } from "@/lib/store";
 
 async function findFestival(slug: string) {
   const festivals = await (await getStore()).listFestivals();
-  return { festival: festivals.find((f) => f.slug === slug && f.active) ?? null, festivals };
+  return { festival: festivals.find((f) => f.slug === slug && f.active) ?? null };
 }
 
 export async function generateMetadata({ params }: PageProps<"/festive/[festival]">): Promise<Metadata> {
@@ -17,9 +17,9 @@ export async function generateMetadata({ params }: PageProps<"/festive/[festival
 
 export default async function FestivalPage({ params, searchParams }: PageProps<"/festive/[festival]">) {
   const [{ festival: slug }, sp] = await Promise.all([params, searchParams]);
-  const { festival, festivals } = await findFestival(slug);
+  const { festival } = await findFestival(slug);
   if (!festival) notFound();
   const store = await getStore();
   const [products, settings] = await Promise.all([store.listProducts(), store.getSettings()]);
-  return <FestivalView festival={festival} festivals={festivals} products={products} settings={settings} sort={parseSort(sp.sort)} />;
+  return <FestivalView festival={festival} products={products} settings={settings} sort={parseSort(sp.sort)} />;
 }
