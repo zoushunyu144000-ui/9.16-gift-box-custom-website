@@ -3,77 +3,64 @@ import { festivalHref, isPurchasable, sortFestivals } from "@/lib/catalog";
 import type { Festival, Product, SiteSettings } from "@/lib/types";
 import { Breadcrumbs } from "./breadcrumbs";
 import { sortBy, type SortKey } from "./collection-view";
-import { MoireField } from "./moire";
 import { ProductImage } from "./product-image";
 import { ProductGrid } from "./product-grid";
 import { SortSelect } from "./sort-select";
 
 /**
- * Festive Collection — level 1: one visual entry per festival.
- * Festivals come from data (Admin → Festivals): name, cover, description, shown/hidden, order.
+ * Festive Collection: every festival's gift boxes on one page, one section per festival,
+ * the current season first, then the order set in Admin → Festivals. Festivals with no
+ * gift boxes are left out. Each festival also keeps its own page (/festive/[slug]).
  */
 export function FestiveIndex({ festivals, products, settings }: { festivals: Festival[]; products: Product[]; settings: SiteSettings }) {
   const festive = products.filter((p) => p.category === "festive" && p.status !== "hidden");
-  const list = sortFestivals(festivals);
+  const ordered = sortFestivals(festivals);
+  const sections = [
+    ...ordered.filter((f) => f.id === settings.activeFestivalId),
+    ...ordered.filter((f) => f.id !== settings.activeFestivalId),
+  ]
+    .map((f) => ({ festival: f, items: sortBy(festive.filter((p) => p.festivalId === f.id), "featured") }))
+    .filter((s) => s.items.length > 0);
 
   return (
     <div>
-      <header className="relative overflow-hidden bg-paper">
-        <MoireField className="pointer-events-none absolute -left-[260px] -top-[300px] h-[760px] w-[760px] text-champagne" opacity={0.3} />
-        <div className="shell relative pb-12 pt-6 md:pb-16 md:pt-10">
+      <header className="bg-paper">
+        <div className="shell pb-12 pt-6 md:pb-16 md:pt-10">
           <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Festive Collection" }]} />
           <div className="mt-10 grid gap-6 md:mt-16 md:grid-cols-12 md:items-end">
             <div className="md:col-span-7">
               <p className="eyebrow">By festival</p>
               <h1 className="display mt-5 text-[2.6rem] leading-[0.98] tracking-[-0.02em] md:text-[4.6rem]">Festive Collection</h1>
             </div>
-            <p className="max-w-[44ch] text-[15px] leading-relaxed text-ink-2 md:col-span-4 md:col-start-9">Choose a festival to see its gift boxes.</p>
+            <p className="max-w-[44ch] text-[15px] leading-relaxed text-ink-2 md:col-span-4 md:col-start-9">Gift boxes for every festival, starting with this season.</p>
           </div>
         </div>
       </header>
 
-      <div className="shell pt-10 md:pt-16">
-        {list.length === 0 ? (
-          <div className="border border-line px-6 py-20 text-center">
+      <div className="shell">
+        {sections.length === 0 ? (
+          <div className="mt-12 border border-line px-6 py-20 text-center">
             <p className="display text-2xl">Nothing here yet</p>
             <p className="mx-auto mt-2 max-w-[40ch] text-ink-2">There are no festive gifts at the moment. Please check back soon.</p>
           </div>
         ) : (
-          <ul className="grid gap-x-6 gap-y-12 sm:grid-cols-2 md:gap-y-16">
-            {list.map((f, i) => {
-              const items = festive.filter((p) => p.festivalId === f.id);
-              const available = items.filter(isPurchasable).length;
-              const cover = f.coverImage ?? items.find((p) => p.images[0])?.images[0];
-              const season = f.id === settings.activeFestivalId;
-              return (
-                <li key={f.id} data-reveal="" style={{ "--reveal-delay": `${(i % 2) * 90}ms` } as React.CSSProperties}>
-                  <Link href={festivalHref(f)} className="group block">
-                    <div className="mount overflow-hidden transition-colors duration-500 group-hover:bg-stone">
-                      <ProductImage
-                        src={cover?.src}
-                        alt={cover?.alt ?? f.name}
-                        ratio={0.8}
-                        priority={i < 2}
-                        sizes="(min-width: 640px) 46vw, 100vw"
-                        imgClassName="grade transition-transform duration-[1.4s] ease-out-soft [@media(hover:hover)]:group-hover:scale-[1.035]"
-                      />
-                    </div>
-                    <div className="flex items-end justify-between gap-6 pt-5">
-                      <div className="min-w-0">
-                        {season && <p className="mb-2 text-[11px] uppercase tracking-[0.16em] text-bronze">This season</p>}
-                        <h2 className="display text-[1.75rem] leading-[1.1] md:text-[2.25rem]">{f.name}</h2>
-                        {f.description && <p className="mt-2 max-w-[44ch] text-[14px] leading-relaxed text-ink-2">{f.description}</p>}
-                      </div>
-                      <span className="flex-none pb-1 text-[12px] tabular-nums text-ink-3 transition-colors group-hover:text-ink">
-                        {items.length} {items.length === 1 ? "gift" : "gifts"}
-                        {items.length > 0 && available === 0 ? " · Sold Out" : ""} →
-                      </span>
-                    </div>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+          sections.map(({ festival: f, items }, i) => (
+            <section key={f.id} id={f.slug} className={`scroll-mt-24 ${i === 0 ? "pt-12 md:pt-16" : "mt-16 border-t border-line pt-12 md:mt-24 md:pt-16"}`} aria-labelledby={`festival-${f.slug}`}>
+              <div className="mb-8 flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between md:mb-10">
+                <div>
+                  {f.id === settings.activeFestivalId && <p className="eyebrow mb-3">This season</p>}
+                  <h2 id={`festival-${f.slug}`} className="display text-[2rem] leading-tight md:text-[2.6rem]">
+                    {f.name}
+                  </h2>
+                  {f.description && <p className="mt-2 max-w-[56ch] text-[14px] text-ink-2 md:text-[15px]">{f.description}</p>}
+                </div>
+                <Link href={festivalHref(f)} className="link-line flex-none sm:mb-1">
+                  View {f.name}
+                </Link>
+              </div>
+              <ProductGrid products={items} priorityCount={i === 0 ? 4 : 0} />
+            </section>
+          ))
         )}
       </div>
     </div>
