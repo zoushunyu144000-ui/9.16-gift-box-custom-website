@@ -161,20 +161,6 @@ function MobileMenu({ open, onClose, isActive }: { open: boolean; onClose: () =>
               </li>
             ))}
           </ul>
-          <ul className="mt-8 space-y-4 text-[14px] text-ink-2">
-            <li>
-              <Link href="/corporate/semi-curated">Semi-customised corporate orders</Link>
-            </li>
-            <li>
-              <Link href="/corporate/bespoke">Fully customised gifts</Link>
-            </li>
-            <li>
-              <Link href="/delivery">Delivery & returns</Link>
-            </li>
-            <li>
-              <Link href="/cart">Shopping bag</Link>
-            </li>
-          </ul>
         </nav>
       </div>
     </div>
