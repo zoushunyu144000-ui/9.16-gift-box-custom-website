@@ -11,15 +11,17 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
   const { add } = useCart();
   const soldOut = isSoldOut(product) || product.status !== "active";
   const hasVariants = product.variants.length > 0;
-  // Every product offers a personalised name (no material choice). Until the service starts
-  // (Admin → Settings) it is shown but can't be chosen.
+  // Every product offers a personalised name in a choice of materials. Admin → Settings can
+  // pause the service, which shows it as "Coming soon".
   const pers = personalisationFor(product);
+  const persOptions = pers.options?.filter(Boolean) ?? [];
   const maxQty = tracksStock(product) ? Math.max(1, Math.min(99, product.stock as number)) : 99;
 
   const [variantId, setVariantId] = useState<string | undefined>(hasVariants ? product.variants[0].id : undefined);
   const [qty, setQty] = useState(1);
   const [wantsPers, setWantsPers] = useState(false);
   const [persText, setPersText] = useState("");
+  const [persOption, setPersOption] = useState<string | undefined>(persOptions.length === 1 ? persOptions[0] : undefined);
   const [wantsMsg, setWantsMsg] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +61,7 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
     if (soldOut) return;
     if (hasVariants && !variant) return setError("Please choose an option.");
     if (wantsPers && pers) {
+      if (persOptions.length && !persOption) return setError("Please choose a material for the personalised name.");
       if (!persText.trim()) return setError("Please enter the name to personalise, or choose “No personalisation”.");
       if (persInvalid) return setError("Please use letters, numbers and basic punctuation only.");
     }
@@ -68,6 +71,7 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
       variantId,
       quantity: qty,
       personalisation: wantsPers ? persText.trim() || undefined : undefined,
+      personalisationOption: wantsPers && persText.trim() ? persOption : undefined,
       giftMessage: wantsMsg ? message.trim() || undefined : undefined,
       snapshot: {
         name: product.name,
@@ -153,6 +157,18 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
             {!personalisationLive && <p className="mt-2.5 text-[12px] text-ink-3">Personalised names will be available soon.</p>}
             {personalisationLive && wantsPers && (
               <div className="mt-5 space-y-5">
+                {persOptions.length > 0 && (
+                  <div>
+                    <p className="field-label">Material</p>
+                    <div className={`grid gap-2 ${persOptions.length === 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"}`} role="radiogroup" aria-label="Material">
+                      {persOptions.map((o) => (
+                        <OptionButton key={o} selected={persOption === o} onClick={() => setPersOption(o)}>
+                          {o}
+                        </OptionButton>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div>
                   <label htmlFor="pers" className="field-label">
                     Name to personalise
@@ -180,7 +196,7 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
                 </div>
                 {persText.trim() && !persInvalid && (
                   <div className="border border-line bg-cream px-4 py-5 text-center">
-                    <p className="label !text-[10px] !text-ink-3">Preview</p>
+                    <p className="label !text-[10px] !text-ink-3">Preview{persOption ? ` · ${persOption}` : ""}</p>
                     <p className="display mt-2 break-words text-[1.5rem] tracking-[0.04em]">{persText}</p>
                   </div>
                 )}

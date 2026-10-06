@@ -254,7 +254,7 @@ const SettingsInput = z.object({
   contactEmail: z.string().trim().email().max(120).or(z.literal("")),
   businessHours: z.string().trim().max(80),
   showPreviewNotice: z.boolean(),
-  personalisationLive: z.boolean().default(false),
+  personalisationLive: z.boolean().default(true),
 });
 
 export async function saveSettingsAction(input: SiteSettings): Promise<{ ok: boolean; error?: string }> {

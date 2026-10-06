@@ -45,15 +45,19 @@ export async function quoteLines(store: Store, lines: LineInput[], settings?: Si
 
     const text = line.personalisation?.trim() || undefined;
     let personalisationFee = 0;
-    // Materials are no longer offered (client, Oct 2026); old orders keep theirs.
-    const option: string | undefined = undefined;
+    let option: string | undefined;
     if (text) {
-      if (!s.personalisationLive) return { key: line.key, ok: false, problem: "Personalised names are coming soon and can’t be ordered yet." };
+      if (s.personalisationLive === false) return { key: line.key, ok: false, problem: "Personalised names are coming soon and can’t be ordered yet." };
       const pers = personalisationFor(p);
       if (text.length > pers.maxLength)
         return { key: line.key, ok: false, problem: `${pers.label} must be ${pers.maxLength} characters or fewer.` };
       if (!PERSONALISATION_PATTERN.test(text))
         return { key: line.key, ok: false, problem: `${pers.label} contains characters we can't engrave.` };
+      const choices = pers.options?.filter(Boolean) ?? [];
+      if (choices.length) {
+        option = choices.find((o) => o === line.personalisationOption);
+        if (!option) return { key: line.key, ok: false, problem: `Please choose a material for the ${pers.label.toLowerCase()}.` };
+      }
       personalisationFee = pers.fee || 0;
     }
 

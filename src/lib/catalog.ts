@@ -152,11 +152,13 @@ export function whatsappLink(number: string, text: string) {
   return `https://wa.me/${n}?text=${encodeURIComponent(text)}`;
 }
 
-/** Personalised name offered on every product (client, Oct 2026): no material choice, no fee
- * unless a product sets its own. A product's own settings (label, length, fee) win when enabled. */
-export const DEFAULT_PERSONALISATION: Personalisation = { enabled: true, label: "Personalised name", maxLength: 20, fee: 0 };
+/** Personalised name offered on every product (client, Oct 2026), in leather or acrylic.
+ * A product's own settings (label, length, fee, materials) win when enabled. */
+export const DEFAULT_PERSONALISATION: Personalisation = { enabled: true, label: "Personalised name", maxLength: 20, fee: 0, options: ["Leather", "Acrylic"] };
 export function personalisationFor(p: Product): Personalisation {
-  return p.personalisation?.enabled ? { ...p.personalisation, options: [] } : DEFAULT_PERSONALISATION;
+  if (!p.personalisation?.enabled) return DEFAULT_PERSONALISATION;
+  const options = p.personalisation.options?.filter(Boolean);
+  return { ...p.personalisation, options: options?.length ? options : DEFAULT_PERSONALISATION.options };
 }
 
 export const PERSONALISATION_PATTERN = /^[\p{L}\p{N} .,'&\-!?/()]*$/u;

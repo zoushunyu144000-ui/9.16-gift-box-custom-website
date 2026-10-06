@@ -750,7 +750,7 @@ export const seedSettings: SiteSettings = {
   contactEmail: "",
   businessHours: "",
   showPreviewNotice: true,
-  personalisationLive: false,
+  personalisationLive: true,
 };
 
 /** Imagery used by site sections (not products). */

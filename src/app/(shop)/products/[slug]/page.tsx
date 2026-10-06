@@ -83,7 +83,7 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
             </p>
           )}
           <div className="mt-4">
-            <PurchasePanel product={product} personalisationLive={!!settings.personalisationLive} />
+            <PurchasePanel product={product} personalisationLive={settings.personalisationLive !== false} />
           </div>
 
 

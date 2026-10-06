@@ -20,14 +20,13 @@ export function WineList({ products }: { products: Product[] }) {
     <div className="grid gap-10 lg:grid-cols-12 lg:gap-16">
       <div className="relative hidden lg:col-span-5 lg:block">
         <div className="sticky top-28">
-          <div className="mount">
-            <div className="relative aspect-[4/5] overflow-hidden">
-              {products.map((p, i) => (
-                <div key={p.id} className={`absolute inset-0 transition-opacity duration-700 ${i === active ? "opacity-100" : "opacity-0"}`} aria-hidden={i !== active}>
-                  <ProductImage src={p.images[0]?.src} alt={p.images[0]?.alt ?? p.name} ratio={1.25} sizes="36vw" className="!absolute inset-0" imgClassName="grade" />
-                </div>
-              ))}
-            </div>
+          {/* The photograph on its own, no mount (client, Oct 2026). */}
+          <div className="relative aspect-[4/5] overflow-hidden">
+            {products.map((p, i) => (
+              <div key={p.id} className={`absolute inset-0 transition-opacity duration-700 ${i === active ? "opacity-100" : "opacity-0"}`} aria-hidden={i !== active}>
+                <ProductImage src={p.images[0]?.src} alt={p.images[0]?.alt ?? p.name} ratio={1.25} sizes="36vw" className="!absolute inset-0" imgClassName="grade" />
+              </div>
+            ))}
           </div>
           <p className="mt-4 text-[12px] text-ink-3" aria-live="polite">
             {current?.name}

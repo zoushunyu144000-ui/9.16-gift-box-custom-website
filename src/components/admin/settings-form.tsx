@@ -39,7 +39,7 @@ export function SettingsForm({ settings, festivals }: { settings: SiteSettings; 
 
       <Section title="Personalised name">
         <label className="flex items-start gap-3 text-[14px]">
-          <input type="checkbox" className="check" checked={!!s.personalisationLive} onChange={(e) => set("personalisationLive", e.target.checked)} />
+          <input type="checkbox" className="check" checked={s.personalisationLive !== false} onChange={(e) => set("personalisationLive", e.target.checked)} />
           <span>Customers can order a personalised name<span className="block text-[12px] text-ink-2">Every product shows “Add a name”. While this is off, it is shown as “Coming soon” and can’t be chosen.</span></span>
         </label>
       </Section>
