@@ -5,7 +5,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { ProductCard } from "@/components/product-card";
 import { Gallery } from "@/components/product/gallery";
 import { PurchasePanel } from "@/components/product/purchase-panel";
-import { CATEGORIES, festivalHref, formatRM, isSoldOut, sortProducts } from "@/lib/catalog";
+import { CATEGORIES, festivalHref, isSoldOut, sortProducts } from "@/lib/catalog";
 import { sizedSrc } from "@/lib/images";
 import { getStore } from "@/lib/store";
 
@@ -34,11 +34,6 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
     .sort((a, b) => Number(b.festivalId === product.festivalId) - Number(a.festivalId === product.festivalId))
     .slice(0, 4);
   const soldOut = isSoldOut(product);
-
-  const deliveryText =
-    settings.freeDeliveryThreshold != null
-      ? `Delivery ${formatRM(settings.deliveryFee)} per order, free on orders from ${formatRM(settings.freeDeliveryThreshold)}.`
-      : `Delivery ${formatRM(settings.deliveryFee)} per order.`;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -91,43 +86,6 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
             <PurchasePanel product={product} personalisationLive={!!settings.personalisationLive} />
           </div>
 
-          <section className="mt-10" aria-label="Details">
-            <div className="border-t border-line">
-              {product.specs.length > 0 && (
-                <Accordion title="Specifications">
-                  <dl className="grid grid-cols-[minmax(7rem,auto)_1fr] gap-x-6 gap-y-2.5 text-[14px]">
-                    {product.specs.map((s) => (
-                      <div key={s.label} className="contents">
-                        <dt className="text-ink-2">{s.label}</dt>
-                        <dd>{s.value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </Accordion>
-              )}
-              {product.allergens && (
-                <Accordion title="Allergens">
-                  <p>{product.allergens}</p>
-                </Accordion>
-              )}
-              {product.storage && (
-                <Accordion title="Storage & care">
-                  <p>{product.storage}</p>
-                </Accordion>
-              )}
-              <Accordion title="Delivery & returns">
-                <p>
-                  {deliveryText} {settings.deliveryNote}
-                </p>
-                <p className="mt-2">
-                  Food and personalised items can’t be returned unless they arrive damaged or incorrect.{" "}
-                  <Link href="/delivery" className="underline underline-offset-4">
-                    Full delivery & returns policy
-                  </Link>
-                </p>
-              </Accordion>
-            </div>
-          </section>
 
         </div>
       </div>
@@ -150,20 +108,5 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
         </section>
       )}
     </div>
-  );
-}
-
-function Accordion({ title, children, open = false }: { title: string; children: React.ReactNode; open?: boolean }) {
-  return (
-    <details className="group border-b border-line" open={open}>
-      <summary className="flex cursor-pointer list-none items-center justify-between py-4 text-[14px] font-medium tracking-wide [&::-webkit-details-marker]:hidden">
-        {title}
-        <span className="relative h-3 w-3" aria-hidden="true">
-          <span className="absolute left-0 top-1/2 h-px w-3 bg-ink" />
-          <span className="absolute left-1/2 top-0 h-3 w-px bg-ink transition-transform group-open:scale-y-0" />
-        </span>
-      </summary>
-      <div className="pb-5 text-[14px] leading-relaxed text-ink-2">{children}</div>
-    </details>
   );
 }

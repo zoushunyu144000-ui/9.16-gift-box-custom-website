@@ -5,6 +5,7 @@ import { Breadcrumbs } from "./breadcrumbs";
 import { Emph } from "./moire";
 import { ProductGrid } from "./product-grid";
 import { SortSelect } from "./sort-select";
+import { WineList } from "./wine-list";
 
 export type SortKey = "featured" | "price-asc" | "price-desc" | "name";
 
@@ -19,7 +20,8 @@ export function sortBy(list: Product[], sort: SortKey) {
 
 /**
  * Category page (Fixed Gift Collection, Wine Gift Boxes).
- * Products always sit in the same even grid (ProductGrid) as every other shopping page.
+ * Products sit in the same even grid (ProductGrid) as every other shopping page;
+ * `layout="list"` reads like a wine list instead.
  * Titles accept *italic* markup.
  */
 export function CollectionView({
@@ -30,6 +32,7 @@ export function CollectionView({
   products,
   sort,
   note,
+  layout = "grid",
 }: {
   basePath: string;
   title: string;
@@ -38,6 +41,7 @@ export function CollectionView({
   products: Product[];
   sort: SortKey;
   note?: string;
+  layout?: "grid" | "list";
 }) {
   const list = sortBy(products, sort);
   const available = list.filter(isPurchasable).length;
@@ -82,6 +86,8 @@ export function CollectionView({
               Back to home
             </Link>
           </div>
+        ) : layout === "list" ? (
+          <WineList products={list} />
         ) : (
           <ProductGrid products={list} />
         )}

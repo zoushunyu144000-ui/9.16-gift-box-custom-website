@@ -9,29 +9,27 @@ export const BESPOKE_STEPS = [
 ];
 
 /**
- * The fully customised process as five boxes (client, Oct 2026: boxes instead of a long
- * text list). Every other step is filled with the gold accent so the row reads at a glance.
+ * The fully customised process as a vertical timeline (client, Oct 2026): a thin gold line
+ * with a diamond at each step, a star at the last, and every other step set in a gold box.
  */
-export function ProcessLine({ className = "", layout = "row" }: { className?: string; layout?: "row" | "column" }) {
-  const row = layout === "row";
+export function ProcessLine({ className = "" }: { className?: string }) {
   return (
     <div className={className}>
       <p className="label mb-6">How fully customised orders work</p>
-      <ol className={`grid gap-2.5 ${row ? "sm:grid-cols-2 md:grid-cols-5 md:gap-3" : ""}`}>
+      <ol className="relative max-w-xl">
+        <span className="absolute bottom-3 left-[7px] top-3 w-px bg-champagne" aria-hidden="true" />
         {BESPOKE_STEPS.map((s, i) => {
           const filled = i % 2 === 1;
           const last = i === BESPOKE_STEPS.length - 1;
           return (
-            <li
-              key={s.title}
-              className={`flex flex-col px-5 py-4 md:min-h-[9.5rem] md:px-5 md:py-5 ${filled ? "bg-champagne text-ink" : "border border-line bg-ivory"}`}
-            >
-              <span className={`flex items-center gap-2 text-[11px] font-medium tabular-nums tracking-[0.16em] ${filled ? "text-ink/70" : "text-bronze"}`}>
-                {String(i + 1).padStart(2, "0")}
-                {last && <Star className="h-2.5 w-2.5" />}
+            <li key={s.title} className="relative py-1.5 pl-8">
+              <span className="absolute left-0 top-1/2 flex h-[15px] w-[15px] -translate-y-1/2 items-center justify-center bg-ivory text-champagne" aria-hidden="true">
+                {last ? <Star className="h-3 w-3" /> : <span className="h-[7px] w-[7px] rotate-45 border border-champagne" />}
               </span>
-              <p className="display mt-2 text-[1.3rem] leading-tight">{s.title}</p>
-              <p className={`mt-1 text-[13px] leading-relaxed ${filled ? "text-ink/80" : "text-ink-2"}`}>{s.text}</p>
+              <div className={`px-3 py-3 ${filled ? "rounded-md bg-champagne text-ivory" : ""}`}>
+                <p className="display text-[1.35rem] leading-tight">{s.title}</p>
+                <p className={`mt-1 text-[14px] leading-relaxed ${filled ? "text-ivory/90" : "text-ink-2"}`}>{s.text}</p>
+              </div>
             </li>
           );
         })}

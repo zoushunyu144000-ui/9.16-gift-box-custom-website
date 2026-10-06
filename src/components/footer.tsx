@@ -8,29 +8,23 @@ export function Footer({ settings }: { settings: SiteSettings }) {
   return (
     <footer className="relative overflow-hidden border-t border-line bg-cream">
       <MoireField className="pointer-events-none absolute -bottom-[420px] -right-[260px] h-[760px] w-[760px] text-champagne" opacity={0.28} />
-      {/* Compact on phones: logo, then the three link columns side by side (client, Oct 2026). */}
-      <div className="shell relative grid gap-8 py-10 md:grid-cols-12 md:gap-8 md:py-16">
-        <div className="md:col-span-4">
-          <Link href="/" aria-label="Moire Co. — home">
-            <Logo />
-          </Link>
-          <p className="mt-4 max-w-[34ch] text-[13px] leading-relaxed text-ink-2 md:mt-5 md:text-[14px]">
-            Festive gift boxes, everyday gifts, wine gift boxes and corporate gifting from Kuala Lumpur.
-          </p>
-        </div>
+      {/* Kept short on every screen (client, Oct 2026): logo beside three short link columns, one line of fine print. */}
+      <div className="shell relative grid gap-6 py-8 md:grid-cols-12 md:items-start md:gap-8 md:py-10">
+        <Link href="/" aria-label="Moire Co. — home" className="md:col-span-3">
+          <Logo compact />
+        </Link>
 
-        <div className="grid grid-cols-3 gap-4 md:col-span-7 md:col-start-6 md:gap-8">
+        <div className="grid grid-cols-3 gap-4 md:col-span-8 md:col-start-5 md:gap-8">
           <FooterCol
             title="Shop"
             links={[
-              ["Festive Collection", "/festive"],
-              ["Fixed Gift Collection", "/fixed-gifts"],
+              ["Festive", "/festive"],
+              ["Fixed Gifts", "/fixed-gifts"],
               ["Wine Gift Boxes", "/wine-gift-boxes"],
-              ["Search", "/search"],
             ]}
           />
           <FooterCol
-            title="Corporate Orders"
+            title="Corporate"
             links={[
               ["Overview", "/corporate"],
               ["Semi-customised", "/fixed-gifts"],
@@ -43,25 +37,18 @@ export function Footer({ settings }: { settings: SiteSettings }) {
               ["Delivery & returns", "/delivery"],
               ["Terms of sale", "/terms"],
               ["Privacy policy", "/privacy"],
-              ["Your bag", "/cart"],
             ]}
           />
         </div>
       </div>
       <div className="relative border-t border-line">
-        <div className="shell flex flex-col gap-2 py-5 text-[12px] text-ink-3 md:flex-row md:items-center md:justify-between md:py-6">
-          <p>© {year} Moire Co. All rights reserved.</p>
-          <p className="flex flex-wrap gap-x-4 gap-y-1">
-            <span>Secure payment: FPX · Card · E-wallet</span>
-            {settings.contactEmail && <a href={`mailto:${settings.contactEmail}`}>{settings.contactEmail}</a>}
-            {settings.businessHours && <span>{settings.businessHours}</span>}
-          </p>
+        <div className="shell flex flex-wrap items-center gap-x-4 gap-y-1 py-4 text-[11px] leading-relaxed text-ink-3 md:gap-x-6">
+          <p>© {year} Moire Co.</p>
+          <p>FPX · Card · E-wallet</p>
+          {settings.contactEmail && <a href={`mailto:${settings.contactEmail}`}>{settings.contactEmail}</a>}
+          {settings.businessHours && <p>{settings.businessHours}</p>}
+          {settings.showPreviewNotice && <p className="md:ml-auto">Preview build: sample products, test-mode checkout.</p>}
         </div>
-        {settings.showPreviewNotice && (
-          <p className="shell pb-6 text-[11px] leading-relaxed text-ink-3">
-            Preview build — products, prices and photography are samples, and checkout runs in test mode. No real payments are taken.
-          </p>
-        )}
       </div>
     </footer>
   );
@@ -70,8 +57,8 @@ export function Footer({ settings }: { settings: SiteSettings }) {
 function FooterCol({ title, links }: { title: string; links: [string, string][] }) {
   return (
     <div className="min-w-0">
-      <p className="label mb-3 !text-[10px] md:mb-4 md:!text-[11px]">{title}</p>
-      <ul className="space-y-2 text-[12.5px] leading-snug md:space-y-2.5 md:text-[14px]">
+      <p className="label mb-2.5 !text-[10px] md:mb-3 md:!text-[11px]">{title}</p>
+      <ul className="space-y-1.5 text-[12.5px] leading-snug md:space-y-2 md:text-[13.5px]">
         {links.map(([label, href]) => (
           <li key={href}>
             <Link href={href} className="text-ink-2 transition-colors hover:text-ink">
