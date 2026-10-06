@@ -1,34 +1,42 @@
-import type { CategorySlug, Occasion, OrderStatus, PaymentMethod, Product, ProductVariant } from "./types";
+import type { CategorySlug, Festival, OrderStatus, PaymentMethod, Personalisation, Product, ProductVariant } from "./types";
 
 export const CATEGORIES: Record<CategorySlug, { name: string; href: string; short: string; intro: string }> = {
   festive: {
     name: "Festive Collection",
     short: "Festive",
     href: "/festive",
-    intro: "Seasonal gift boxes and hampers for Chinese New Year, Mid-Autumn, the Dragon Boat Festival and Hari Raya.",
+    intro: "Seasonal gift boxes and hampers, gathered by festival.",
   },
   "fixed-gifts": {
     name: "Fixed Gift Collection",
     short: "Fixed Gift Collection",
     href: "/fixed-gifts",
-    intro: "Year-round gifts for birthdays, thanks and milestones. Selected pieces can be engraved with a name.",
+    intro: "Year-round gifts for birthdays, thanks and milestones.",
   },
+  // Internal id stays "wine-spirits" (database value); everything customer-facing presents
+  // these as gift boxes — the client sells gift boxes, not alcohol on its own.
   "wine-spirits": {
-    name: "Wine & Spirits",
-    short: "Wine & Spirits",
-    href: "/wine-spirits",
-    intro: "Wine, champagne and spirits, each presented in a gift box. For customers aged 21 and above.",
+    name: "Wine Gift Boxes",
+    short: "Wine Gift Boxes",
+    href: "/wine-gift-boxes",
+    intro: "Gift boxes and gift sets with wine, champagne or spirits, presented ready to give. For customers aged 21 and above.",
   },
 };
 
-export const OCCASIONS: Record<Occasion, { name: string; short: string }> = {
-  "chinese-new-year": { name: "Chinese New Year", short: "CNY" },
-  "mid-autumn": { name: "Mid-Autumn Festival", short: "Mid-Autumn" },
-  "dragon-boat": { name: "Dragon Boat Festival", short: "Dragon Boat" },
-  "hari-raya": { name: "Hari Raya", short: "Hari Raya" },
-};
+// ───────── Festivals ─────────
 
-export const OCCASION_ORDER: Occasion[] = ["chinese-new-year", "hari-raya", "dragon-boat", "mid-autumn"];
+/** Festivals in display order. `includeHidden` is for admin. */
+export function sortFestivals(list: Festival[], includeHidden = false) {
+  return [...list].filter((f) => includeHidden || f.active).sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name));
+}
+
+export function festivalHref(f: Pick<Festival, "slug">) {
+  return `/festive/${f.slug}`;
+}
+
+export function festivalName(festivals: Festival[], id?: string | null) {
+  return id ? festivals.find((f) => f.id === id)?.name : undefined;
+}
 
 export const PAYMENT_METHODS: Record<PaymentMethod, { name: string; detail: string }> = {
   fpx: { name: "FPX online banking", detail: "Pay directly from your Malaysian bank account" },
@@ -74,15 +82,34 @@ export function isVisible(p: Product) {
   return p.status !== "hidden";
 }
 
+/** Stock is tracked when it is a number; null/undefined = not tracked. */
+export function tracksStock(p: Product) {
+  return typeof p.stock === "number" && Number.isFinite(p.stock);
+}
+
+/**
+ * Sold out = still shown everywhere and the product page still opens, but it can't be added to the bag.
+ * Either set manually (status "sold_out", e.g. "Season ended") or because stock reached 0.
+ */
+export function isSoldOut(p: Product) {
+  return p.status === "sold_out" || (tracksStock(p) && (p.stock as number) <= 0);
+}
+
 export function isPurchasable(p: Product) {
-  return p.status === "active";
+  return p.status === "active" && !isSoldOut(p);
+}
+
+/** Label for sold-out products. Stock-based sell-outs always read "Sold Out". */
+export function soldOutLabel(p: Product) {
+  if (p.status === "sold_out" && p.availabilityNote) return p.availabilityNote;
+  return "Sold Out";
 }
 
 export function sortProducts(list: Product[]) {
   return [...list].sort((a, b) => {
     // Purchasable first, then by sort order.
-    const av = a.status === "active" ? 0 : 1;
-    const bv = b.status === "active" ? 0 : 1;
+    const av = isPurchasable(a) ? 0 : 1;
+    const bv = isPurchasable(b) ? 0 : 1;
     return av - bv || a.sort - b.sort || a.name.localeCompare(b.name);
   });
 }
@@ -123,6 +150,15 @@ export function slugify(input: string) {
 export function whatsappLink(number: string, text: string) {
   const n = number.replace(/[^0-9]/g, "");
   return `https://wa.me/${n}?text=${encodeURIComponent(text)}`;
+}
+
+/** Personalised name offered on every product (client, Oct 2026), in leather or acrylic.
+ * A product's own settings (label, length, fee, materials) win when enabled. */
+export const DEFAULT_PERSONALISATION: Personalisation = { enabled: true, label: "Personalised name", maxLength: 20, fee: 0, options: ["Leather", "Acrylic"] };
+export function personalisationFor(p: Product): Personalisation {
+  if (!p.personalisation?.enabled) return DEFAULT_PERSONALISATION;
+  const options = p.personalisation.options?.filter(Boolean);
+  return { ...p.personalisation, options: options?.length ? options : DEFAULT_PERSONALISATION.options };
 }
 
 export const PERSONALISATION_PATTERN = /^[\p{L}\p{N} .,'&\-!?/()]*$/u;

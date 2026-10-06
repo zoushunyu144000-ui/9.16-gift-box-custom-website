@@ -9,7 +9,7 @@ export default async function EnquiriesPage() {
   const list = await (await getStore()).listEnquiries();
   return (
     <>
-      <PageTitle title="Corporate enquiries" sub="Semi-curated requests and fully customised enquiries" />
+      <PageTitle title="Corporate enquiries" sub="Semi-customised requests (and fully customised enquiries from before Oct 2026)" />
       {list.length === 0 ? (
         <Empty>No enquiries yet. Requests from the Corporate Orders pages appear here.</Empty>
       ) : (
@@ -32,7 +32,7 @@ export default async function EnquiriesPage() {
                     <Link href={`/admin/enquiries/${e.id}`} className="font-medium underline-offset-4 hover:underline">{e.id}</Link>
                     <div className="text-[12px] text-ink-3">{formatDateTime(e.createdAt)}</div>
                   </td>
-                  <td className="px-4 py-3">{e.type === "bespoke" ? "Fully customised" : "Semi-curated"}</td>
+                  <td className="px-4 py-3">{e.type === "bespoke" ? "Fully customised" : "Semi-customised"}</td>
                   <td className="px-4 py-3">
                     {e.contact.name}
                     <div className="text-[12px] text-ink-3">{e.contact.company || e.contact.phone}</div>

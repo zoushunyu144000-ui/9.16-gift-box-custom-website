@@ -2,10 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { saveSettingsAction } from "@/lib/admin/actions";
-import { OCCASIONS } from "@/lib/catalog";
-import type { SiteSettings } from "@/lib/types";
+import { sortFestivals } from "@/lib/catalog";
+import type { Festival, SiteSettings } from "@/lib/types";
 
-export function SettingsForm({ settings }: { settings: SiteSettings }) {
+export function SettingsForm({ settings, festivals }: { settings: SiteSettings; festivals: Festival[] }) {
   const [s, setS] = useState(settings);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
@@ -22,10 +22,11 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
       }}
       className="grid max-w-5xl gap-6 lg:grid-cols-2"
     >
-      <Section title="Festive season" hint="Controls which occasion leads the homepage and Festive page.">
-        <F label="Current occasion">
-          <select className="field" value={s.activeOccasion} onChange={(e) => set("activeOccasion", e.target.value as SiteSettings["activeOccasion"])}>
-            {Object.entries(OCCASIONS).map(([k, o]) => <option key={k} value={k}>{o.name}</option>)}
+      <Section title="Festive season" hint="Which festival is in season. Its gift boxes show on the homepage and open first on the Festive Collection page. Choose “No festival in season” between festivals. Festival names are edited in Festivals.">
+        <F label="Current festival">
+          <select className="field" value={s.activeFestivalId} onChange={(e) => set("activeFestivalId", e.target.value)}>
+            <option value="">No festival in season</option>
+            {sortFestivals(festivals, true).map((f) => <option key={f.id} value={f.id}>{f.name}{f.active ? "" : " (hidden)"}</option>)}
           </select>
         </F>
         <F label="Section title"><input className="field" value={s.festiveTitle} onChange={(e) => set("festiveTitle", e.target.value)} /></F>
@@ -33,9 +34,14 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
       </Section>
 
       <Section title="Homepage hero">
-        <F label="Small heading"><input className="field" value={s.heroEyebrow} onChange={(e) => set("heroEyebrow", e.target.value)} /></F>
-        <F label="Headline"><input className="field" value={s.heroTitle} onChange={(e) => set("heroTitle", e.target.value)} /></F>
-        <F label="Text"><textarea className="field" value={s.heroText} onChange={(e) => set("heroText", e.target.value)} /></F>
+        <F label="Headline" hint="Shown over the photographs. Use / for a new line, e.g. More than a gift / A memory"><input className="field" value={s.heroTitle} onChange={(e) => set("heroTitle", e.target.value)} /></F>
+      </Section>
+
+      <Section title="Personalised name">
+        <label className="flex items-start gap-3 text-[14px]">
+          <input type="checkbox" className="check" checked={s.personalisationLive !== false} onChange={(e) => set("personalisationLive", e.target.checked)} />
+          <span>Customers can order a personalised name<span className="block text-[12px] text-ink-2">Every product shows “Add a name”. While this is off, it is shown as “Coming soon” and can’t be chosen.</span></span>
+        </label>
       </Section>
 
       <Section title="Delivery">

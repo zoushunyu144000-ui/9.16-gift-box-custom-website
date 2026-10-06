@@ -5,71 +5,72 @@ import { useEffect, useState } from "react";
 import type { ProductImage as Img } from "@/lib/types";
 import { ProductImage } from "./product-image";
 
-/** Homepage opening: one integrated gifting scene, one message and one action. */
-export function Hero({
-  eyebrow,
-  title,
-  text,
-  slides,
-}: {
-  eyebrow: string;
-  title: string;
-  text: string;
-  slides: Img[];
-}) {
+/**
+ * Homepage opening: one full-height photograph (portrait on phones) that cross-fades
+ * through a few gifting scenes with a slow push-in, a short headline and Shop Now.
+ * The headline comes from Admin → Settings; " / " starts a new line.
+ */
+export function Hero({ title, slides, href }: { title: string; slides: Img[]; href: string }) {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
     if (slides.length < 2) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const t = setInterval(() => setIndex((i) => (i + 1) % slides.length), 7000);
+    const t = setInterval(() => setIndex((i) => (i + 1) % slides.length), 6000);
     return () => clearInterval(t);
   }, [slides.length]);
 
-  const plainTitle = title.replaceAll("*", "");
+  const lines = title.replaceAll("*", "").split(/\s*\/\s*/);
 
   return (
-    <section className="overflow-hidden bg-ivory" aria-label="Introduction">
-      <div className="relative">
-        <div className="relative aspect-[16/10] overflow-hidden bg-mount sm:aspect-[16/9] lg:absolute lg:inset-0 lg:aspect-auto">
-            {slides.map((s, i) => (
-              <div key={s.src} className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${i === index ? "opacity-100" : "opacity-0"}`} aria-hidden={i !== index}>
-                <ProductImage
-                  src={s.src}
-                  alt={s.alt}
-                  className="!absolute inset-0 h-full w-full"
-                  sizes="100vw"
-                  priority={i === 0}
-                  imgClassName="grade object-[55%_center] lg:object-center"
-                />
-              </div>
-            ))}
-            {slides.length > 1 && (
-              <div className="absolute bottom-4 right-4 flex gap-2" role="tablist" aria-label="Hero images">
-                {slides.map((s, i) => (
-                  <button key={s.src} type="button" role="tab" aria-selected={i === index} aria-label={`Show image ${i + 1}`} onClick={() => setIndex(i)} className="grid h-8 w-8 place-items-center">
-                    <span className={`block h-px w-full transition-colors ${i === index ? "bg-ivory" : "bg-ivory/40"}`} />
-                  </button>
-                ))}
-              </div>
-            )}
-        </div>
-        <div className="hero-scrim pointer-events-none absolute inset-0 hidden lg:block" aria-hidden="true" />
-
-        <div className="shell relative flex items-center py-9 sm:py-11 lg:min-h-[570px] lg:py-16 xl:min-h-[610px]">
-          <div className="max-w-[31rem]">
-              <p className="text-[11px] font-medium uppercase tracking-[0.17em] text-bronze">{eyebrow}</p>
-              <h1 className="display mt-4 text-[2.3rem] leading-[1.08] sm:text-[2.65rem] lg:text-[3.25rem] xl:text-[3.55rem]">
-                {plainTitle}
-              </h1>
-              <p className="mt-4 max-w-[36ch] text-[15px] leading-[1.65] text-ink-2">{text}</p>
-              <div className="mt-7">
-                <Link href="/festive" className="home-cta bg-bronze text-ivory hover:bg-champagne hover:text-ink">
-                  Explore the collection
-                </Link>
-              </div>
+    <section className="relative overflow-hidden bg-mount" aria-label="Introduction">
+      <div className="relative h-[calc(100svh-4rem)] max-h-[760px] min-h-[520px] lg:h-[calc(100svh-76px)] lg:max-h-[820px]">
+        {slides.map((s, i) => (
+          <div
+            key={s.src}
+            className={`hero-slide absolute inset-0 transition-opacity duration-[1400ms] ease-in-out ${i === index ? "opacity-100" : "opacity-0"}`}
+            data-active={i === index ? "" : undefined}
+            aria-hidden={i !== index}
+          >
+            <ProductImage
+              src={s.src}
+              alt={s.alt}
+              className="!absolute inset-0 h-full w-full"
+              sizes="100vw"
+              priority={i === 0}
+              imgClassName="grade object-[62%_center] md:object-center"
+            />
           </div>
+        ))}
+        <div className="hero-scrim pointer-events-none absolute inset-0" aria-hidden="true" />
+
+        <div className="absolute inset-x-0 top-[16%] px-6 text-center md:top-[18%]">
+          {/* Serif capitals, light and widely spaced, with a thin gold rule between the lines. */}
+          <h1 className="display text-[1.65rem] font-medium uppercase leading-[1.25] indent-[0.16em] tracking-[0.16em] text-ink sm:text-[2.15rem] lg:text-[2.8rem] lg:indent-[0.18em] lg:tracking-[0.18em]">
+            {lines.map((l, i) => (
+              <span key={i} className="block">
+                {i > 0 && <span className="mx-auto my-3 block h-px w-10 bg-champagne md:my-4 md:w-14" aria-hidden="true" />}
+                {l}
+              </span>
+            ))}
+          </h1>
         </div>
+
+        <div className="absolute inset-x-0 bottom-[12%] flex justify-center px-6">
+          <Link href={href} className="home-cta min-w-[11rem] bg-ivory text-ink shadow-[0_1px_0_rgb(31_28_24/0.06)] hover:bg-champagne hover:text-ink">
+            SHOP NOW
+          </Link>
+        </div>
+
+        {slides.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1" role="tablist" aria-label="Hero images">
+            {slides.map((s, i) => (
+              <button key={s.src} type="button" role="tab" aria-selected={i === index} aria-label={`Show image ${i + 1}`} onClick={() => setIndex(i)} className="grid h-8 w-7 place-items-center">
+                <span className={`block h-px w-full transition-colors ${i === index ? "bg-ink/70" : "bg-ink/25"}`} />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

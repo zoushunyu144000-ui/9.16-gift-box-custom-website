@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { whatsappLink } from "@/lib/catalog";
 import type { SiteSettings } from "@/lib/types";
 import { Logo } from "./logo";
 import { MoireField } from "./moire";
@@ -7,67 +6,49 @@ import { MoireField } from "./moire";
 export function Footer({ settings }: { settings: SiteSettings }) {
   const year = new Date().getFullYear();
   return (
-    <footer className="relative mt-24 overflow-hidden border-t border-line bg-cream md:mt-32">
+    <footer className="relative overflow-hidden border-t border-line bg-cream">
       <MoireField className="pointer-events-none absolute -bottom-[420px] -right-[260px] h-[760px] w-[760px] text-champagne" opacity={0.28} />
-      <div className="shell relative grid gap-12 py-14 md:grid-cols-12 md:gap-8 md:py-20">
-        <div className="md:col-span-4">
-          <Link href="/" aria-label="Moire Co. — home">
-            <Logo />
-          </Link>
-          <p className="mt-5 max-w-[34ch] text-[14px] leading-relaxed text-ink-2">
-            Festive gift boxes, everyday gifts, wine & spirits and corporate gifting from Kuala Lumpur.
-          </p>
-          <a
-            href={whatsappLink(settings.whatsappNumber, "Hello Moire Co., I have a question about a gift.")}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="link-line mt-6"
-          >
-            Chat on WhatsApp
-          </a>
-        </div>
+      {/* Kept short on every screen (client, Oct 2026): logo beside three short link columns, one line of fine print. */}
+      <div className="shell relative grid gap-6 py-8 md:grid-cols-12 md:items-start md:gap-8 md:py-10">
+        <Link href="/" aria-label="Moire Co. — home" className="md:col-span-3">
+          <Logo compact />
+        </Link>
 
-        <FooterCol
-          title="Shop"
-          links={[
-            ["Festive Collection", "/festive"],
-            ["Fixed Gift Collection", "/fixed-gifts"],
-            ["Wine & Spirits", "/wine-spirits"],
-            ["Search", "/search"],
-          ]}
-        />
-        <FooterCol
-          title="Corporate Orders"
-          links={[
-            ["Overview", "/corporate"],
-            ["Semi-curated", "/corporate/semi-curated"],
-            ["Fully customised", "/corporate/bespoke"],
-          ]}
-        />
-        <FooterCol
-          title="Help"
-          links={[
-            ["Delivery & returns", "/delivery"],
-            ["Terms of sale", "/terms"],
-            ["Privacy policy", "/privacy"],
-            ["Your bag", "/cart"],
-          ]}
-        />
+        <div className="grid grid-cols-3 gap-4 md:col-span-8 md:col-start-5 md:gap-8">
+          <FooterCol
+            title="Shop"
+            links={[
+              ["Festive", "/festive"],
+              ["Fixed Gifts", "/fixed-gifts"],
+              ["Wine Gift Boxes", "/wine-gift-boxes"],
+            ]}
+          />
+          <FooterCol
+            title="Corporate"
+            links={[
+              ["Overview", "/corporate"],
+              ["Semi-customised", "/fixed-gifts"],
+              ["Fully customised", "/corporate/bespoke"],
+            ]}
+          />
+          <FooterCol
+            title="Help"
+            links={[
+              ["Delivery & returns", "/delivery"],
+              ["Terms of sale", "/terms"],
+              ["Privacy policy", "/privacy"],
+            ]}
+          />
+        </div>
       </div>
       <div className="relative border-t border-line">
-        <div className="shell flex flex-col gap-3 py-6 text-[12px] text-ink-3 md:flex-row md:items-center md:justify-between">
-          <p>© {year} Moire Co. All rights reserved.</p>
-          <p className="flex flex-wrap gap-x-4 gap-y-1">
-            <span>Secure payment: FPX · Card · E-wallet</span>
-            {settings.contactEmail && <a href={`mailto:${settings.contactEmail}`}>{settings.contactEmail}</a>}
-            {settings.businessHours && <span>{settings.businessHours}</span>}
-          </p>
+        <div className="shell flex flex-wrap items-center gap-x-4 gap-y-1 py-4 text-[11px] leading-relaxed text-ink-3 md:gap-x-6">
+          <p>© {year} Moire Co.</p>
+          <p>FPX · Card · E-wallet</p>
+          {settings.contactEmail && <a href={`mailto:${settings.contactEmail}`}>{settings.contactEmail}</a>}
+          {settings.businessHours && <p>{settings.businessHours}</p>}
+          {settings.showPreviewNotice && <p className="md:ml-auto">Preview build: sample products, test-mode checkout.</p>}
         </div>
-        {settings.showPreviewNotice && (
-          <p className="shell pb-6 text-[11px] leading-relaxed text-ink-3">
-            Preview build — products, prices and photography are samples, and checkout runs in test mode. No real payments are taken.
-          </p>
-        )}
       </div>
     </footer>
   );
@@ -75,9 +56,9 @@ export function Footer({ settings }: { settings: SiteSettings }) {
 
 function FooterCol({ title, links }: { title: string; links: [string, string][] }) {
   return (
-    <div className="md:col-span-2 md:col-start-auto [&:nth-child(2)]:md:col-start-7">
-      <p className="label mb-4">{title}</p>
-      <ul className="space-y-2.5 text-[14px]">
+    <div className="min-w-0">
+      <p className="label mb-2.5 !text-[10px] md:mb-3 md:!text-[11px]">{title}</p>
+      <ul className="space-y-1.5 text-[12.5px] leading-snug md:space-y-2 md:text-[13.5px]">
         {links.map(([label, href]) => (
           <li key={href}>
             <Link href={href} className="text-ink-2 transition-colors hover:text-ink">

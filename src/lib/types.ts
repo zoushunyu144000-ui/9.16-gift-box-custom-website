@@ -3,9 +3,30 @@
 
 export type CategorySlug = "festive" | "fixed-gifts" | "wine-spirits";
 
-export type Occasion = "chinese-new-year" | "mid-autumn" | "dragon-boat" | "hari-raya";
+/**
+ * A festival inside the Festive Collection (Chinese New Year, Hari Raya, …).
+ * Stored as data (Admin → Festivals), not hard-coded, so the client can rename,
+ * add, hide and reorder festivals. Products point to one with `festivalId`.
+ */
+export interface Festival {
+  /** Stable id used by products. Never changes after creation. */
+  id: string;
+  name: string;
+  /** URL segment: /festive/{slug} */
+  slug: string;
+  description?: string;
+  coverImage?: ProductImage | null;
+  /** false = hidden from the storefront (its products stay in the catalogue). */
+  active: boolean;
+  /** Lower first. */
+  sort: number;
+  updatedAt?: string;
+}
 
-/** active = purchasable; sold_out = visible but not purchasable; hidden = not shown on storefront */
+/**
+ * active = purchasable; sold_out = visible but not purchasable; hidden = not shown on storefront.
+ * A product with stock <= 0 is also treated as sold out (see isSoldOut in catalog.ts).
+ */
 export type ProductStatus = "active" | "sold_out" | "hidden";
 
 export interface ProductImage {
@@ -29,6 +50,11 @@ export interface ProductVariant {
   containsAlcohol?: boolean;
 }
 
+/**
+ * Optional personalisation (e.g. a name on a leather or acrylic tag).
+ * Maps to the meeting brief as: enabled = personalisationEnabled,
+ * options = personalisationOptions, fee = personalisationPrice.
+ */
 export interface Personalisation {
   enabled: boolean;
   /** Label shown to the customer, e.g. "Engraved name". */
@@ -36,8 +62,10 @@ export interface Personalisation {
   /** Short explanation of where the text appears. */
   helper?: string;
   maxLength: number;
-  /** Additional charge per unit in MYR. 0 = included. */
+  /** Additional charge per unit in MYR. 0 = no charge shown. */
   fee: number;
+  /** Materials / styles the customer picks from, e.g. ["Leather", "Acrylic"]. Empty = no choice offered. */
+  options?: string[];
 }
 
 export interface SpecRow {
@@ -50,8 +78,14 @@ export interface Product {
   slug: string;
   name: string;
   category: CategorySlug;
-  occasion?: Occasion | null;
+  /** Festival this product belongs to (Festive Collection only). References Festival.id. */
+  festivalId?: string | null;
   status: ProductStatus;
+  /**
+   * Units in stock. Website orders deduct automatically once paid; the client adjusts it
+   * manually in Admin for WhatsApp / Instagram / in-person sales. null/undefined = not tracked.
+   */
+  stock?: number | null;
   /** Shown when status is sold_out, e.g. "Season ended". */
   availabilityNote?: string;
   /** Base price in MYR. When variants exist, the first variant should match this. */
@@ -77,8 +111,8 @@ export interface Product {
 }
 
 export interface SiteSettings {
-  /** Which occasion leads the homepage and the Festive page. */
-  activeOccasion: Occasion;
+  /** Which festival (Festival.id) leads the homepage Festive section. */
+  activeFestivalId: string;
   festiveTitle: string;
   festiveIntro: string;
   /** Hero copy */
@@ -99,6 +133,8 @@ export interface SiteSettings {
   businessHours: string;
   /** Show the preview/test-mode notice in the footer and checkout. */
   showPreviewNotice: boolean;
+  /** Personalised names can be ordered. Off = every product shows the option as “Coming soon”. */
+  personalisationLive?: boolean;
 }
 
 export type PaymentMethod = "fpx" | "card" | "ewallet";
@@ -125,6 +161,8 @@ export interface OrderItem {
   lineTotal: number;
   personalisation?: string;
   personalisationLabel?: string;
+  /** Material chosen for the personalisation, e.g. "Leather". */
+  personalisationOption?: string;
   giftMessage?: string;
   containsAlcohol: boolean;
 }
@@ -206,6 +244,7 @@ export interface CartLine {
   variantId?: string;
   quantity: number;
   personalisation?: string;
+  personalisationOption?: string;
   giftMessage?: string;
   /** Display snapshot taken when added. Prices are always re-validated on the server at checkout. */
   snapshot: {

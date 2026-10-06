@@ -22,7 +22,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <aside className="border-b border-line bg-ivory lg:sticky lg:top-0 lg:h-dvh lg:border-b-0 lg:border-r">
         <div className="flex h-14 items-center justify-between px-5 lg:h-20">
           <Link href="/admin" className="flex items-center gap-2.5">
-            <Monogram className="h-7 w-auto text-champagne" />
+            <Monogram className="h-9 w-auto" />
             <span className="text-[12px] tracking-[0.28em]">ADMIN</span>
           </Link>
           <Link href="/" target="_blank" className="text-[12px] text-ink-2 underline-offset-4 hover:underline lg:hidden">

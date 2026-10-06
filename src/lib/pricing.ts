@@ -2,8 +2,11 @@ import "server-only";
 import {
   findVariant,
   GIFT_MESSAGE_MAX,
+  isSoldOut,
+  tracksStock,
   lineContainsAlcohol,
   PERSONALISATION_PATTERN,
+  personalisationFor,
   unitPrice,
 } from "./catalog";
 import type { Store } from "./store/types";
@@ -11,21 +14,27 @@ import type { CartLine, OrderItem, Quote, QuotedLine, SiteSettings } from "./typ
 
 export const MAX_QTY = 99;
 
-type LineInput = Pick<CartLine, "key" | "productId" | "variantId" | "quantity" | "personalisation" | "giftMessage">;
+type LineInput = Pick<CartLine, "key" | "productId" | "variantId" | "quantity" | "personalisation" | "personalisationOption" | "giftMessage">;
 
 /** Re-price every line from the catalogue. Never trust prices sent by the browser. */
 export async function quoteLines(store: Store, lines: LineInput[], settings?: SiteSettings): Promise<Quote> {
   const s = settings ?? (await store.getSettings());
   const products = await store.listProducts();
   const byId = new Map(products.map((p) => [p.id, p]));
+  // Total requested per product across all lines (the same box can be in the bag twice with different names).
+  const requested = new Map<string, number>();
+  for (const l of lines) requested.set(l.productId, (requested.get(l.productId) ?? 0) + (Math.floor(Number(l.quantity)) || 0));
 
   const quoted: QuotedLine[] = lines.map((line) => {
     const p = byId.get(line.productId);
     if (!p || p.status === "hidden") return { key: line.key, ok: false, problem: "This item is no longer available." };
+    if (isSoldOut(p)) return { key: line.key, ok: false, problem: `${p.name} is sold out.` };
     if (p.status !== "active") return { key: line.key, ok: false, problem: `${p.name} is currently unavailable.` };
 
     const qty = Math.floor(Number(line.quantity));
     if (!Number.isFinite(qty) || qty < 1 || qty > MAX_QTY) return { key: line.key, ok: false, problem: "Please choose a quantity between 1 and 99." };
+    if (tracksStock(p) && (requested.get(p.id) ?? qty) > (p.stock as number))
+      return { key: line.key, ok: false, problem: `Only ${p.stock} of ${p.name} left — please reduce the quantity.` };
 
     let variantName: string | undefined;
     if (p.variants.length) {
@@ -36,13 +45,19 @@ export async function quoteLines(store: Store, lines: LineInput[], settings?: Si
 
     const text = line.personalisation?.trim() || undefined;
     let personalisationFee = 0;
+    let option: string | undefined;
     if (text) {
-      const pers = p.personalisation;
-      if (!pers?.enabled) return { key: line.key, ok: false, problem: `${p.name} cannot be personalised.` };
+      if (s.personalisationLive === false) return { key: line.key, ok: false, problem: "Personalised names are coming soon and can’t be ordered yet." };
+      const pers = personalisationFor(p);
       if (text.length > pers.maxLength)
         return { key: line.key, ok: false, problem: `${pers.label} must be ${pers.maxLength} characters or fewer.` };
       if (!PERSONALISATION_PATTERN.test(text))
         return { key: line.key, ok: false, problem: `${pers.label} contains characters we can't engrave.` };
+      const choices = pers.options?.filter(Boolean) ?? [];
+      if (choices.length) {
+        option = choices.find((o) => o === line.personalisationOption);
+        if (!option) return { key: line.key, ok: false, problem: `Please choose a material for the ${pers.label.toLowerCase()}.` };
+      }
       personalisationFee = pers.fee || 0;
     }
 
@@ -63,7 +78,8 @@ export async function quoteLines(store: Store, lines: LineInput[], settings?: Si
       quantity: qty,
       lineTotal: (price + personalisationFee) * qty,
       personalisation: text,
-      personalisationLabel: text ? p.personalisation?.label : undefined,
+      personalisationLabel: text ? personalisationFor(p).label : undefined,
+      personalisationOption: option,
       giftMessage: message,
       containsAlcohol: lineContainsAlcohol(p, line.variantId),
     };

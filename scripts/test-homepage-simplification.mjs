@@ -17,10 +17,11 @@ assert.match(source, /<ProductCard[\s\S]{0,300}\bcompact\b/, "Festive cards shou
 
 assert.doesNotMatch(hero, /<MoireField\b|<Emph\b/, "Hero should not depend on decorative editorial treatments");
 assert.doesNotMatch(hero, /href="\/corporate"/, "Hero should have one clear primary action");
-assert.equal((hero.match(/href="\/festive"/g) ?? []).length, 1, "Hero should expose one collection CTA");
+assert.equal((hero.match(/<Link\b/g) ?? []).length, 1, "Hero should expose one Shop Now CTA");
+assert.match(hero, /SHOP NOW/, "Hero CTA reads Shop Now (client, Oct 2026)");
 assert.doesNotMatch(hero, /border border-line/, "Hero should read as one integrated brand scene, not a bordered UI card");
 assert.doesNotMatch(hero, /animate-fade-up/, "Critical hero copy should be visible immediately without delayed entrance animation");
-assert.match(source, /slides=\{\[siteImages\.homeHero\]\}/, "Hero should use the unbranded warm gift-box scene selected for the homepage");
+assert.match(source, /heroSlides = \[siteImages\.homeHero,/, "Hero should open on the unbranded warm gift-box scene selected for the homepage");
 assert.match(source, /fixedImage = siteImages\.homeFixed/, "Fixed Gifts gateway should use its unbranded homepage photograph");
 assert.match(source, /image=\{siteImages\.homeCorporate\}/, "Corporate gateway should use its unbranded homepage photograph");
 assert.match(source, /wineImage = siteImages\.homeWine/, "Wine gateway should use its dedicated unbranded homepage photograph");
@@ -33,7 +34,7 @@ assert.match(styles, /--font-display: "Lora Variable"/, "The global display toke
 assert.match(styles, /--color-walnut: #6b513d;/, "Wine should use the approved warmer walnut tone");
 assert.match(styles, /\.home-cta--quiet\s*\{/, "The homepage should define a restrained category CTA modifier");
 
-for (const route of ["/fixed-gifts", "/wine-spirits", "/corporate"]) {
+for (const route of ["/fixed-gifts", "/wine-gift-boxes", "/corporate"]) {
   assert.match(source, new RegExp(`href=[{]?["]${route.replace("/", "\\/")}`), `Homepage should keep a direct CTA to ${route}`);
 }
 

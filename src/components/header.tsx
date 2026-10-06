@@ -11,7 +11,7 @@ import { SearchOverlay } from "./search-overlay";
 export const NAV = [
   { href: "/festive", label: "Festive" },
   { href: "/fixed-gifts", label: "Fixed Gift Collection" },
-  { href: "/wine-spirits", label: "Wine & Spirits" },
+  { href: "/wine-gift-boxes", label: "Wine Gift Boxes" },
   { href: "/corporate", label: "Corporate Orders" },
 ];
 
@@ -160,20 +160,6 @@ function MobileMenu({ open, onClose, isActive }: { open: boolean; onClose: () =>
                 </Link>
               </li>
             ))}
-          </ul>
-          <ul className="mt-8 space-y-4 text-[14px] text-ink-2">
-            <li>
-              <Link href="/corporate/semi-curated">Semi-curated corporate orders</Link>
-            </li>
-            <li>
-              <Link href="/corporate/bespoke">Fully customised gifts</Link>
-            </li>
-            <li>
-              <Link href="/delivery">Delivery & returns</Link>
-            </li>
-            <li>
-              <Link href="/cart">Shopping bag</Link>
-            </li>
           </ul>
         </nav>
       </div>
