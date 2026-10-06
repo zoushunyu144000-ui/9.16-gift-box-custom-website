@@ -133,6 +133,8 @@ export interface SiteSettings {
   businessHours: string;
   /** Show the preview/test-mode notice in the footer and checkout. */
   showPreviewNotice: boolean;
+  /** Personalised names can be ordered. Off = every product shows the option as “Coming soon”. */
+  personalisationLive?: boolean;
 }
 
 export type PaymentMethod = "fpx" | "card" | "ewallet";

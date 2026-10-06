@@ -1,4 +1,4 @@
-import type { CategorySlug, Festival, OrderStatus, PaymentMethod, Product, ProductVariant } from "./types";
+import type { CategorySlug, Festival, OrderStatus, PaymentMethod, Personalisation, Product, ProductVariant } from "./types";
 
 export const CATEGORIES: Record<CategorySlug, { name: string; href: string; short: string; intro: string }> = {
   festive: {
@@ -150,6 +150,13 @@ export function slugify(input: string) {
 export function whatsappLink(number: string, text: string) {
   const n = number.replace(/[^0-9]/g, "");
   return `https://wa.me/${n}?text=${encodeURIComponent(text)}`;
+}
+
+/** Personalised name offered on every product (client, Oct 2026): no material choice, no fee
+ * unless a product sets its own. A product's own settings (label, length, fee) win when enabled. */
+export const DEFAULT_PERSONALISATION: Personalisation = { enabled: true, label: "Personalised name", maxLength: 20, fee: 0 };
+export function personalisationFor(p: Product): Personalisation {
+  return p.personalisation?.enabled ? { ...p.personalisation, options: [] } : DEFAULT_PERSONALISATION;
 }
 
 export const PERSONALISATION_PATTERN = /^[\p{L}\p{N} .,'&\-!?/()]*$/u;

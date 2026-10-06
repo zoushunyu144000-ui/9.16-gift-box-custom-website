@@ -12,8 +12,9 @@ export const metadata: Metadata = {
 };
 
 /**
- * Corporate Orders — deliberately short: two main entries, details one click away
- * (/corporate/semi-curated and /corporate/bespoke).
+ * Corporate Orders — deliberately short: two main entries. Semi-customised goes straight to
+ * the Fixed Gift Collection (client, Oct 2026); Fully customised to /corporate/bespoke.
+ * Photographs sit full-bleed, without a mount.
  */
 export default function CorporatePage() {
   return (
@@ -30,7 +31,7 @@ export default function CorporatePage() {
         <Entry
           title="Semi-customised"
           text="Gifts from our collection, with your company’s touch."
-          href="/corporate/semi-curated"
+          href="/fixed-gifts"
           image={siteImages.corporateSemi}
           priority
         />
@@ -48,7 +49,7 @@ export default function CorporatePage() {
 function Entry({ title, text, href, image, priority = false }: { title: string; text: string; href: string; image: Img; priority?: boolean }) {
   return (
     <Link href={href} className="group block">
-      <div className="mount overflow-hidden transition-colors duration-500 group-hover:bg-stone">
+      <div className="-mx-5 overflow-hidden md:mx-0">
         <ProductImage
           src={image.src}
           alt={image.alt}

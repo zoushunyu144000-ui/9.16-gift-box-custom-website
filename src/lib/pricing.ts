@@ -6,6 +6,7 @@ import {
   tracksStock,
   lineContainsAlcohol,
   PERSONALISATION_PATTERN,
+  personalisationFor,
   unitPrice,
 } from "./catalog";
 import type { Store } from "./store/types";
@@ -44,19 +45,15 @@ export async function quoteLines(store: Store, lines: LineInput[], settings?: Si
 
     const text = line.personalisation?.trim() || undefined;
     let personalisationFee = 0;
-    let option: string | undefined;
+    // Materials are no longer offered (client, Oct 2026); old orders keep theirs.
+    const option: string | undefined = undefined;
     if (text) {
-      const pers = p.personalisation;
-      if (!pers?.enabled) return { key: line.key, ok: false, problem: `${p.name} cannot be personalised.` };
+      if (!s.personalisationLive) return { key: line.key, ok: false, problem: "Personalised names are coming soon and can’t be ordered yet." };
+      const pers = personalisationFor(p);
       if (text.length > pers.maxLength)
         return { key: line.key, ok: false, problem: `${pers.label} must be ${pers.maxLength} characters or fewer.` };
       if (!PERSONALISATION_PATTERN.test(text))
         return { key: line.key, ok: false, problem: `${pers.label} contains characters we can't engrave.` };
-      const choices = pers.options?.filter(Boolean) ?? [];
-      if (choices.length) {
-        option = choices.find((o) => o === line.personalisationOption);
-        if (!option) return { key: line.key, ok: false, problem: `Please choose a material for the ${pers.label.toLowerCase()}.` };
-      }
       personalisationFee = pers.fee || 0;
     }
 
@@ -77,7 +74,7 @@ export async function quoteLines(store: Store, lines: LineInput[], settings?: Si
       quantity: qty,
       lineTotal: (price + personalisationFee) * qty,
       personalisation: text,
-      personalisationLabel: text ? p.personalisation?.label : undefined,
+      personalisationLabel: text ? personalisationFor(p).label : undefined,
       personalisationOption: option,
       giftMessage: message,
       containsAlcohol: lineContainsAlcohol(p, line.variantId),

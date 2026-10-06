@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Hero } from "@/components/hero";
-import { Star } from "@/components/logo";
 import { ProductCard } from "@/components/product-card";
 import { ProductImage } from "@/components/product-image";
 import { ProductRail, RailItem } from "@/components/product-rail";
@@ -25,17 +24,20 @@ export default async function HomePage() {
   // available ones, via sortProducts) and are marked Sold Out on the card.
   const season = festivals.find((f) => f.id === settings.activeFestivalId && f.active);
   const festive = season ? pick(visible.filter((p) => p.category === "festive" && p.festivalId === season.id), 4) : [];
-  // Every other festival is a plain button under the row (no images, no prices) that leads to its page.
-  const otherFestivals = sortFestivals(festivals).filter((f) => f.id !== season?.id);
+  // Hero photographs cross-fade like a short film.
+  const heroSlides = [siteImages.homeHero, siteImages.homeFixed, siteImages.festiveCampaign, siteImages.homeCorporate];
+  const shown = sortFestivals(festivals);
+  const festivalNames = shown.length > 1 ? `${shown.slice(0, -1).map((f) => f.name).join(", ")} and ${shown.at(-1)!.name}` : shown[0]?.name ?? "every festival";
   const fixedImage = siteImages.homeFixed;
   const wineImage = siteImages.homeWine;
 
   return (
     <>
-      <Hero eyebrow={settings.heroEyebrow} title={settings.heroTitle} text={settings.heroText} slides={[siteImages.homeHero]} />
+      <Hero title={settings.heroTitle} slides={heroSlides} href={season && festive.length > 0 ? festivalHref(season) : "/festive"} />
 
-      {/* 1 · Festive — direct seasonal shopping */}
-      {(festive.length > 0 || otherFestivals.length > 0) && (
+      {/* 1 · Festive — only while a festival is in season (Admin → Settings). Other festivals
+          live on the Festive Collection page. */}
+      {festive.length > 0 && (
         <section className="bg-paper py-12 md:py-16" aria-labelledby="festive-heading">
           <div className="shell">
             <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
@@ -44,47 +46,19 @@ export default async function HomePage() {
                 <h2 id="festive-heading" className="display mt-3 text-[2.2rem] leading-tight tracking-[-0.01em] md:text-[2.8rem]">Festive Collection</h2>
                 <p className="mt-2 text-[14px] text-ink-2 md:text-[15px]">Joyful gifts for the season, ready to choose and send.</p>
               </div>
-              <Link href={season && festive.length > 0 ? festivalHref(season) : "/festive"} className="link-line flex-none sm:mb-1">
+              <Link href={festivalHref(season!)} className="link-line flex-none sm:mb-1">
                 View all <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.25} />
               </Link>
             </div>
-            {festive.length > 0 && (
-              <div className="mt-8 md:mt-10">
-                <ProductRail label={settings.festiveTitle}>
-                  {festive.map((p, i) => (
-                    <RailItem key={p.id}>
-                      <ProductCard product={p} compact priority={i < 2} ratio={0.92} reveal={false} sizes="(min-width: 1024px) 24vw, (min-width: 640px) 44vw, 78vw" />
-                    </RailItem>
-                  ))}
-                </ProductRail>
-              </div>
-            )}
-            {otherFestivals.length > 0 && (
-              <nav className="mt-12 md:mt-14" aria-labelledby="other-festivals-heading">
-                <p id="other-festivals-heading" className="text-[11px] font-medium uppercase tracking-[0.18em] text-bronze">
-                  Other festivals
-                </p>
-                <ul className="mt-4 grid border-t border-line sm:grid-cols-3 sm:border-t-0 sm:gap-4">
-                  {otherFestivals.map((f) => (
-                    <li key={f.id}>
-                      <Link
-                        href={festivalHref(f)}
-                        className="group flex items-center justify-between gap-4 border-b border-line py-4 transition-colors sm:h-full sm:flex-col sm:items-start sm:border sm:border-line sm:bg-ivory/60 sm:px-6 sm:py-6 sm:hover:border-bronze/50 sm:hover:bg-ivory"
-                      >
-                        <span className="flex items-center gap-3">
-                          <Star className="h-2.5 w-2.5 flex-none text-champagne" />
-                          <span className="display text-[1.25rem] leading-tight md:text-[1.45rem]">{f.name}</span>
-                        </span>
-                        <span className="flex flex-none items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-ink-2 transition-colors group-hover:text-bronze sm:mt-6">
-                          <span className="hidden sm:inline">View gift boxes</span>
-                          <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" strokeWidth={1.25} aria-hidden="true" />
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-            )}
+            <div className="mt-8 md:mt-10">
+              <ProductRail label={settings.festiveTitle}>
+                {festive.map((p, i) => (
+                  <RailItem key={p.id}>
+                    <ProductCard product={p} compact priority={i < 2} ratio={0.92} reveal={false} sizes="(min-width: 1024px) 24vw, (min-width: 640px) 44vw, 78vw" />
+                  </RailItem>
+                ))}
+              </ProductRail>
+            </div>
           </div>
         </section>
       )}
@@ -119,8 +93,23 @@ export default async function HomePage() {
         cta="Explore corporate gifting"
         image={siteImages.homeCorporate}
         tone="paper"
-        flushFooter
+        flushFooter={festive.length > 0}
       />
+
+      {/* No festival in season: the festive collection becomes a closing entry instead of a product row. */}
+      {festive.length === 0 && (
+        <CollectionGateway
+          id="festive-gateway-heading"
+          eyebrow="By festival"
+          title="Festive Collection"
+          text={`Gift boxes for ${festivalNames}.`}
+          href="/festive"
+          cta="Explore festive gifts"
+          image={siteImages.festiveCampaign}
+          tone="walnut"
+          flushFooter
+        />
+      )}
     </>
   );
 }

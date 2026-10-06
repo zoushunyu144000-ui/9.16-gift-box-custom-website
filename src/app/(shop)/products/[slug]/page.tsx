@@ -73,43 +73,26 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
           <Gallery images={product.images} name={product.name} soldOut={soldOut} mobileRatio={product.category === "wine-spirits" ? 1.25 : 1.05} />
         </div>
 
-        {/* Name → Price → Options / Personalisation → Add to bag (or Sold Out) → Description & details */}
+        {/* Name → Description → Price → Options / Personalisation → Add to bag (or Sold Out) → details */}
         <div className="min-w-0 lg:col-span-5">
           <div className="lg:hidden">
             <Breadcrumbs items={[{ label: cat.name, href: cat.href }, { label: product.name }]} />
           </div>
           <p className="eyebrow mt-5 lg:mt-0">{festival ? festival.name : cat.name}</p>
           <h1 className="display mt-3 text-[2.25rem] leading-[1.05] md:text-[2.9rem]">{product.name}</h1>
+          {/* The one product description sits right under the name (client, Oct 2026); what's in
+              the box is written into it, so there is no separate contents list. */}
+          {product.description && (
+            <p id="description-heading" className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-ink-2">
+              {product.description}
+            </p>
+          )}
           <div className="mt-4">
-            <PurchasePanel product={product} />
+            <PurchasePanel product={product} personalisationLive={!!settings.personalisationLive} />
           </div>
 
-          {/* The one product description, after price and purchase. */}
-          <section className="mt-10 border-t border-line pt-8" aria-labelledby="description-heading">
-            <h2 id="description-heading" className="label">
-              Description
-            </h2>
-            {product.description && <p className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-ink-2">{product.description}</p>}
-            {product.contents.length > 0 && (
-              <>
-                <h3 className="display mt-8 text-[1.45rem] leading-tight">What’s inside</h3>
-                <ul className="mt-4 border-t border-line">
-                  {product.contents.map((c) => (
-                    <li key={c} className="flex items-baseline gap-4 border-b border-line py-3 text-[15px]">
-                      <span className="h-px w-3 flex-none translate-y-[-4px] bg-champagne" aria-hidden="true" />
-                      {c}
-                    </li>
-                  ))}
-                </ul>
-                {product.variants.some((v) => v.note) && (
-                  <p className="mt-4 text-[13px] text-ink-2">
-                    Options: {product.variants.filter((v) => v.note).map((v) => `${v.name} — ${v.note}`).join("; ")}.
-                  </p>
-                )}
-              </>
-            )}
-
-            <div className={`border-t border-line ${product.contents.length || product.description ? "mt-8" : "mt-4"}`}>
+          <section className="mt-10" aria-label="Details">
+            <div className="border-t border-line">
               {product.specs.length > 0 && (
                 <Accordion title="Specifications">
                   <dl className="grid grid-cols-[minmax(7rem,auto)_1fr] gap-x-6 gap-y-2.5 text-[14px]">
@@ -146,14 +129,6 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
             </div>
           </section>
 
-          <ul className="mt-8 space-y-3 text-[13px] leading-relaxed text-ink-2">
-            <li className="flex gap-3">
-              <span className="w-20 flex-none text-ink">Corporate</span>
-              <Link href="/corporate" className="underline decoration-line-strong underline-offset-4 hover:text-ink">
-                Ordering in quantity? See corporate orders
-              </Link>
-            </li>
-          </ul>
         </div>
       </div>
 
@@ -167,7 +142,7 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
               {cat.name}
             </Link>
           </div>
-          <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-10 md:gap-x-6 lg:grid-cols-4">
+          <div className="mt-8 grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-4">
             {related.map((p) => (
               <ProductCard key={p.id} product={p} sizes="(min-width: 1024px) 23vw, 50vw" />
             ))}

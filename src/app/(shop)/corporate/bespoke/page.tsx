@@ -26,7 +26,8 @@ export default async function BespokePage() {
             A corporate gift designed around your brand, occasion and recipients. We prepare a proposal for you to review before anything is produced.
           </p>
         </div>
-        <div className="lg:col-span-5 lg:col-start-8">
+        {/* Full-bleed on phones: the photograph runs edge to edge, no frame. */}
+        <div className="-mx-5 md:mx-0 lg:col-span-5 lg:col-start-8">
           <ProductImage src={siteImages.bespokeDetail.src} alt={siteImages.bespokeDetail.alt} ratio={1.15} sizes="(min-width: 1024px) 40vw, 100vw" priority />
         </div>
       </header>

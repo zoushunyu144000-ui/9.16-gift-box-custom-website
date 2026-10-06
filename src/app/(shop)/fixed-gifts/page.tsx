@@ -17,7 +17,6 @@ export default async function FixedGiftsPage({ searchParams }: PageProps<"/fixed
       eyebrow="Year-round"
       title="Fixed Gift *Collection*"
       intro={CATEGORIES["fixed-gifts"].intro}
-      note="Pieces marked “Engraving available” can carry a name or a date — add it on the product page."
       products={products.filter((p) => p.category === "fixed-gifts" && p.status !== "hidden")}
       sort={parseSort(sp.sort)}
     />

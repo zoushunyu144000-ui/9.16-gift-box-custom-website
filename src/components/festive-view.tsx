@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { festivalHref, isPurchasable, sortFestivals } from "@/lib/catalog";
 import type { Festival, Product, SiteSettings } from "@/lib/types";
 import { Breadcrumbs } from "./breadcrumbs";
@@ -8,9 +9,10 @@ import { ProductGrid } from "./product-grid";
 import { SortSelect } from "./sort-select";
 
 /**
- * Festive Collection: every festival's gift boxes on one page, one section per festival,
- * the current season first, then the order set in Admin → Festivals. Festivals with no
- * gift boxes are left out. Each festival also keeps its own page (/festive/[slug]).
+ * Festive Collection: one row per festival, the current season first and open; the others
+ * stay closed and show their gift boxes only when clicked (client, Oct 2026). Order after the
+ * season follows Admin → Festivals; festivals with no gift boxes are left out. Each festival
+ * also keeps its own page (/festive/[slug]).
  */
 export function FestiveIndex({ festivals, products, settings }: { festivals: Festival[]; products: Product[]; settings: SiteSettings }) {
   const festive = products.filter((p) => p.category === "festive" && p.status !== "hidden");
@@ -32,35 +34,50 @@ export function FestiveIndex({ festivals, products, settings }: { festivals: Fes
               <p className="eyebrow">By festival</p>
               <h1 className="display mt-5 text-[2.6rem] leading-[0.98] tracking-[-0.02em] md:text-[4.6rem]">Festive Collection</h1>
             </div>
-            <p className="max-w-[44ch] text-[15px] leading-relaxed text-ink-2 md:col-span-4 md:col-start-9">Gift boxes for every festival, starting with this season.</p>
+            <p className="max-w-[44ch] text-[15px] leading-relaxed text-ink-2 md:col-span-4 md:col-start-9">Choose a festival to see its gift boxes.</p>
           </div>
         </div>
       </header>
 
-      <div className="shell">
+      <div className="shell pt-10 md:pt-14">
         {sections.length === 0 ? (
-          <div className="mt-12 border border-line px-6 py-20 text-center">
+          <div className="border border-line px-6 py-20 text-center">
             <p className="display text-2xl">Nothing here yet</p>
             <p className="mx-auto mt-2 max-w-[40ch] text-ink-2">There are no festive gifts at the moment. Please check back soon.</p>
           </div>
         ) : (
-          sections.map(({ festival: f, items }, i) => (
-            <section key={f.id} id={f.slug} className={`scroll-mt-24 ${i === 0 ? "pt-12 md:pt-16" : "mt-16 border-t border-line pt-12 md:mt-24 md:pt-16"}`} aria-labelledby={`festival-${f.slug}`}>
-              <div className="mb-8 flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between md:mb-10">
-                <div>
-                  {f.id === settings.activeFestivalId && <p className="eyebrow mb-3">This season</p>}
-                  <h2 id={`festival-${f.slug}`} className="display text-[2rem] leading-tight md:text-[2.6rem]">
-                    {f.name}
-                  </h2>
-                  {f.description && <p className="mt-2 max-w-[56ch] text-[14px] text-ink-2 md:text-[15px]">{f.description}</p>}
-                </div>
-                <Link href={festivalHref(f)} className="link-line flex-none sm:mb-1">
-                  View {f.name}
-                </Link>
-              </div>
-              <ProductGrid products={items} priorityCount={i === 0 ? 4 : 0} />
-            </section>
-          ))
+          <div className="border-t border-line">
+            {sections.map(({ festival: f, items }) => {
+              const season = f.id === settings.activeFestivalId;
+              return (
+                <details key={f.id} id={f.slug} className="group scroll-mt-24 border-b border-line" open={season}>
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 md:py-6 [&::-webkit-details-marker]:hidden">
+                    <span className="min-w-0">
+                      {season && <span className="eyebrow mb-1.5 block">This season</span>}
+                      <span className="display block text-[1.6rem] leading-tight md:text-[2.1rem]">{f.name}</span>
+                      {f.description && <span className="mt-1 block text-[13px] text-ink-2 md:text-[14px]">{f.description}</span>}
+                    </span>
+                    <span className="flex flex-none items-center gap-3 text-[12px] uppercase tracking-[0.14em] text-ink-2">
+                      <span className="hidden sm:inline">
+                        {items.length} {items.length === 1 ? "gift" : "gifts"}
+                      </span>
+                      <span className="grid h-9 w-9 place-items-center border border-line-strong transition-colors group-open:border-champagne group-open:bg-champagne group-open:text-ivory">
+                        <Plus className="h-4 w-4 transition-transform duration-300 group-open:rotate-45" strokeWidth={1.25} aria-hidden="true" />
+                      </span>
+                    </span>
+                  </summary>
+                  <div className="pb-10 md:pb-14">
+                    <ProductGrid products={items} priorityCount={season ? 4 : 0} />
+                    <div className="mt-6 flex justify-end">
+                      <Link href={festivalHref(f)} className="link-line">
+                        View {f.name}
+                      </Link>
+                    </div>
+                  </div>
+                </details>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

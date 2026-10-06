@@ -40,7 +40,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
         </div>
       )}
       {results.length > 0 && (
-        <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-12 md:grid-cols-3 md:gap-x-6 xl:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 xl:grid-cols-4">
           {results.map((p) => (
             <ProductCard key={p.id} product={p} eyebrow={festivalName(festivals, p.festivalId)} sizes="(min-width: 1280px) 23vw, (min-width: 768px) 31vw, 50vw" />
           ))}

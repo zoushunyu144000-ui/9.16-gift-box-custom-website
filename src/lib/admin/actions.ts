@@ -239,7 +239,8 @@ export async function updateEnquiryAction(id: string, patch: { status?: EnquiryS
 
 // ───────── Settings ─────────
 const SettingsInput = z.object({
-  activeFestivalId: z.string().trim().min(1, "Choose the festival that leads the homepage").max(80),
+  // "" = no festival in season: the homepage drops the festive row and shows a Festive Collection entry instead.
+  activeFestivalId: z.string().trim().max(80),
   festiveTitle: z.string().trim().min(2).max(80),
   festiveIntro: z.string().trim().max(300),
   heroEyebrow: z.string().trim().max(60),
@@ -253,6 +254,7 @@ const SettingsInput = z.object({
   contactEmail: z.string().trim().email().max(120).or(z.literal("")),
   businessHours: z.string().trim().max(80),
   showPreviewNotice: z.boolean(),
+  personalisationLive: z.boolean().default(false),
 });
 
 export async function saveSettingsAction(input: SiteSettings): Promise<{ ok: boolean; error?: string }> {

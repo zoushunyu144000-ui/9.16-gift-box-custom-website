@@ -5,18 +5,14 @@ import { ProductImage } from "./product-image";
 import { QuickAdd } from "./quick-add";
 
 /**
- * Product card.
- * `mount`  — photograph set in a paper mount (default; the collection look)
- * `bare`   — full-bleed photograph, used for the larger editorial features
- * Cards show only the name and price (client request); details live on the product page.
- * Sold Out is the one label: a small ivory tag on the photograph, in every card size.
+ * Product card: a framed card with the photograph, the name and the price beneath it
+ * (client, Oct 2026). Sold Out is the one label: a small ivory tag on the photograph.
  */
 export function ProductCard({
   product,
   priority = false,
   sizes,
   eyebrow,
-  frame = "mount",
   ratio = 1.25,
   size = "md",
   reveal = true,
@@ -27,7 +23,6 @@ export function ProductCard({
   sizes?: string;
   /** Small line above the name, e.g. the festival in search results. */
   eyebrow?: string;
-  frame?: "mount" | "bare";
   ratio?: number;
   size?: "md" | "lg";
   /** Kept for existing call sites; every card is now name + price only. */
@@ -67,30 +62,26 @@ export function ProductCard({
     </div>
   );
 
+  // One framed card: photograph on top, then the name and, on its own line, the price.
   return (
     <article
-      className="group relative flex flex-col"
+      className="group relative flex flex-col border border-line bg-ivory transition-colors duration-500 hover:border-champagne/70"
       data-reveal={reveal ? "" : undefined}
       style={revealDelay ? ({ "--reveal-delay": `${revealDelay}ms` } as React.CSSProperties) : undefined}
     >
       <Link href={`/products/${product.slug}`} className="block" aria-label={product.name} tabIndex={-1}>
-        {frame === "mount" ? <div className="mount transition-colors duration-500 group-hover:bg-stone">{media}</div> : media}
+        {media}
       </Link>
-      <div className={`flex flex-1 flex-col ${size === "lg" ? "pt-5 md:pt-6" : "pt-4"}`}>
-        {eyebrow && <p className="mb-1.5 text-[11px] tracking-[0.14em] text-ink-3 uppercase">{eyebrow}</p>}
-        <div className="flex items-baseline justify-between gap-4">
-          <h3 className={`display leading-[1.15] ${size === "lg" ? "text-[1.5rem] md:text-[1.9rem]" : "text-[1.12rem] md:text-[1.28rem]"}`}>
-            <Link href={`/products/${product.slug}`} className="after:absolute after:inset-0 after:content-['']">
-              {product.name}
-            </Link>
-          </h3>
-          <p className={`hidden flex-none tabular-nums sm:block ${soldOut ? "text-ink-3" : "text-ink"} ${size === "lg" ? "text-[15px]" : "text-[14px]"}`}>
-            {priceLabel(product)}
-          </p>
-        </div>
-        <p className={`mt-2 text-[14px] tabular-nums sm:hidden ${soldOut ? "text-ink-3" : ""}`}>{priceLabel(product)}</p>
+      <div className={`flex flex-1 flex-col ${size === "lg" ? "p-4 md:p-5" : "px-3 pb-3.5 pt-3 md:px-4 md:pb-4 md:pt-3.5"}`}>
+        {eyebrow && <p className="mb-1 text-[11px] tracking-[0.14em] text-ink-3 uppercase">{eyebrow}</p>}
+        <h3 className={`display leading-[1.2] ${size === "lg" ? "text-[1.4rem] md:text-[1.7rem]" : "text-[1.02rem] md:text-[1.15rem]"}`}>
+          <Link href={`/products/${product.slug}`} className="after:absolute after:inset-0 after:content-['']">
+            {product.name}
+          </Link>
+        </h3>
+        <p className={`mt-1.5 tabular-nums ${soldOut ? "text-ink-3" : "text-ink-2"} ${size === "lg" ? "text-[15px]" : "text-[13px] md:text-[14px]"}`}>{priceLabel(product)}</p>
         {simple && !soldOut && (
-          <div className="mt-auto flex justify-end pt-2.5">
+          <div className="mt-auto flex justify-end pt-2">
             <QuickAdd product={product} />
           </div>
         )}
@@ -101,12 +92,12 @@ export function ProductCard({
 
 export function ProductCardSkeleton() {
   return (
-    <div className="flex flex-col">
-      <div className="mount">
-        <div className="skeleton aspect-[4/5] w-full" />
+    <div className="flex flex-col border border-line bg-ivory">
+      <div className="skeleton aspect-[4/5] w-full" />
+      <div className="p-3">
+        <div className="skeleton h-5 w-2/3" />
+        <div className="skeleton mt-2 h-4 w-1/3" />
       </div>
-      <div className="skeleton mt-4 h-5 w-2/3" />
-      <div className="skeleton mt-2 h-4 w-full" />
     </div>
   );
 }

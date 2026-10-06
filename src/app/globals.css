@@ -2,17 +2,19 @@
 
 /* ───────────────────────── Moire Co. · Line & Light tokens ───────────────────────── */
 @theme {
-  --color-ivory: #faf7f1;
-  --color-cream: #f3ede3;
-  --color-stone: #e9e2d6;
-  --color-sand: #ddd3c3;
-  --color-mount: #efe8dc;
-  --color-paper: #f6f1e8;
+  /* Champagne Pearl palette (client, Oct 2026): pearl white base, champagne / warm beige
+     section tints for clear contrast between bands, gold accent. */
+  --color-ivory: #fbf8f3; /* Pearl White */
+  --color-cream: #ecdfc9; /* between Champagne and Warm Beige */
+  --color-stone: #e4d5bf;
+  --color-sand: #d9c8b2; /* Warm Beige */
+  --color-mount: #f2e8d8;
+  --color-paper: #f4ebdc; /* light Champagne */
   --color-ink: #1f1c18;
-  --color-ink-2: #5e574e;
-  --color-ink-3: #8c8276;
-  --color-champagne: #b39465;
-  --color-bronze: #7e6337;
+  --color-ink-2: #5a5148;
+  --color-ink-3: #8a7f73; /* Soft Taupe, darkened for legibility */
+  --color-champagne: #c79c5a; /* Gold Accent */
+  --color-bronze: #8c6a32;
   --color-walnut: #6b513d;
   --color-line: rgb(31 28 24 / 0.12);
   --color-line-strong: rgb(31 28 24 / 0.24);
@@ -211,7 +213,23 @@
   }
 
   .hero-scrim {
-    background: linear-gradient(90deg, rgb(250 247 241 / 0.98) 0%, rgb(250 247 241 / 0.9) 25%, rgb(250 247 241 / 0.1) 52%, transparent 66%);
+    background: linear-gradient(180deg, rgb(251 248 243 / 0.55) 0%, rgb(251 248 243 / 0.15) 38%, transparent 60%, rgb(31 28 24 / 0.12) 100%);
+  }
+
+  /* Hero slideshow: each slide slowly pushes in while it is shown, so the still photographs
+     read like a short film. Reduced-motion visitors get still images. */
+  .hero-slide img {
+    transform: scale(1);
+  }
+  .hero-slide[data-active] img {
+    animation: hero-push 9s linear both;
+  }
+  @keyframes hero-push {
+    from { transform: scale(1.0); }
+    to { transform: scale(1.09); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero-slide[data-active] img { animation: none; }
   }
 
   .link-line {

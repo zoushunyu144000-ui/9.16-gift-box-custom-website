@@ -740,7 +740,7 @@ export const seedSettings: SiteSettings = {
   festiveTitle: "Chinese New Year 2027",
   festiveIntro: "Boxes and hampers for the first visits of the year — to parents and grandparents, to friends, and to the people you work with.",
   heroEyebrow: "Chinese New Year 2027",
-  heroTitle: "Gift boxes for the *Year of the Goat*",
+  heroTitle: "More than a gift / A memory",
   heroText: "Festive boxes, year-round gifts, wine gift boxes and corporate orders — from Moire Co. in Kuala Lumpur.",
   deliveryFee: 20,
   freeDeliveryThreshold: null,
@@ -750,6 +750,7 @@ export const seedSettings: SiteSettings = {
   contactEmail: "",
   businessHours: "",
   showPreviewNotice: true,
+  personalisationLive: false,
 };
 
 /** Imagery used by site sections (not products). */
@@ -771,6 +772,12 @@ export const siteImages = {
     alt: "Unbranded wine bottle and glass beside a warm taupe presentation box",
     width: 1672,
     height: 941,
+  },
+  festiveCampaign: {
+    src: "/images/grand-prosperity-hamper-hero-v1.webp",
+    alt: "Ivory festive hamper with a red knot tassel beside mandarins and plum blossom",
+    width: 1122,
+    height: 1402,
   },
   homeCorporate: {
     src: "/images/moire-home-corporate-v1.webp",
