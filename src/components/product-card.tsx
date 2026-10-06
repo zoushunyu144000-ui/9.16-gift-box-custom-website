@@ -13,7 +13,7 @@ export function ProductCard({
   priority = false,
   sizes,
   eyebrow,
-  ratio = 1.25,
+  ratio = 1,
   size = "md",
   reveal = true,
   revealDelay = 0,
@@ -79,12 +79,10 @@ export function ProductCard({
             {product.name}
           </Link>
         </h3>
-        <p className={`mt-1.5 tabular-nums ${soldOut ? "text-ink-3" : "text-ink-2"} ${size === "lg" ? "text-[15px]" : "text-[13px] md:text-[14px]"}`}>{priceLabel(product)}</p>
-        {simple && !soldOut && (
-          <div className="mt-auto flex justify-end pt-2">
-            <QuickAdd product={product} />
-          </div>
-        )}
+        <div className="mt-1.5 flex items-baseline justify-between gap-3">
+          <p className={`tabular-nums ${soldOut ? "text-ink-3" : "text-ink-2"} ${size === "lg" ? "text-[15px]" : "text-[13px] md:text-[14px]"}`}>{priceLabel(product)}</p>
+          {simple && !soldOut && <QuickAdd product={product} />}
+        </div>
       </div>
     </article>
   );
@@ -93,7 +91,7 @@ export function ProductCard({
 export function ProductCardSkeleton() {
   return (
     <div className="flex flex-col border border-line bg-ivory">
-      <div className="skeleton aspect-[4/5] w-full" />
+      <div className="skeleton aspect-square w-full" />
       <div className="p-3">
         <div className="skeleton h-5 w-2/3" />
         <div className="skeleton mt-2 h-4 w-1/3" />

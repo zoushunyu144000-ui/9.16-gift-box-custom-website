@@ -50,18 +50,18 @@ export function CollectionView({
   return (
     <div>
       <header className="bg-paper">
-        <div className="shell pb-14 pt-6 md:pb-20 md:pt-10">
+        <div className="shell pb-8 pt-4 md:pb-16 md:pt-10">
           <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: plainTitle }]} />
-          <div className="mt-12 grid gap-8 md:mt-20 md:grid-cols-12 md:items-end">
+          <div className="mt-6 grid gap-3 md:mt-16 md:grid-cols-12 md:items-end md:gap-8">
             <div className="md:col-span-7">
-              {eyebrow && <p className="eyebrow mb-5">{eyebrow}</p>}
-              <h1 className="display text-[2.8rem] leading-[0.98] tracking-[-0.02em] md:text-[5rem]">
+              {eyebrow && <p className="eyebrow mb-3 md:mb-5">{eyebrow}</p>}
+              <h1 className="display text-[2.2rem] leading-[1] tracking-[-0.02em] md:text-[5rem]">
                 <Emph text={title} />
               </h1>
             </div>
             <div className="md:col-span-4 md:col-start-9">
-              <p className="max-w-[44ch] text-[15px] leading-relaxed text-ink-2">{intro}</p>
-              {note && <p className="mt-3 text-[13px] leading-relaxed text-ink-3">{note}</p>}
+              <p className="max-w-[44ch] text-[14px] leading-relaxed text-ink-2 md:text-[15px]">{intro}</p>
+              {note && <p className="mt-3 hidden text-[13px] leading-relaxed text-ink-3 md:block">{note}</p>}
             </div>
           </div>
         </div>
@@ -77,7 +77,7 @@ export function CollectionView({
         </div>
       </div>
 
-      <div className="shell pt-12 md:pt-20">
+      <div className="shell pt-8 md:pt-16">
         {list.length === 0 ? (
           <div className="border border-line px-6 py-20 text-center">
             <p className="display text-2xl">Nothing here yet</p>

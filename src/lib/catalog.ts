@@ -11,7 +11,7 @@ export const CATEGORIES: Record<CategorySlug, { name: string; href: string; shor
     name: "Fixed Gift Collection",
     short: "Fixed Gift Collection",
     href: "/fixed-gifts",
-    intro: "Year-round gifts for birthdays, thanks and milestones. Selected pieces can be engraved with a name.",
+    intro: "Year-round gifts for birthdays, thanks and milestones.",
   },
   // Internal id stays "wine-spirits" (database value); everything customer-facing presents
   // these as gift boxes — the client sells gift boxes, not alcohol on its own.

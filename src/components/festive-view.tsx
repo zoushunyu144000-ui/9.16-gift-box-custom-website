@@ -27,14 +27,14 @@ export function FestiveIndex({ festivals, products, settings }: { festivals: Fes
   return (
     <div>
       <header className="bg-paper">
-        <div className="shell pb-12 pt-6 md:pb-16 md:pt-10">
+        <div className="shell pb-8 pt-4 md:pb-16 md:pt-10">
           <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Festive Collection" }]} />
-          <div className="mt-10 grid gap-6 md:mt-16 md:grid-cols-12 md:items-end">
+          <div className="mt-6 grid gap-3 md:mt-16 md:grid-cols-12 md:items-end md:gap-6">
             <div className="md:col-span-7">
               <p className="eyebrow">By festival</p>
-              <h1 className="display mt-5 text-[2.6rem] leading-[0.98] tracking-[-0.02em] md:text-[4.6rem]">Festive Collection</h1>
+              <h1 className="display mt-3 text-[2.2rem] leading-[1] tracking-[-0.02em] md:mt-5 md:text-[4.6rem]">Festive Collection</h1>
             </div>
-            <p className="max-w-[44ch] text-[15px] leading-relaxed text-ink-2 md:col-span-4 md:col-start-9">Choose a festival to see its gift boxes.</p>
+            <p className="max-w-[44ch] text-[14px] leading-relaxed text-ink-2 md:col-span-4 md:col-start-9 md:text-[15px]">Choose a festival to see its gift boxes.</p>
           </div>
         </div>
       </header>
@@ -115,15 +115,16 @@ export function FestivalView({
   return (
     <div>
       <header className="bg-paper">
-        <div className="shell grid gap-8 pb-12 pt-6 md:pb-16 md:pt-10 lg:grid-cols-12 lg:items-end lg:gap-12">
+        <div className="shell grid gap-8 pb-8 pt-4 md:pb-16 md:pt-10 lg:grid-cols-12 lg:items-end lg:gap-12">
           <div className="lg:col-span-6">
             <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Festive Collection", href: "/festive" }, { label: festival.name }]} />
-            <p className="eyebrow mt-10 md:mt-16">{isSeason ? "This season" : "Festive Collection"}</p>
-            <h1 className="display mt-5 text-[2.4rem] leading-[1] tracking-[-0.02em] md:text-[4rem]">{title}</h1>
-            {intro && <p className="mt-6 max-w-[44ch] text-[15px] leading-relaxed text-ink-2">{intro}</p>}
+            <p className="eyebrow mt-6 md:mt-16">{isSeason ? "This season" : "Festive Collection"}</p>
+            <h1 className="display mt-3 text-[2.2rem] leading-[1] tracking-[-0.02em] md:mt-5 md:text-[4rem]">{title}</h1>
+            {intro && <p className="mt-3 max-w-[44ch] text-[14px] leading-relaxed text-ink-2 md:mt-6 md:text-[15px]">{intro}</p>}
           </div>
           {campaign && (
-            <div className="lg:col-span-5 lg:col-start-8">
+            // Desktop only: on phones the products follow the title straight away.
+            <div className="hidden lg:col-span-5 lg:col-start-8 lg:block">
               <ProductImage src={campaign.src} alt={campaign.alt} ratio={0.75} sizes="(min-width: 1024px) 40vw, 100vw" priority imgClassName="grade" />
             </div>
           )}
@@ -140,7 +141,7 @@ export function FestivalView({
         </div>
       </div>
 
-      <div className="shell pt-12 md:pt-20">
+      <div className="shell pt-8 md:pt-16">
         {list.length === 0 ? (
           <div className="border border-line px-6 py-20 text-center">
             <p className="display text-2xl">Nothing here yet</p>
