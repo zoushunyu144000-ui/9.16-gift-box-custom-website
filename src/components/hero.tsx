@@ -46,7 +46,7 @@ export function Hero({ title, slides, href }: { title: string; slides: Img[]; hr
 
         <div className="absolute inset-x-0 top-[16%] px-6 text-center md:top-[18%]">
           {/* Serif capitals, light and widely spaced, with a thin gold rule between the lines. */}
-          <h1 className="display text-[1.45rem] font-normal uppercase leading-[1.3] indent-[0.2em] tracking-[0.2em] text-ink sm:text-[1.9rem] lg:text-[2.35rem] lg:indent-[0.22em] lg:tracking-[0.22em]">
+          <h1 className="display text-[1.65rem] font-medium uppercase leading-[1.25] indent-[0.16em] tracking-[0.16em] text-ink sm:text-[2.15rem] lg:text-[2.8rem] lg:indent-[0.18em] lg:tracking-[0.18em]">
             {lines.map((l, i) => (
               <span key={i} className="block">
                 {i > 0 && <span className="mx-auto my-3 block h-px w-10 bg-champagne md:my-4 md:w-14" aria-hidden="true" />}
