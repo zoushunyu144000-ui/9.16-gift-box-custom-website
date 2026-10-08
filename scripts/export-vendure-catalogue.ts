@@ -17,6 +17,7 @@ const OUT = path.join(import.meta.dirname, "../backend/stores/moire");
 const COLUMNS = [
   "name", "slug", "description", "assets", "facets", "optionGroups", "optionValues", "sku", "price", "taxCategory", "stockOnHand", "trackInventory", "variantAssets", "variantFacets",
   "product:personalisationLabel", "product:personalisationHelper", "product:personalisationMaxLength",
+  "product:summary", "product:featured", "product:sortOrder", "product:availabilityNote", "variant:note",
 ] as const;
 /** The item names are bought as (PersonalisationPlugin.namesSku in the backend): one unit per name. */
 const NAMES_SKU = "personalised-name";
@@ -63,6 +64,10 @@ for (const p of seedProducts) {
     "product:personalisationLabel": pers.label === DEFAULT_PERSONALISATION.label ? "" : pers.label,
     "product:personalisationHelper": pers.helper ?? "",
     "product:personalisationMaxLength": pers.maxLength,
+    "product:summary": p.summary,
+    "product:featured": p.featured ? "true" : "false",
+    "product:sortOrder": p.sort,
+    "product:availabilityNote": p.status === "sold_out" ? (p.availabilityNote ?? "") : "",
   };
   if (!p.variants.length) {
     rows.push({ ...base, sku: p.slug, price: p.price });
@@ -78,6 +83,7 @@ for (const p of seedProducts) {
       stockOnHand: stock,
       trackInventory: tracked ? "true" : "false",
       variantFacets: v.containsAlcohol && !p.containsAlcohol ? "alcohol:Contains alcohol" : "",
+      "variant:note": v.note ?? "",
     };
     rows.push(i === 0 ? { ...base, ...variant, optionGroups: group } : variant);
   });
@@ -94,6 +100,8 @@ rows.push({
   stockOnHand: 0,
   trackInventory: "false",
   "product:personalisationMaxLength": DEFAULT_PERSONALISATION.maxLength,
+  "product:featured": "false",
+  "product:sortOrder": 1000,
 });
 
 const facetFilter = (name: string) => [{ code: "facet-value-filter", args: { facetValueNames: [name], containsAny: false } }];

@@ -12,6 +12,7 @@ import { GraphiqlPlugin } from '@vendure/graphiql-plugin';
 import 'dotenv/config';
 import path from 'path';
 import { AgeCheckPlugin } from './plugins/age-check/age-check.plugin';
+import { CatalogDisplayPlugin } from './plugins/catalog-display/catalog-display.plugin';
 import { GiftMessagePlugin } from './plugins/gift-message/gift-message.plugin';
 import { PersonalisationPlugin } from './plugins/personalisation/personalisation.plugin';
 
@@ -112,6 +113,7 @@ export const config: VendureConfig = {
         PersonalisationPlugin.init({ namesSku: 'personalised-name', defaultMaxLength: 20 }),
         GiftMessagePlugin.init({ maxLength: 200 }),
         AgeCheckPlugin.init({ facetCode: 'alcohol', minimumAge: 21 }),
+        CatalogDisplayPlugin,
         DashboardPlugin.init({
             route: 'dashboard',
             appDir: IS_DEV ? path.join(__dirname, '../dist/dashboard') : path.join(__dirname, 'dashboard'),
