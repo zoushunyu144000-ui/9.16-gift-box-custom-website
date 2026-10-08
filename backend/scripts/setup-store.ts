@@ -111,7 +111,7 @@ async function main() {
         paymentMethods: [
             {
                 name: 'Test payment',
-                handler: { code: dummyPaymentHandler.code, arguments: [{ name: 'automaticSettle', value: 'false' }] },
+                handler: { code: dummyPaymentHandler.code, arguments: [{ name: 'automaticSettle', value: 'true' }] },
             },
         ],
         roles: store.roles.map(r => ROLE_PRESETS[r]),

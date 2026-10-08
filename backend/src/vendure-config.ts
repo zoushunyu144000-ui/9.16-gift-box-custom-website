@@ -1,6 +1,7 @@
 import {
     dummyPaymentHandler,
     DefaultJobQueuePlugin,
+    DefaultOrderByCodeAccessStrategy,
     DefaultSchedulerPlugin,
     DefaultSearchPlugin,
     VendureConfig,
@@ -80,6 +81,11 @@ export const config: VendureConfig = {
         // Managed Postgres (Supabase, Neon, RDS…): DB_SSL=true, plus DB_SSL_CA when the provider's
         // certificate authority is not in the system store.
         ssl: process.env.DB_SSL === 'true' ? { ca: process.env.DB_SSL_CA || undefined } : false,
+    },
+    orderOptions: {
+        // How long an order's link (its code: the confirmation page, the link in the email) opens
+        // without signing in, counted from when it was placed. Members always see their own orders.
+        orderByCodeAccessStrategy: new DefaultOrderByCodeAccessStrategy(process.env.ORDER_LINK_VALID_FOR || '30d'),
     },
     paymentOptions: {
         // Test payments only until the Malaysian gateway plugins are added.

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { formatRM, ORDER_STATUS, PAYMENT_METHODS, personalisationHeading } from "@/lib/catalog";
+import { formatRM, ORDER_STATUS, paymentMethodName, personalisationHeading } from "@/lib/catalog";
 import { formatDate } from "@/lib/dates";
 import { useCart } from "../cart/cart-context";
 import { Star } from "../logo";
@@ -114,7 +114,7 @@ export function OrderView({ orderId, token }: { orderId: string; token: string }
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-ink-2">Method</dt>
-              <dd>{PAYMENT_METHODS[order.payment.method].name}</dd>
+              <dd>{paymentMethodName(order.payment.method)}</dd>
             </div>
             {order.payment.reference && paid && (
               <div className="flex justify-between gap-4">

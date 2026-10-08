@@ -5,9 +5,10 @@ import { publicOrder } from "@/lib/orders";
 import { getPaymentProvider } from "@/lib/payments";
 import { quoteLines } from "@/lib/pricing";
 import { newOrderId, orderAccessToken } from "@/lib/security";
-import { getStore } from "@/lib/store";
+import { getStore, isVendureConfigured } from "@/lib/store";
 import type { Order } from "@/lib/types";
 import { earliestDeliveryDate } from "@/lib/dates";
+import { placeVendureOrder } from "@/lib/vendure/checkout";
 
 const phone = z
   .string()
@@ -74,6 +75,17 @@ export async function POST(req: Request) {
       { error: "Please choose a later delivery date.", fieldErrors: { deliveryDate: "This date is no longer available." } },
       { status: 422 },
     );
+  }
+
+  if (isVendureConfigured) {
+    try {
+      const result = await placeVendureOrder(body, new URL(req.url).origin);
+      if (!result.ok) return NextResponse.json({ error: result.error, fieldErrors: result.fieldErrors, lineProblems: result.lineProblems }, { status: result.status });
+      return NextResponse.json({ orderId: result.orderCode, accessToken: "", snapshot: "", redirectUrl: result.redirectUrl });
+    } catch (err) {
+      console.error("[checkout] backend order failed", err);
+      return NextResponse.json({ error: "We couldn't create your order. Please try again in a moment." }, { status: 502 });
+    }
   }
 
   const quote = await quoteLines(store, body.lines, settings);

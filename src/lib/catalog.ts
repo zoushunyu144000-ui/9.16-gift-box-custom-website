@@ -38,6 +38,11 @@ export function festivalName(festivals: Festival[], id?: string | null) {
   return id ? festivals.find((f) => f.id === id)?.name : undefined;
 }
 
+/** Name of an order's payment method, including "online" (a hosted gateway that didn't say which). */
+export function paymentMethodName(method: PaymentMethod | "online") {
+  return method === "online" ? "Online payment" : PAYMENT_METHODS[method].name;
+}
+
 export const PAYMENT_METHODS: Record<PaymentMethod, { name: string; detail: string }> = {
   fpx: { name: "FPX online banking", detail: "Pay directly from your Malaysian bank account" },
   card: { name: "Credit / debit card", detail: "Visa and Mastercard" },

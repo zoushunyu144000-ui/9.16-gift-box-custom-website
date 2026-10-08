@@ -156,72 +156,74 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
             </fieldset>
           )}
 
-          <fieldset className="border-t border-line pt-6">
-            <legend className="sr-only">{pers.label}</legend>
-            <div className="flex items-baseline justify-between gap-4">
-              <p className="label">{pers.label}</p>
-              <p className={`text-[12px] ${personalisationLive ? "text-ink-3" : "font-medium uppercase tracking-[0.12em] text-bronze"}`}>
-                {personalisationLive ? `Optional${pers.fee > 0 ? ` · ${formatRM(pers.fee)} per name` : ""}` : "Coming soon"}
-              </p>
-            </div>
-            <div className="mt-3 grid grid-cols-2 gap-2" role="radiogroup" aria-label={pers.label}>
-              <OptionButton selected={!wantsPers} onClick={() => setWantsPers(false)}>
-                No personalisation
-              </OptionButton>
-              <OptionButton selected={wantsPers} onClick={() => setWantsPers(true)} disabled={!personalisationLive}>
-                Add a name
-              </OptionButton>
-            </div>
-            {!personalisationLive && <p className="mt-2.5 text-[12px] text-ink-3">Personalised names will be available soon.</p>}
-            {personalisationLive && wantsPers && (
-              <div className="mt-5 space-y-5">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="field-label !mb-0.5">Number of names</p>
-                    {pers.fee > 0 && (
-                      <p className="text-[12px] tabular-nums text-ink-3">
-                        {names > 1 ? `${names} × ${formatRM(pers.fee)} = ${formatRM(namesFee)}` : `${formatRM(pers.fee)} each`}
-                      </p>
-                    )}
-                  </div>
-                  <QuantityStepper value={names} onChange={setNames} max={MAX_NAMES} label="Number of names" />
-                </div>
-                <div>
-                  <label htmlFor="pers" className="field-label">
-                    Name to personalise
-                  </label>
-                  {pers.helper && <p className="-mt-1 mb-2 text-[12px] text-ink-3">{pers.helper}</p>}
-                  <textarea
-                    id="pers"
-                    className={`field uppercase placeholder:normal-case ${names > 1 ? "!min-h-[7.5rem]" : "!min-h-0 resize-none"}`}
-                    rows={names > 1 ? 4 : 2}
-                    maxLength={persLimit}
-                    value={persText}
-                    onChange={(e) => setPersText(e.target.value)}
-                    autoComplete="off"
-                    autoCapitalize="characters"
-                    spellCheck={false}
-                    aria-invalid={persInvalid}
-                    aria-describedby="pers-help"
-                    placeholder="Personalisation is only acceptable in uppercase letters. e.g. SARAH"
-                  />
-                  <div id="pers-help" className="mt-2 flex justify-between gap-4 text-[12px] leading-relaxed text-ink-3">
-                    <span>For bulk orders with different names, please list the names in order. e.g. “1. JASON 2. EMILY”</span>
-                    <span className={`flex-none tabular-nums ${persText.length > persLimit ? "text-danger" : ""}`}>
-                      {persText.length}/{persLimit}
-                    </span>
-                  </div>
-                  {persInvalid && <p className="field-error">{PATTERN_ERROR}</p>}
-                </div>
-                {names === 1 && persName && !persInvalid && (
-                  <div className="border border-line bg-cream px-4 py-5 text-center">
-                    <p className="label !text-[10px] !text-ink-3">Preview</p>
-                    <p className="display mt-2 whitespace-pre-line break-words text-[1.5rem] tracking-[0.04em]">{persName}</p>
-                  </div>
-                )}
+          {!product.noPersonalisation && (
+            <fieldset className="border-t border-line pt-6">
+              <legend className="sr-only">{pers.label}</legend>
+              <div className="flex items-baseline justify-between gap-4">
+                <p className="label">{pers.label}</p>
+                <p className={`text-[12px] ${personalisationLive ? "text-ink-3" : "font-medium uppercase tracking-[0.12em] text-bronze"}`}>
+                  {personalisationLive ? `Optional${pers.fee > 0 ? ` · ${formatRM(pers.fee)} per name` : ""}` : "Coming soon"}
+                </p>
               </div>
-            )}
-          </fieldset>
+              <div className="mt-3 grid grid-cols-2 gap-2" role="radiogroup" aria-label={pers.label}>
+                <OptionButton selected={!wantsPers} onClick={() => setWantsPers(false)}>
+                  No personalisation
+                </OptionButton>
+                <OptionButton selected={wantsPers} onClick={() => setWantsPers(true)} disabled={!personalisationLive}>
+                  Add a name
+                </OptionButton>
+              </div>
+              {!personalisationLive && <p className="mt-2.5 text-[12px] text-ink-3">Personalised names will be available soon.</p>}
+              {personalisationLive && wantsPers && (
+                <div className="mt-5 space-y-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="field-label !mb-0.5">Number of names</p>
+                      {pers.fee > 0 && (
+                        <p className="text-[12px] tabular-nums text-ink-3">
+                          {names > 1 ? `${names} × ${formatRM(pers.fee)} = ${formatRM(namesFee)}` : `${formatRM(pers.fee)} each`}
+                        </p>
+                      )}
+                    </div>
+                    <QuantityStepper value={names} onChange={setNames} max={MAX_NAMES} label="Number of names" />
+                  </div>
+                  <div>
+                    <label htmlFor="pers" className="field-label">
+                      Name to personalise
+                    </label>
+                    {pers.helper && <p className="-mt-1 mb-2 text-[12px] text-ink-3">{pers.helper}</p>}
+                    <textarea
+                      id="pers"
+                      className={`field uppercase placeholder:normal-case ${names > 1 ? "!min-h-[7.5rem]" : "!min-h-0 resize-none"}`}
+                      rows={names > 1 ? 4 : 2}
+                      maxLength={persLimit}
+                      value={persText}
+                      onChange={(e) => setPersText(e.target.value)}
+                      autoComplete="off"
+                      autoCapitalize="characters"
+                      spellCheck={false}
+                      aria-invalid={persInvalid}
+                      aria-describedby="pers-help"
+                      placeholder="Personalisation is only acceptable in uppercase letters. e.g. SARAH"
+                    />
+                    <div id="pers-help" className="mt-2 flex justify-between gap-4 text-[12px] leading-relaxed text-ink-3">
+                      <span>For bulk orders with different names, please list the names in order. e.g. “1. JASON 2. EMILY”</span>
+                      <span className={`flex-none tabular-nums ${persText.length > persLimit ? "text-danger" : ""}`}>
+                        {persText.length}/{persLimit}
+                      </span>
+                    </div>
+                    {persInvalid && <p className="field-error">{PATTERN_ERROR}</p>}
+                  </div>
+                  {names === 1 && persName && !persInvalid && (
+                    <div className="border border-line bg-cream px-4 py-5 text-center">
+                      <p className="label !text-[10px] !text-ink-3">Preview</p>
+                      <p className="display mt-2 whitespace-pre-line break-words text-[1.5rem] tracking-[0.04em]">{persName}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </fieldset>
+          )}
 
           <div>
             <label className="flex items-start gap-3">

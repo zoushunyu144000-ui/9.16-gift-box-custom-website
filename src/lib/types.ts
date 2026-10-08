@@ -42,6 +42,8 @@ export interface ProductImage {
 
 export interface ProductVariant {
   id: string;
+  /** Backend (Vendure) SKU; names are linked to their gift by it. */
+  sku?: string;
   name: string;
   /** Full price in MYR for this variant (not a surcharge). */
   price: number;
@@ -99,6 +101,10 @@ export interface Product {
   images: ProductImage[];
   variants: ProductVariant[];
   personalisation?: Personalisation | null;
+  /** Backend (Vendure) variant of a product without options: what goes in the order. */
+  defaultVariant?: { id: string; sku: string };
+  /** The backend says this product can't be personalised (every product can in demo mode). */
+  noPersonalisation?: boolean;
   containsAlcohol: boolean;
   /** Show in the homepage section for its category. */
   featured: boolean;
@@ -191,7 +197,8 @@ export interface Order {
   deliveryFee: number;
   total: number;
   payment: {
-    method: PaymentMethod;
+    /** "online" when a hosted gateway took the payment and didn't say which method was used. */
+    method: PaymentMethod | "online";
     provider: string;
     reference?: string;
     paidAt?: string;

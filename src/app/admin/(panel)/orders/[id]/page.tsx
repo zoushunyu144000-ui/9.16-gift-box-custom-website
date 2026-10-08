@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { OrderEditor } from "@/components/admin/record-editor";
 import { Card, OrderStatusPill, PageTitle } from "@/components/admin/ui";
-import { formatRM, ORDER_STATUS, PAYMENT_METHODS, personalisationHeading } from "@/lib/catalog";
+import { formatRM, ORDER_STATUS, paymentMethodName, personalisationHeading } from "@/lib/catalog";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { getStore } from "@/lib/store";
 
@@ -62,7 +62,7 @@ export default async function OrderDetail({ params }: PageProps<"/admin/orders/[
                 <a href={`https://wa.me/${order.customer.phone.replace(/\D/g, "").replace(/^0/, "60")}`} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">{order.customer.phone}</a>
               </p>
               <p className="mt-3 text-[14px] text-ink-2">
-                {PAYMENT_METHODS[order.payment.method].name} · {order.payment.provider === "test" ? "Test mode" : order.payment.provider}
+                {paymentMethodName(order.payment.method)} · {order.payment.provider === "test" ? "Test mode" : order.payment.provider}
                 {order.payment.reference && <><br />Ref {order.payment.reference}</>}
                 {order.payment.paidAt && <><br />Paid {formatDateTime(order.payment.paidAt)}</>}
                 {order.payment.failureReason && <><br /><span className="text-danger">{order.payment.failureReason}</span></>}
