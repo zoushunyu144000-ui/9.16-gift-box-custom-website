@@ -15,7 +15,9 @@
     "outDir": "./dist",
     "baseUrl": "./"
   },
-  "include": ["src/**/*.ts"],
+  "include": [
+    "src/**/*.ts"
+  ],
   "exclude": [
     "node_modules",
     "migration.ts",
@@ -23,12 +25,15 @@
     "admin-ui",
     "src/plugins/**/dashboard/*",
     "src/gql/*",
-    "vite.*.*ts"
+    "vite.*.*ts",
+    "src/**/*.spec.ts"
   ],
   "ts-node": {
     "files": true
   },
-  "references": [{
-    "path": "./tsconfig.dashboard.json"
-  }]
+  "references": [
+    {
+      "path": "./tsconfig.dashboard.json"
+    }
+  ]
 }

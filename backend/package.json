@@ -19,7 +19,8 @@
     "migration:generate": "vendure migrate --output-dir ./src/migrations --generate",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "setup:store": "ts-node scripts/setup-store.ts",
-    "check:shop-rules": "node scripts/check-shop-rules.mjs"
+    "check:shop-rules": "node scripts/check-shop-rules.mjs",
+    "test": "node --require ts-node/register/transpile-only --test \"src/**/*.spec.ts\""
   },
   "dependencies": {
     "@vendure/asset-server-plugin": "3.7.4",
