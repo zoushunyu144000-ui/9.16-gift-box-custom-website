@@ -7,14 +7,19 @@
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { CATEGORIES, sortFestivals } from "../src/lib/catalog";
+import { CATEGORIES, DEFAULT_PERSONALISATION, sortFestivals } from "../src/lib/catalog";
 import { isUnsplash } from "../src/lib/images";
 import { seedFestivals, seedProducts } from "../src/data/seed";
 import type { CategorySlug, ProductImage } from "../src/lib/types";
 
 const OUT = path.join(import.meta.dirname, "../backend/stores/moire");
 
-const COLUMNS = ["name", "slug", "description", "assets", "facets", "optionGroups", "optionValues", "sku", "price", "taxCategory", "stockOnHand", "trackInventory", "variantAssets", "variantFacets"] as const;
+const COLUMNS = [
+  "name", "slug", "description", "assets", "facets", "optionGroups", "optionValues", "sku", "price", "taxCategory", "stockOnHand", "trackInventory", "variantAssets", "variantFacets",
+  "product:personalisationLabel", "product:personalisationHelper", "product:personalisationMaxLength",
+] as const;
+/** The item names are bought as (PersonalisationPlugin.namesSku in the backend): one unit per name. */
+const NAMES_SKU = "personalised-name";
 type Row = Partial<Record<(typeof COLUMNS)[number], string | number>>;
 
 function csvCell(v: string | number | undefined) {
@@ -43,6 +48,9 @@ for (const p of seedProducts) {
   // Sold-out products stay listed with no stock, so the storefront shows them as Sold Out.
   const tracked = typeof p.stock === "number" || p.status === "sold_out";
   const stock = p.status === "sold_out" ? 0 : (p.stock ?? 0);
+  // A product's own name settings; empty label / help text means the shop's defaults.
+  const pers = p.personalisation?.enabled ? p.personalisation : DEFAULT_PERSONALISATION;
+  if (pers.fee !== DEFAULT_PERSONALISATION.fee) console.warn(`${p.name}: names cost ${pers.fee}, but the backend charges ${DEFAULT_PERSONALISATION.fee} per name for every product.`);
   const base: Row = {
     name: p.name,
     slug: p.slug,
@@ -52,6 +60,9 @@ for (const p of seedProducts) {
     taxCategory: "standard",
     stockOnHand: stock,
     trackInventory: tracked ? "true" : "false",
+    "product:personalisationLabel": pers.label === DEFAULT_PERSONALISATION.label ? "" : pers.label,
+    "product:personalisationHelper": pers.helper ?? "",
+    "product:personalisationMaxLength": pers.maxLength,
   };
   if (!p.variants.length) {
     rows.push({ ...base, sku: p.slug, price: p.price });
@@ -72,6 +83,19 @@ for (const p of seedProducts) {
   });
 }
 
+rows.push({
+  name: "Personalised name",
+  slug: NAMES_SKU,
+  description: "A name for a gift, charged per name. Added to the bag with the gift it belongs to; not listed in the shop.",
+  facets: "service:Personalised name",
+  sku: NAMES_SKU,
+  price: DEFAULT_PERSONALISATION.fee,
+  taxCategory: "standard",
+  stockOnHand: 0,
+  trackInventory: "false",
+  "product:personalisationMaxLength": DEFAULT_PERSONALISATION.maxLength,
+});
+
 const facetFilter = (name: string) => [{ code: "facet-value-filter", args: { facetValueNames: [name], containsAny: false } }];
 const collections = [
   { name: CATEGORIES.festive.name, slug: "festive", description: CATEGORIES.festive.intro, filters: facetFilter(CATEGORY_FACET.festive) },
@@ -91,4 +115,4 @@ const collections = [
 mkdirSync(OUT, { recursive: true });
 writeFileSync(path.join(OUT, "products.csv"), [COLUMNS.join(","), ...rows.map((r) => COLUMNS.map((c) => csvCell(r[c])).join(","))].join("\n") + "\n");
 writeFileSync(path.join(OUT, "collections.json"), JSON.stringify(collections, null, 2) + "\n");
-console.log(`Wrote ${seedProducts.length} products (${rows.length} rows) and ${collections.length} collections to ${path.relative(process.cwd(), OUT)}`);
+console.log(`Wrote ${seedProducts.length} products and the personalised name item (${rows.length} rows), and ${collections.length} collections, to ${path.relative(process.cwd(), OUT)}`);

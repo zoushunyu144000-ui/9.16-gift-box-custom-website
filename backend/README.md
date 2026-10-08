@@ -41,6 +41,18 @@ For a new client, copy `stores/moire`, change the files (a spreadsheet exported 
 products) and run the command on the client's own database. Moire's files are generated from the
 storefront's sample catalogue: `npx tsx scripts/export-vendure-catalogue.ts` from the repo root.
 
+## Shop plugins (ours)
+
+Each lives in `src/plugins/<name>` and can be used on its own in another shop.
+
+| Plugin | What it does | How a storefront uses it |
+|---|---|---|
+| `personalisation` | Personalised names charged **per name**. Each product sets whether it offers a name, the option's label, where the name goes and characters per name. Names are bought as their own order line: the names item (SKU `personalised-name`, price = fee per name) with quantity = number of names. Checked on the server (capitals A–Z, numbers, basic punctuation; length; the gift must be in the bag) and again before payment. Staff see a **Personalised names** card on each order. | Add the gift, then `addItemToOrder(namesVariantId, quantity: <number of names>, customFields: { names: "1. JASON\n2. EMILY", namesFor: "<gift SKU>" })`. Refusals come back as `OrderInterceptorError.interceptorError`. Disable the names product to show the option as "Coming soon". |
+| `gift-message` | A card message per gift (order line field, 200 characters). Staff see a **Gift messages** card on each order. | `addItemToOrder(…, customFields: { giftMessage })` |
+| `age-check` | Orders with items whose product or variant has an `alcohol` facet value can't go to payment until the customer confirms they are 21 or older. | `setOrderCustomFields({ customFields: { ageConfirmed: true } })` |
+
+`npm run check:shop-rules` runs these rules against a server set up from `stores/moire` (12 checks).
+
 ## Staff roles
 
 Created by the setup script; the owner adds people under **Settings → Administrators** and can

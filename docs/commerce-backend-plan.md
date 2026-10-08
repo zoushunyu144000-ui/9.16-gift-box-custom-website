@@ -83,7 +83,7 @@ with a Vendure `ShippingCalculator` (price at checkout) and `FulfillmentHandler`
 | Phase | Scope | Status |
 |---|---|---|
 | 0 | Vendure running on Postgres, dashboard, staff roles, Moire catalogue imported | Done 2026-10-08 |
-| 1 | Moire data: personalised names (RM 8 per name), gift message, alcohol 21+, festival content, corporate enquiries | Next |
+| 1 | Moire data: personalised names (RM 8 per name), gift message, alcohol 21+ (done 2026-10-08: plugins `personalisation`, `gift-message`, `age-check`); festival content, corporate enquiries | In progress |
 | 2 | Storefront reads from Vendure (catalogue, cart, checkout, customer accounts); retire `/admin` and the Supabase tables | |
 | 3 | CHIP payment plugin with webhook verification; then Billplz | |
 | 4 | Delivery plugin: fees, dispatch rules, Lalamove + EasyParcel booking, labels, tracking, notifications | |

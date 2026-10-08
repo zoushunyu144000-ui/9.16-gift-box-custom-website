@@ -18,7 +18,8 @@
     "migrate": "vendure migrate --run",
     "migration:generate": "vendure migrate --output-dir ./src/migrations --generate",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "setup:store": "ts-node scripts/setup-store.ts"
+    "setup:store": "ts-node scripts/setup-store.ts",
+    "check:shop-rules": "node scripts/check-shop-rules.mjs"
   },
   "dependencies": {
     "@vendure/asset-server-plugin": "3.7.4",
