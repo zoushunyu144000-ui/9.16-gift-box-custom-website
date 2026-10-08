@@ -2,6 +2,8 @@
 
 Updated: 2026-10-02
 
+> Superseded on 2026-10-08 by [commerce-backend-plan.md](commerce-backend-plan.md): the admin, payments and delivery move to a reusable Vendure backend (`backend/`).
+
 ## Goal
 
 Build the Moire Co. commerce system as one integrated system rather than treating admin and payment as unrelated features.

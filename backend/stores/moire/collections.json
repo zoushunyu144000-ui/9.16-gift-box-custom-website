@@ -1,0 +1,134 @@
+[
+  {
+    "name": "Festive Collection",
+    "slug": "festive",
+    "description": "Seasonal gift boxes and hampers, gathered by festival.",
+    "filters": [
+      {
+        "code": "facet-value-filter",
+        "args": {
+          "facetValueNames": [
+            "Festive Collection"
+          ],
+          "containsAny": false
+        }
+      }
+    ]
+  },
+  {
+    "name": "Chinese New Year",
+    "slug": "chinese-new-year",
+    "description": "Boxes and hampers for the first visits of the year.",
+    "parentName": "Festive Collection",
+    "private": false,
+    "filters": [
+      {
+        "code": "facet-value-filter",
+        "args": {
+          "facetValueNames": [
+            "Chinese New Year"
+          ],
+          "containsAny": false
+        }
+      }
+    ],
+    "assetPaths": [
+      "images/grand-prosperity-hamper-hero-v1.webp"
+    ]
+  },
+  {
+    "name": "Hari Raya",
+    "slug": "hari-raya",
+    "description": "Gifts for Hari Raya open houses.",
+    "parentName": "Festive Collection",
+    "private": false,
+    "filters": [
+      {
+        "code": "facet-value-filter",
+        "args": {
+          "facetValueNames": [
+            "Hari Raya"
+          ],
+          "containsAny": false
+        }
+      }
+    ],
+    "assetPaths": [
+      "https://images.unsplash.com/photo-1663505305791-87f2248df4ae?w=1600&q=80&fm=jpg"
+    ]
+  },
+  {
+    "name": "Dragon Boat Festival",
+    "slug": "dragon-boat",
+    "description": "Rice dumplings for the Dragon Boat Festival.",
+    "parentName": "Festive Collection",
+    "private": false,
+    "filters": [
+      {
+        "code": "facet-value-filter",
+        "args": {
+          "facetValueNames": [
+            "Dragon Boat Festival"
+          ],
+          "containsAny": false
+        }
+      }
+    ],
+    "assetPaths": [
+      "https://images.unsplash.com/photo-1781873605812-3cea8bb65de8?w=1600&q=80&fm=jpg"
+    ]
+  },
+  {
+    "name": "Mid-Autumn Festival",
+    "slug": "mid-autumn",
+    "description": "Mooncakes and tea for the Mid-Autumn Festival.",
+    "parentName": "Festive Collection",
+    "private": false,
+    "filters": [
+      {
+        "code": "facet-value-filter",
+        "args": {
+          "facetValueNames": [
+            "Mid-Autumn Festival"
+          ],
+          "containsAny": false
+        }
+      }
+    ],
+    "assetPaths": [
+      "https://images.unsplash.com/photo-1787310886226-f4d273c50081?w=1600&q=80&fm=jpg"
+    ]
+  },
+  {
+    "name": "Fixed Gift Collection",
+    "slug": "fixed-gifts",
+    "description": "Year-round gifts for birthdays, thanks and milestones.",
+    "filters": [
+      {
+        "code": "facet-value-filter",
+        "args": {
+          "facetValueNames": [
+            "Fixed Gift Collection"
+          ],
+          "containsAny": false
+        }
+      }
+    ]
+  },
+  {
+    "name": "Wine Gift Boxes",
+    "slug": "wine-gift-boxes",
+    "description": "Gift boxes and gift sets with wine, champagne or spirits, presented ready to give. For customers aged 21 and above.",
+    "filters": [
+      {
+        "code": "facet-value-filter",
+        "args": {
+          "facetValueNames": [
+            "Wine Gift Boxes"
+          ],
+          "containsAny": false
+        }
+      }
+    ]
+  }
+]
