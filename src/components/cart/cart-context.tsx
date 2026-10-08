@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { MAX_NAMES } from "@/lib/catalog";
 import type { CartLine } from "@/lib/types";
 
 const STORAGE_KEY = "moire.cart.v1";
@@ -48,8 +49,23 @@ function subscribe(listener: Listener) {
   };
 }
 
-export function lineKey(l: Pick<CartLine, "productId" | "variantId" | "personalisation" | "personalisationOption" | "giftMessage">) {
-  return [l.productId, l.variantId ?? "", (l.personalisation ?? "").trim(), l.personalisationOption ?? "", (l.giftMessage ?? "").trim()].join("|");
+export function lineKey(l: Pick<CartLine, "productId" | "variantId" | "personalisation" | "giftMessage">) {
+  return [l.productId, l.variantId ?? "", (l.personalisation ?? "").trim(), (l.giftMessage ?? "").trim()].join("|");
+}
+
+/** The bag's own price for a line until the server re-prices it: the items, plus each name. */
+export function snapshotTotal(l: CartLine) {
+  const names = l.personalisation ? (l.snapshot.personalisationFee ?? 0) * (l.personalisationCount ?? 1) : 0;
+  return l.snapshot.unitPrice * l.quantity + names;
+}
+
+/** Two adds of the same line keep every name that was paid for. */
+function mergeLines(into: CartLine, from: Pick<CartLine, "quantity" | "personalisation" | "personalisationCount">): CartLine {
+  return {
+    ...into,
+    quantity: Math.min(MAX_QTY, into.quantity + from.quantity),
+    personalisationCount: into.personalisation ? Math.min(MAX_NAMES, (into.personalisationCount ?? 1) + (from.personalisationCount ?? 1)) : undefined,
+  };
 }
 
 interface CartContextValue {
@@ -85,7 +101,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const current = read();
     const existing = current.find((l) => l.key === key);
     const next = existing
-      ? current.map((l) => (l.key === key ? { ...l, quantity: Math.min(MAX_QTY, l.quantity + line.quantity), snapshot: line.snapshot } : l))
+      ? current.map((l) => (l.key === key ? { ...mergeLines(l, line), snapshot: line.snapshot } : l))
       : [...current, { ...line, key }];
     write(next);
     setLastAdded(key);
@@ -107,7 +123,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const others = current.filter((l) => l.key !== key);
     const merge = others.find((l) => l.key === newKey);
     if (merge) {
-      write(others.map((l) => (l.key === newKey ? { ...l, quantity: Math.min(MAX_QTY, l.quantity + target.quantity) } : l)));
+      write(others.map((l) => (l.key === newKey ? mergeLines(l, target) : l)));
     } else {
       write(current.map((l) => (l.key === key ? { ...updated, key: newKey } : l)));
     }
@@ -129,7 +145,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       lines,
       ready,
       count: lines.reduce((n, l) => n + l.quantity, 0),
-      subtotal: lines.reduce((n, l) => n + l.snapshot.unitPrice * l.quantity, 0),
+      subtotal: lines.reduce((n, l) => n + snapshotTotal(l), 0),
       add,
       setQuantity,
       update,

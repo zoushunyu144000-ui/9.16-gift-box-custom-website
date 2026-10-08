@@ -54,7 +54,6 @@ const ProductInput = z.object({
       helper: z.string().trim().max(160).optional(),
       maxLength: z.number().int().min(1).max(60),
       fee: z.number().min(0).max(10000),
-      options: z.array(z.string().trim().min(1).max(40)).max(8).optional(),
     })
     .nullable(),
   containsAlcohol: z.boolean(),
@@ -102,9 +101,7 @@ export async function saveProductAction(input: ProductInputType): Promise<{ ok: 
     storage: data.storage || undefined,
     images: data.images,
     variants,
-    personalisation: data.personalisation?.enabled
-      ? { ...data.personalisation, options: [...new Set((data.personalisation.options ?? []).filter(Boolean))] }
-      : null,
+    personalisation: data.personalisation?.enabled ? data.personalisation : null,
     containsAlcohol: data.containsAlcohol,
     featured: data.featured,
     sort: data.sort,

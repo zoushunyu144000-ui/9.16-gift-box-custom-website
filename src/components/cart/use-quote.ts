@@ -7,7 +7,7 @@ import type { CartLine, Quote } from "@/lib/types";
 export function useQuote(lines: CartLine[], ready: boolean) {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [error, setError] = useState(false);
-  const signature = JSON.stringify(lines.map((l) => [l.key, l.quantity]));
+  const signature = JSON.stringify(lines.map((l) => [l.key, l.quantity, l.personalisationCount]));
 
   useEffect(() => {
     if (!ready || lines.length === 0) return;
@@ -18,13 +18,13 @@ export function useQuote(lines: CartLine[], ready: boolean) {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
-            lines: lines.map(({ key, productId, variantId, quantity, personalisation, personalisationOption, giftMessage }) => ({
+            lines: lines.map(({ key, productId, variantId, quantity, personalisation, personalisationCount, giftMessage }) => ({
               key,
               productId,
               variantId,
               quantity,
               personalisation,
-              personalisationOption,
+              personalisationCount,
               giftMessage,
             })),
           }),

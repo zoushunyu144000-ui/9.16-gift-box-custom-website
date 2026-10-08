@@ -30,17 +30,14 @@ function p(d: Draft): Product {
 }
 
 /**
- * Personalised name (meeting 2026-10-01). Sample configuration only: the client has not yet
- * confirmed which products offer it, whether it costs extra, or the material rules — so the fee is 0
- * (no charge shown) and both materials are offered. Adjust per product in Admin → Products.
+ * Personalised name (client, Oct 2026): offered on every product, capital letters only,
+ * RM 8 per name, no choice of material. Adjust per product in Admin → Products.
  */
 const personalisedName: Personalisation = {
   enabled: true,
   label: "Personalised name",
-  helper: "Letters, numbers and basic punctuation only.",
   maxLength: 20,
-  fee: 0,
-  options: ["Leather", "Acrylic"],
+  fee: 8,
 };
 
 const foodStorage = "Store in a cool, dry place away from direct sunlight. Once opened, keep in an airtight container.";
@@ -401,9 +398,9 @@ export const seedProducts: Product[] = [
     personalisation: {
       enabled: true,
       label: "Engraved name",
-      helper: "Engraved on both glasses. Letters, numbers and basic punctuation only.",
+      helper: "Engraved on both glasses.",
       maxLength: 20,
-      fee: 0,
+      fee: 8,
     },
     images: [
       unsplash("saWOgbangdE", "Crystal tumbler on a white surface with shadow"),
@@ -433,7 +430,7 @@ export const seedProducts: Product[] = [
       label: "Name on cover",
       helper: "Engraved on the front cover.",
       maxLength: 16,
-      fee: 0,
+      fee: 8,
     },
     images: [unsplash("i-ut6Z7qOnc", "Brown leather wrap journal on a white surface")],
   }),
@@ -460,7 +457,7 @@ export const seedProducts: Product[] = [
       label: "Engraving on lid",
       helper: "A name, date or short message.",
       maxLength: 24,
-      fee: 0,
+      fee: 8,
     },
     images: [
       unsplash("RdKjjpnR-iI", "Pale wooden box with engraved lid on linen"),
@@ -488,7 +485,7 @@ export const seedProducts: Product[] = [
       label: "Name on pen",
       helper: "Engraved along the pen barrel.",
       maxLength: 18,
-      fee: 0,
+      fee: 8,
     },
     images: [
       unsplash("KAnmK-kavKM", "Green linen notebook with a pen on a desk"),

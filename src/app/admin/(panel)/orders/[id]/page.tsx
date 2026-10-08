@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { OrderEditor } from "@/components/admin/record-editor";
 import { Card, OrderStatusPill, PageTitle } from "@/components/admin/ui";
-import { formatRM, ORDER_STATUS, PAYMENT_METHODS } from "@/lib/catalog";
+import { formatRM, ORDER_STATUS, PAYMENT_METHODS, personalisationHeading } from "@/lib/catalog";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { getStore } from "@/lib/store";
 
@@ -27,10 +27,10 @@ export default async function OrderDetail({ params }: PageProps<"/admin/orders/[
                     <span className="tabular-nums">{formatRM(i.lineTotal, { decimals: true })}</span>
                   </div>
                   {i.personalisation && (
-                    <p className="mt-2 inline-block bg-[#fbf0dc] px-2 py-1 text-[13px]">
+                    <p className="mt-2 inline-block whitespace-pre-line bg-[#fbf0dc] px-2 py-1 text-[13px]">
                       <span className="text-ink-2">
-                        {i.personalisationLabel ?? "Engraving"}
-                        {i.personalisationOption ? ` · ${i.personalisationOption}` : ""}:
+                        {personalisationHeading(i.personalisationLabel, i.personalisationCount)}
+                        {i.personalisationFee > 0 ? ` · ${formatRM(i.personalisationFee * (i.personalisationCount ?? 1))}` : ""}:
                       </span> <strong className="font-medium">{i.personalisation}</strong>
                     </p>
                   )}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { formatRM, ORDER_STATUS, PAYMENT_METHODS } from "@/lib/catalog";
+import { formatRM, ORDER_STATUS, PAYMENT_METHODS, personalisationHeading } from "@/lib/catalog";
 import { formatDate } from "@/lib/dates";
 import { useCart } from "../cart/cart-context";
 import { Star } from "../logo";
@@ -143,9 +143,8 @@ export function OrderView({ orderId, token }: { orderId: string; token: string }
                   {i.variantName ? `${i.variantName} · ` : ""}Qty {i.quantity}
                 </p>
                 {i.personalisation && (
-                  <p className="mt-1 text-[13px] text-ink-2">
-                    {i.personalisationLabel}
-                    {i.personalisationOption ? ` (${i.personalisationOption})` : ""}: “{i.personalisation}”
+                  <p className="mt-1 whitespace-pre-line text-[13px] text-ink-2">
+                    {personalisationHeading(i.personalisationLabel, i.personalisationCount)}: “{i.personalisation}”
                   </p>
                 )}
                 {i.giftMessage && <p className="mt-1 text-[13px] italic text-ink-2">Gift message: “{i.giftMessage}”</p>}

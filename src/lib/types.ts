@@ -51,21 +51,19 @@ export interface ProductVariant {
 }
 
 /**
- * Optional personalisation (e.g. a name on a leather or acrylic tag).
- * Maps to the meeting brief as: enabled = personalisationEnabled,
- * options = personalisationOptions, fee = personalisationPrice.
+ * Personalised name. Every product offers one (DEFAULT_PERSONALISATION in catalog.ts);
+ * a product's own settings replace the default when enabled.
  */
 export interface Personalisation {
   enabled: boolean;
-  /** Label shown to the customer, e.g. "Engraved name". */
+  /** Label shown to the customer, e.g. "Personalised name". */
   label: string;
-  /** Short explanation of where the text appears. */
+  /** Short explanation of where the name appears, e.g. "Engraved on the lid." */
   helper?: string;
+  /** Characters allowed per name. */
   maxLength: number;
-  /** Additional charge per unit in MYR. 0 = no charge shown. */
+  /** Charge per name in MYR. 0 = no charge shown. */
   fee: number;
-  /** Materials / styles the customer picks from, e.g. ["Leather", "Acrylic"]. Empty = no choice offered. */
-  options?: string[];
 }
 
 export interface SpecRow {
@@ -156,13 +154,16 @@ export interface OrderItem {
   variantName?: string;
   image?: string;
   unitPrice: number;
+  /** Charge per name (see personalisationCount). */
   personalisationFee: number;
   quantity: number;
+  /** unitPrice × quantity, plus personalisationFee × personalisationCount. */
   lineTotal: number;
+  /** Name(s) in capitals. Bulk orders list them in order: "1. JASON 2. EMILY". */
   personalisation?: string;
   personalisationLabel?: string;
-  /** Material chosen for the personalisation, e.g. "Leather". */
-  personalisationOption?: string;
+  /** How many names the customer paid for. */
+  personalisationCount?: number;
   giftMessage?: string;
   containsAlcohol: boolean;
 }
@@ -244,14 +245,18 @@ export interface CartLine {
   variantId?: string;
   quantity: number;
   personalisation?: string;
-  personalisationOption?: string;
+  /** Number of names, charged per name. Only set with `personalisation`. */
+  personalisationCount?: number;
   giftMessage?: string;
   /** Display snapshot taken when added. Prices are always re-validated on the server at checkout. */
   snapshot: {
     name: string;
     image?: string;
     variantName?: string;
+    /** Price of one item, without names. */
     unitPrice: number;
+    /** Charge per name. */
+    personalisationFee?: number;
     personalisationLabel?: string;
     containsAlcohol: boolean;
   };

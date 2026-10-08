@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Lock } from "lucide-react";
-import { formatRM, MALAYSIAN_STATES, PAYMENT_METHODS } from "@/lib/catalog";
+import { formatRM, MALAYSIAN_STATES, PAYMENT_METHODS, personalisationHeading } from "@/lib/catalog";
 import type { PaymentMethod } from "@/lib/types";
 import { useCart } from "../cart/cart-context";
 import { rememberOrder, useQuote } from "../cart/use-quote";
@@ -138,13 +138,13 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
           paymentMethod: d.paymentMethod,
           ageConfirmed: age,
           termsAccepted: terms,
-          lines: lines.map(({ key, productId, variantId, quantity, personalisation, personalisationOption, giftMessage }) => ({
+          lines: lines.map(({ key, productId, variantId, quantity, personalisation, personalisationCount, giftMessage }) => ({
             key,
             productId,
             variantId,
             quantity,
             personalisation,
-            personalisationOption,
+            personalisationCount,
             giftMessage,
           })),
         }),
@@ -193,9 +193,8 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
               <p className="leading-snug">{i.name}</p>
               {i.variantName && <p className="text-[12px] text-ink-2">{i.variantName}</p>}
               {i.personalisation && (
-                <p className="text-[12px] text-ink-2">
-                  {i.personalisationLabel}
-                  {i.personalisationOption ? ` (${i.personalisationOption})` : ""}: “{i.personalisation}”
+                <p className="whitespace-pre-line text-[12px] text-ink-2">
+                  {personalisationHeading(i.personalisationLabel, i.personalisationCount)}: “{i.personalisation}”
                 </p>
               )}
               {i.giftMessage && <p className="line-clamp-1 text-[12px] italic text-ink-2">Message: “{i.giftMessage}”</p>}

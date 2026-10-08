@@ -32,7 +32,7 @@ export default async function BespokePage() {
         </div>
       </header>
 
-      <section className="mt-16 border-t border-line pt-12 md:mt-24" aria-label="Process">
+      <section className="mt-16 border-t border-line pt-12 md:mt-24" aria-labelledby="process-heading">
         <ProcessLine />
       </section>
 

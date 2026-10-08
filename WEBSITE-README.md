@@ -33,7 +33,7 @@ Without Supabase variables the site runs in **demo mode**: the sample catalogue 
 | `/festive` | Festive Collection level 1: one entry per festival (from Admin → Festivals) |
 | `/festive/[slug]` | Level 2: only that festival's gift boxes, sort. Old `/festive?occasion=…` links redirect here |
 | `/fixed-gifts`, `/wine-gift-boxes` | Category listings with sort (`/wine-spirits` redirects) |
-| `/products/[slug]` | Product page: Name → Price → options / personalised name (material + name) → Add to bag or disabled Sold Out → one Description (contents, specs, allergens, delivery) |
+| `/products/[slug]` | Product page: Name → Price → options / personalised name (number of names + names in capitals) → Add to bag or disabled Sold Out → one Description (contents, specs, allergens, delivery) |
 | `/cart` + bag drawer | Server-validated prices, edit quantity/message, unavailable-item handling |
 | `/checkout` | Guest checkout: contact, recipient, Malaysian address, delivery date, payment method (FPX / card / e-wallet), 21+ confirmation for alcohol, terms |
 | `/pay/[id]` | **Test-mode gateway** (simulates success / failure / cancel) — replaced by the real gateway |
@@ -42,14 +42,14 @@ Without Supabase variables the site runs in **demo mode**: the sample catalogue 
 | `/corporate/semi-curated` | Semi-customised: pick existing gifts + quantities + light customisation → saved request with reference → optional WhatsApp follow-up |
 | `/corporate/bespoke` | Fully customised “MADE FOR YOUR BRAND”: process + what to prepare → Enquire via WhatsApp (no web form) |
 | `/search` | Search (also live search overlay in header) |
-| `/delivery`, `/terms`, `/privacy` | Policy pages — **draft templates, need client confirmation** |
+| `/delivery`, `/terms`, `/privacy` | Policy pages — Delivery & returns and Terms of sale use the client's wording (Oct 2026); **privacy is still a draft template** |
 | `/admin` | Orders, products (name, description, price, **stock**, festival, images, options, personalisation, status), **festivals** (rename / hide / reorder / add), corporate enquiries, settings |
 
 ## Key design / business decisions
 
 - **Inventory (2026-10):** each product can track `stock`. Paid website orders deduct it automatically; sales on WhatsApp / Instagram / in person are adjusted in Admin → Products (list or editor). Stock 0 → shown as **Sold Out**, never hidden; the product page stays open with a disabled Sold Out button.
 - **Festivals are data (2026-10):** `festivals` table (id, name, slug, cover, description, active, sort); products link with `festivalId`.
-- **Personalised name (2026-10):** per product — `personalisation.enabled` / `.options` (e.g. Leather, Acrylic) / `.fee`. Fee 0 = no charge shown; pricing and which products offer it are pending client confirmation.
+- **Personalised name (2026-10):** every product offers it — capital letters only, **RM 8 per name**, no choice of material. The customer picks the number of names (charged once each, not per box) and lists bulk names in order (“1. JASON 2. EMILY”). A product can override label / help text / length / fee in Admin → Products (`personalisation.enabled`).
 - **Logo:** asset paths live in `src/lib/brand.ts`; replace files there to swap the logo everywhere.
 - **Wine wording:** the site sells gift boxes — “Wine Gift Boxes”, never “Wine” on its own (internal category id stays `wine-spirits`).
 

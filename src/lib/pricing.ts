@@ -5,8 +5,10 @@ import {
   isSoldOut,
   tracksStock,
   lineContainsAlcohol,
+  MAX_NAMES,
   PERSONALISATION_PATTERN,
   personalisationFor,
+  personalisationLimit,
   unitPrice,
 } from "./catalog";
 import type { Store } from "./store/types";
@@ -14,7 +16,7 @@ import type { CartLine, OrderItem, Quote, QuotedLine, SiteSettings } from "./typ
 
 export const MAX_QTY = 99;
 
-type LineInput = Pick<CartLine, "key" | "productId" | "variantId" | "quantity" | "personalisation" | "personalisationOption" | "giftMessage">;
+type LineInput = Pick<CartLine, "key" | "productId" | "variantId" | "quantity" | "personalisation" | "personalisationCount" | "giftMessage">;
 
 /** Re-price every line from the catalogue. Never trust prices sent by the browser. */
 export async function quoteLines(store: Store, lines: LineInput[], settings?: SiteSettings): Promise<Quote> {
@@ -43,21 +45,20 @@ export async function quoteLines(store: Store, lines: LineInput[], settings?: Si
       variantName = v.name;
     }
 
-    const text = line.personalisation?.trim() || undefined;
+    // Names are taken in capitals only (client, Oct 2026); bags saved before that may hold lower case.
+    const text = line.personalisation?.replace(/\r\n?/g, "\n").trim().toUpperCase() || undefined;
     let personalisationFee = 0;
-    let option: string | undefined;
+    let names: number | undefined;
     if (text) {
       if (s.personalisationLive === false) return { key: line.key, ok: false, problem: "Personalised names are coming soon and can’t be ordered yet." };
       const pers = personalisationFor(p);
-      if (text.length > pers.maxLength)
-        return { key: line.key, ok: false, problem: `${pers.label} must be ${pers.maxLength} characters or fewer.` };
+      names = Math.floor(Number(line.personalisationCount ?? 1));
+      if (!Number.isFinite(names) || names < 1 || names > MAX_NAMES)
+        return { key: line.key, ok: false, problem: `Please choose between 1 and ${MAX_NAMES} names.` };
+      const limit = personalisationLimit(pers, names);
+      if (text.length > limit) return { key: line.key, ok: false, problem: `${pers.label} must be ${limit} characters or fewer.` };
       if (!PERSONALISATION_PATTERN.test(text))
-        return { key: line.key, ok: false, problem: `${pers.label} contains characters we can't engrave.` };
-      const choices = pers.options?.filter(Boolean) ?? [];
-      if (choices.length) {
-        option = choices.find((o) => o === line.personalisationOption);
-        if (!option) return { key: line.key, ok: false, problem: `Please choose a material for the ${pers.label.toLowerCase()}.` };
-      }
+        return { key: line.key, ok: false, problem: `${pers.label} can only use letters A–Z, numbers and basic punctuation.` };
       personalisationFee = pers.fee || 0;
     }
 
@@ -76,10 +77,10 @@ export async function quoteLines(store: Store, lines: LineInput[], settings?: Si
       unitPrice: price,
       personalisationFee,
       quantity: qty,
-      lineTotal: (price + personalisationFee) * qty,
+      lineTotal: price * qty + personalisationFee * (names ?? 0),
       personalisation: text,
       personalisationLabel: text ? personalisationFor(p).label : undefined,
-      personalisationOption: option,
+      personalisationCount: names,
       giftMessage: message,
       containsAlcohol: lineContainsAlcohol(p, line.variantId),
     };
