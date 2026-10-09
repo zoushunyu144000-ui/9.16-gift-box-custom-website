@@ -139,6 +139,17 @@ export function unitPrice(p: Product, variantId?: string) {
   return findVariant(p, variantId)?.price ?? p.price;
 }
 
+/** The earlier price to show crossed out (a sale), only when it is higher than the price. */
+export function compareAtPrice(p: Product, variantId?: string): number | undefined {
+  const v = findVariant(p, variantId);
+  const was = v ? v.compareAt : p.compareAt;
+  return was != null && was > (v ? v.price : p.price) ? was : undefined;
+}
+
+export function isOnSale(p: Product) {
+  return p.variants.length ? p.variants.some((v) => v.compareAt != null && v.compareAt > v.price) : compareAtPrice(p) !== undefined;
+}
+
 export function lineContainsAlcohol(p: Product, variantId?: string) {
   return p.containsAlcohol || Boolean(findVariant(p, variantId)?.containsAlcohol);
 }

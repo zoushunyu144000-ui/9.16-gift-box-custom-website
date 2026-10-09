@@ -50,27 +50,30 @@
                     {{#if customFields.giftMessage}}<div style="color: #6f675d; font-size: 13px; font-style: italic;">Gift message: “{{ customFields.giftMessage }}”</div>{{/if}}
                 </td>
                 <td style="padding: 10px 0; border-bottom: 1px solid #ebe5dc; text-align: right; vertical-align: top; white-space: nowrap;">
-                    {{ formatMoney discountedLinePriceWithTax ../order.currencyCode 'en-MY' }}
+                    {{ formatMoney linePriceWithTax ../order.currencyCode 'en-MY' }}
                 </td>
             </tr>
             {{/each}}
-            {{#each order.discounts}}
-            <tr>
-                <td></td>
-                <td style="padding: 10px 12px 0 0;">{{ description }}</td>
-                <td style="padding: 10px 0 0; text-align: right; white-space: nowrap;">{{ formatMoney amountWithTax ../order.currencyCode 'en-MY' }}</td>
-            </tr>
-            {{/each}}
+            {{!-- Items and delivery at full price, then each discount (codes, promotions, points). --}}
+            {{#unless order.discounts.length}}
             <tr>
                 <td></td>
                 <td style="padding: 12px 12px 0 0; color: #6f675d;">Subtotal</td>
                 <td style="padding: 12px 0 0; text-align: right; white-space: nowrap;">{{ formatMoney order.subTotalWithTax order.currencyCode 'en-MY' }}</td>
             </tr>
+            {{/unless}}
             {{#each shippingLines}}
             <tr>
                 <td></td>
                 <td style="padding: 6px 12px 0 0; color: #6f675d;">{{ shippingMethod.name }}</td>
-                <td style="padding: 6px 0 0; text-align: right; white-space: nowrap;">{{ formatMoney discountedPriceWithTax ../order.currencyCode 'en-MY' }}</td>
+                <td style="padding: 6px 0 0; text-align: right; white-space: nowrap;">{{ formatMoney priceWithTax ../order.currencyCode 'en-MY' }}</td>
+            </tr>
+            {{/each}}
+            {{#each order.discounts}}
+            <tr>
+                <td></td>
+                <td style="padding: 6px 12px 0 0; color: #3f5e3a;">{{ description }}</td>
+                <td style="padding: 6px 0 0; text-align: right; white-space: nowrap; color: #3f5e3a;">{{ formatMoney amountWithTax ../order.currencyCode 'en-MY' }}</td>
             </tr>
             {{/each}}
             <tr>

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import {
+  compareAtPrice,
   formatRM,
   GIFT_MESSAGE_MAX,
   isSoldOut,
@@ -16,6 +17,7 @@ import {
 } from "@/lib/catalog";
 import type { Product } from "@/lib/types";
 import { useCart } from "../cart/cart-context";
+import { Price } from "../price";
 import { QuantityStepper } from "../quantity-stepper";
 
 const PATTERN_ERROR = "Please use letters A–Z, numbers and basic punctuation only.";
@@ -108,7 +110,7 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
   return (
     <div>
       <p className="text-[1.35rem] tabular-nums tracking-wide" aria-live="polite">
-        {formatRM(price)}
+        <Price price={price} compareAt={compareAtPrice(product, variantId)} />
         {hasVariants && product.variants.length > 1 && <span className="ml-2 text-[13px] text-ink-3">{variant?.name}</span>}
       </p>
 
@@ -148,7 +150,9 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
                         <span className="block text-[15px]">{v.name}</span>
                         {v.note && <span className="block text-[13px] text-ink-2">{v.note}</span>}
                       </span>
-                      <span className="text-[15px] tabular-nums">{formatRM(v.price)}</span>
+                      <span className="text-right text-[15px] tabular-nums">
+                        <Price price={v.price} compareAt={v.compareAt} />
+                      </span>
                     </label>
                   );
                 })}
@@ -287,7 +291,9 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
           <div className="flex items-center gap-4">
             <div className="min-w-0 flex-1">
               <p className="truncate text-[13px]">{product.name}</p>
-              <p className="text-[13px] tabular-nums text-ink-2">{formatRM(price)}</p>
+              <p className="text-[13px] tabular-nums text-ink-2">
+                <Price price={price} compareAt={compareAtPrice(product, variantId)} />
+              </p>
             </div>
             <button type="button" onClick={submit} className="btn btn-primary !min-h-11 !px-5" tabIndex={showSticky ? 0 : -1}>
               {added ? "Added" : "Add to bag"}

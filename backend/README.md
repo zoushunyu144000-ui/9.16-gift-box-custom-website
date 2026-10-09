@@ -50,6 +50,7 @@ Each lives in `src/plugins/<name>` and can be used on its own in another shop.
 | `personalisation` | Personalised names charged **per name**. Each product sets whether it offers a name, the option's label, where the name goes and characters per name. Names are bought as their own order line: the names item (SKU `personalised-name`, price = fee per name) with quantity = number of names. Checked on the server (capitals A–Z, numbers, basic punctuation; length; the gift must be in the bag) and again before payment. Staff see a **Personalised names** card on each order. | Add the gift, then `addItemToOrder(namesVariantId, quantity: <number of names>, customFields: { names: "1. JASON\n2. EMILY", namesFor: "<gift SKU>" })`. Refusals come back as `OrderInterceptorError.interceptorError`. Disable the names product to show the option as "Coming soon". |
 | `gift-message` | A card message per gift (order line field, 200 characters). Staff see a **Gift messages** card on each order. | `addItemToOrder(…, customFields: { giftMessage })` |
 | `age-check` | Orders with items whose product or variant has an `alcohol` facet value can't go to payment until the customer confirms they are 21 or older. | `setOrderCustomFields({ customFields: { ageConfirmed: true } })` |
+| `catalog-display` | Display fields: a one-line summary, homepage "featured", sort order, a note when sold out ("Season ended"), a note under each option, and a variant's "Was price (RM)" for sales. | `customFields { summary featured sortOrder availabilityNote }` on products; `customFields { note compareAtPrice }` on variants. |
 | `delivery-my` | Malaysian delivery: the zone from the postcode (official data.gov.my table), dispatch days and the 3pm cut-off, closed dates (Global Settings), same-day prices by road distance (Google Routes, `GOOGLE_MAPS_API_KEY`) and courier prices by weight (live courier rates when a rate provider is registered, else a zone × weight table). Checks the preferred delivery date before payment. Details: `src/plugins/delivery-my/README.md`. | `deliveryPromise(postalCode)` for dates and wording, `deliveryQuote(input)` for options and prices before an order exists; `setOrderCustomFields({ customFields: { preferredDeliveryDate, deliveryNotes } })`. |
 | `storefront-content` | The storefront's texts and contact details on the channel (homepage banner, featured collection, WhatsApp number, contact email, business hours, preview notice), edited under **Settings → Storefront**. Set up from `stores/<shop>/content.json`. | `activeChannel { customFields { heroTitle … } }` |
 | `enquiries` | Corporate quote requests: stored with their gifts and indicative value, emailed to `SHOP_NOTIFY_EMAIL` (reply goes to the customer), listed under **Sales → Enquiries** with status and internal notes. Permissions `ReadEnquiry` / `UpdateEnquiry`. A hidden `details.website` field catches bots. | `submitEnquiry(input: { type, contact, items, details })` |
@@ -57,6 +58,13 @@ Each lives in `src/plugins/<name>` and can be used on its own in another shop.
 | `staff-permissions` | `ShipOrder`: ship and mark delivered without the order-editing permission (so without refunds). | Admin API `shipOrder`, `markFulfillmentDelivered`. |
 
 `npm run check:shop-rules` runs these rules against a server set up from `stores/moire` (12 checks).
+
+**Discounts** are Vendure's own promotions (Marketing → Promotions): a code customers type at
+checkout or an automatic discount, with conditions (minimum spend, products, customer group,
+dates, uses per customer) and actions (% or amount off the order or products, free delivery, buy X
+get Y). The storefront shows them at checkout, on the order page and in the confirmation email.
+A **sale price** is the variant's "Was price (RM)" field (catalog-display): shown crossed out next
+to the lower price.
 
 ## Staff roles
 

@@ -38,23 +38,26 @@ export async function quoteDelivery(input: {
     shopApi<{ deliveryQuote: VOption[] }>(`query($input: DeliveryQuoteInput!) { deliveryQuote(input: $input) { id code name description priceWithTax } }`, {
       input: { postalCode: postcode, province: input.state || undefined, lines },
     }),
-    caps.queries.has("deliveryPromise")
-      ? shopApi<{ deliveryPromise: VPromise }>(`query($p: String!) { deliveryPromise(postalCode: $p) { zoneLabel sameDayAvailable earliestDispatchDate closedDates message } }`, { p: postcode })
-          .then(({ data }) => data.deliveryPromise)
-          .catch(() => null)
-      : null,
+    deliveryPromiseFor(postcode),
   ]);
   const options = quoted.data.deliveryQuote.map((o) => ({ id: o.id, name: o.name, description: o.description, price: o.priceWithTax / 100 }));
-  const promise: DeliveryPromise | undefined = promised
-    ? {
-        zoneLabel: promised.zoneLabel,
-        earliestDate: promised.earliestDispatchDate,
-        closedDates: promised.closedDates,
-        sameDayAvailable: promised.sameDayAvailable,
-        message: promised.message,
-      }
-    : undefined;
+  const promise = promised;
   if (!options.length) return { status: "unavailable", options, promise };
   const selected = options.find((o) => o.id === input.optionId) ?? options[0];
   return { status: "ok", options, selectedId: selected.id, promise };
+}
+
+/** When a postcode can receive its delivery (dates, cut-off wording), when the backend says so. */
+export async function deliveryPromiseFor(postcode: string): Promise<DeliveryPromise | undefined> {
+  if (!(await getCapabilities()).queries.has("deliveryPromise")) return undefined;
+  try {
+    const { data } = await shopApi<{ deliveryPromise: VPromise }>(
+      `query($p: String!) { deliveryPromise(postalCode: $p) { zoneLabel sameDayAvailable earliestDispatchDate closedDates message } }`,
+      { p: postcode },
+    );
+    const p = data.deliveryPromise;
+    return { zoneLabel: p.zoneLabel, earliestDate: p.earliestDispatchDate, closedDates: p.closedDates, sameDayAvailable: p.sameDayAvailable, message: p.message };
+  } catch {
+    return undefined;
+  }
 }

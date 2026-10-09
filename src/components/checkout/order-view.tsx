@@ -161,6 +161,12 @@ export function OrderView({ orderId, token, backend = false }: { orderId: string
             <dt className="text-ink-2">Subtotal</dt>
             <dd className="tabular-nums">{formatRM(order.subtotal, { decimals: true })}</dd>
           </div>
+          {order.discounts?.map((x, i) => (
+            <div key={`${x.description}-${i}`} className="flex justify-between gap-4 text-success">
+              <dt>{x.description}</dt>
+              <dd className="tabular-nums">−{formatRM(Math.abs(x.amount), { decimals: true })}</dd>
+            </div>
+          ))}
           <div className="flex justify-between">
             <dt className="text-ink-2">Delivery</dt>
             <dd className="tabular-nums">{order.deliveryFee ? formatRM(order.deliveryFee, { decimals: true }) : "Free"}</dd>

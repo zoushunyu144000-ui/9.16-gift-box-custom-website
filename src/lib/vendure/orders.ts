@@ -28,6 +28,8 @@ type VOrder = {
   shippingAddress: { fullName: string | null; phoneNumber: string | null; streetLine1: string | null; streetLine2: string | null; city: string | null; postalCode: string | null; province: string | null } | null;
   lines: VLine[];
   payments: { method: string; state: string; transactionId: string | null; createdAt: string; errorMessage: string | null; metadata: Record<string, unknown> | null }[] | null;
+  discounts: { description: string; amountWithTax: number }[];
+  shippingLines: { priceWithTax: number }[];
   customFields: { ageConfirmed?: boolean; preferredDeliveryDate?: string | null; deliveryNotes?: string | null };
 };
 
@@ -44,6 +46,8 @@ function orderFields(caps: Capabilities) {
       customFields { names namesFor giftMessage }
     }
     payments { method state transactionId createdAt errorMessage metadata }
+    discounts { description amountWithTax }
+    shippingLines { priceWithTax }
     customFields { ageConfirmed ${extra} }
   `;
 }
@@ -105,8 +109,10 @@ export function toStorefrontOrder(o: VOrder): Order {
     deliveryDate: o.customFields.preferredDeliveryDate || undefined,
     deliveryNotes: o.customFields.deliveryNotes || undefined,
     items: items(o.lines),
-    subtotal: o.subTotalWithTax / 100,
-    deliveryFee: o.shippingWithTax / 100,
+    // Items and delivery at their full prices, then the discounts (codes, promotions, points) taken off.
+    subtotal: o.lines.reduce((sum, l) => sum + l.linePriceWithTax, 0) / 100,
+    deliveryFee: o.shippingLines.reduce((sum, l) => sum + l.priceWithTax, 0) / 100,
+    discounts: o.discounts.map((d) => ({ description: d.description, amount: d.amountWithTax / 100 })),
     total: o.totalWithTax / 100,
     payment: {
       method: typeof chosen === "string" && chosen in PAYMENT_METHODS ? (chosen as PaymentMethod) : "online",

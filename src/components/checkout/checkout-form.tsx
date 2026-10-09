@@ -3,7 +3,7 @@
 import { DateSelect } from "../date-select";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { ChevronDown, Lock } from "lucide-react";
 import { formatRM, MALAYSIAN_STATES, PAYMENT_METHODS, personalisationHeading } from "@/lib/catalog";
 import type { PaymentMethod, Quote } from "@/lib/types";
@@ -59,6 +59,7 @@ export function CheckoutForm({
   testMode,
   accounts = false,
   member = null,
+  backend = false,
 }: {
   earliestDate: string;
   deliveryNote: string;
@@ -67,12 +68,25 @@ export function CheckoutForm({
   accounts?: boolean;
   /** The signed-in member, whose order goes to their account. */
   member?: { name: string; email: string; phone: string } | null;
+  /** Totals come from the commerce backend's order: discount codes, points, delivery. */
+  backend?: boolean;
 }) {
   const router = useRouter();
   const { lines, ready } = useCart();
   const [d, setD] = useState<Draft>(EMPTY);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [pointsWanted, setPointsWanted] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
   const postcodeReady = /^\d{5}$/.test(d.postcode);
-  const { quote, error: quoteError } = useQuote(lines, ready, { postcode: postcodeReady ? d.postcode : "", state: d.state, optionId: d.deliveryOptionId });
+  const addressReady = Boolean(d.line1.trim() && d.city.trim() && postcodeReady && d.state);
+  const { quote, error: quoteError } = useQuote(lines, ready, {
+    postcode: postcodeReady ? d.postcode : "",
+    state: d.state,
+    optionId: d.deliveryOptionId,
+    ...(backend ? { backend: true, couponCode, loyaltyPoints: pointsWanted, ...(addressReady ? { line1: d.line1, line2: d.line2, city: d.city } : {}) } : {}),
+    paused: submitting,
+  });
   const delivery = quote?.delivery;
   // With delivery priced per address, the backend says when this address can receive it.
   const minDate = delivery?.promise?.earliestDate ?? earliestDate;
@@ -81,8 +95,22 @@ export function CheckoutForm({
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [needsSignIn, setNeedsSignIn] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
+
+  // A refused code comes back with the quote: show why, and stop sending it.
+  const refusedCoupon = quote?.coupon?.error;
+  useEffect(() => {
+    if (!refusedCoupon || !couponCode) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the server's answer about the code just arrived
+    setCouponError(refusedCoupon);
+    setCouponCode("");
+  }, [refusedCoupon, couponCode]);
+  // Points in use follow what this bag can take (the cap depends on the items).
+  const usablePoints = quote?.points?.usable;
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- keep the points used within what the new bag allows
+    if (pointsWanted > 0 && usablePoints !== undefined && usablePoints !== pointsWanted) setPointsWanted(usablePoints);
+  }, [usablePoints, pointsWanted]);
 
   // Restore a draft so a refresh or failed payment doesn't lose the address. A member's own
   // details fill in what the draft doesn't have, and their email is always the account's.
@@ -165,6 +193,8 @@ export function CheckoutForm({
           deliveryDate: d.deliveryDate,
           deliveryNotes: d.deliveryNotes,
           deliveryOptionId: delivery?.selectedId,
+          couponCode: couponCode || undefined,
+          loyaltyPoints: pointsWanted || undefined,
           paymentMethod: d.paymentMethod,
           ageConfirmed: age,
           termsAccepted: terms,
@@ -186,6 +216,10 @@ export function CheckoutForm({
           map[k.replace(/^(customer|address)\./, "").replace("recipient.name", "recipientName").replace("recipient.phone", "recipientPhone")] = v;
         }
         setErrors(map);
+        if (map.coupon) {
+          setCouponError(map.coupon);
+          setCouponCode("");
+        }
         setFormError(data.error ?? "Something went wrong. Please try again.");
         setNeedsSignIn(Boolean(data.signIn));
         setSubmitting(false);
@@ -245,6 +279,12 @@ export function CheckoutForm({
           <dt className="text-ink-2">Subtotal</dt>
           <dd className="tabular-nums">{quote ? formatRM(quote.subtotal, { decimals: true }) : "—"}</dd>
         </div>
+        {quote?.discounts?.map((x, i) => (
+          <div key={`${x.description}-${i}`} className="flex justify-between gap-4 text-success">
+            <dt>{x.description}</dt>
+            <dd className="tabular-nums">−{formatRM(Math.abs(x.amount), { decimals: true })}</dd>
+          </div>
+        ))}
         <div className="flex justify-between">
           <dt className="text-ink-2">Delivery</dt>
           <dd className="tabular-nums">
@@ -256,6 +296,23 @@ export function CheckoutForm({
           <dd className="tabular-nums">{quote ? formatRM(quote.total, { decimals: true }) : "—"}</dd>
         </div>
       </dl>
+      {backend && (
+        <CouponField
+          applied={quote?.coupon?.code ?? (couponCode || undefined)}
+          error={couponError ?? errors.coupon}
+          onApply={(code) => {
+            setCouponError(null);
+            setCouponCode(code);
+          }}
+          onRemove={() => {
+            setCouponError(null);
+            setCouponCode("");
+          }}
+        />
+      )}
+      {quote?.points && quote.points.balance > 0 && (
+        <PointsChoice points={quote.points} using={pointsWanted > 0} error={errors.points} onChange={(on) => setPointsWanted(on ? (quote.points?.usable ?? 0) : 0)} />
+      )}
       {quote?.hasProblems && (
         <p className="mt-4 text-[13px] text-danger">
           Some items are no longer available or need changes.{" "}
@@ -520,5 +577,76 @@ function DeliveryOptions({ delivery, onChoose }: { delivery: NonNullable<Quote["
       </div>
       {delivery.promise?.message && <p className="mt-2 text-[13px] text-ink-2">{delivery.promise.message}</p>}
     </fieldset>
+  );
+}
+
+/** A discount code: typed and applied, or shown with a way to take it off. */
+function CouponField({ applied, error, onApply, onRemove }: { applied?: string; error?: string | null; onApply: (code: string) => void; onRemove: () => void }) {
+  const id = useId();
+  const [value, setValue] = useState("");
+  if (applied) {
+    return (
+      <p className="mt-4 flex items-center justify-between gap-3 border-t border-line pt-4 text-[13px]">
+        <span>
+          Code <strong className="font-medium tracking-wide">{applied}</strong> applied
+        </span>
+        <button type="button" onClick={onRemove} className="underline underline-offset-4">
+          Remove
+        </button>
+      </p>
+    );
+  }
+  const apply = () => value.trim() && onApply(value.trim());
+  return (
+    <div className="mt-4 border-t border-line pt-4">
+      <label htmlFor={id} className="field-label">
+        Discount code
+      </label>
+      <div className="flex gap-2">
+        <input
+          id={id}
+          className="field flex-1 uppercase placeholder:normal-case"
+          value={value}
+          maxLength={60}
+          autoComplete="off"
+          placeholder="Enter code"
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              apply();
+            }
+          }}
+          aria-invalid={!!error}
+        />
+        <button type="button" onClick={apply} className="btn btn-outline !px-5">
+          Apply
+        </button>
+      </div>
+      {error && <p className="field-error">{error}</p>}
+    </div>
+  );
+}
+
+/** A member's points: use them on this order when there are enough, else how many are needed. */
+function PointsChoice({ points, using, error, onChange }: { points: NonNullable<Quote["points"]>; using: boolean; error?: string; onChange: (on: boolean) => void }) {
+  const id = useId();
+  return (
+    <div className="mt-4 border-t border-line pt-4 text-[13px]">
+      {points.usable > 0 ? (
+        <label htmlFor={id} className="flex items-start gap-3">
+          <input id={id} type="checkbox" className="check" checked={using} onChange={(e) => onChange(e.target.checked)} />
+          <span>
+            Use {points.usable.toLocaleString("en-MY")} points (−{formatRM(points.usable * points.pointValue, { decimals: true })})
+            <span className="block text-ink-3">You have {points.balance.toLocaleString("en-MY")} points.</span>
+          </span>
+        </label>
+      ) : (
+        <p className="text-ink-2">
+          You have {points.balance.toLocaleString("en-MY")} points. You can use them from {points.minimum.toLocaleString("en-MY")} points.
+        </p>
+      )}
+      {(error || points.error) && <p className="field-error">{error || points.error}</p>}
+    </div>
   );
 }

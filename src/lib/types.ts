@@ -49,6 +49,8 @@ export interface ProductVariant {
   price: number;
   /** Optional one-line note shown under the option, e.g. what the upgrade adds. */
   note?: string;
+  /** Earlier price, shown crossed out when higher than `price` (a sale). */
+  compareAt?: number;
   containsAlcohol?: boolean;
 }
 
@@ -90,6 +92,8 @@ export interface Product {
   availabilityNote?: string;
   /** Base price in MYR. When variants exist, the first variant should match this. */
   price: number;
+  /** Earlier price, shown crossed out when higher than `price` (a sale; products without variants). */
+  compareAt?: number;
   /** One-line summary for cards. */
   summary: string;
   /** Longer description for the product page. */
@@ -198,6 +202,8 @@ export interface Order {
   subtotal: number;
   deliveryFee: number;
   total: number;
+  /** Discounts taken off (codes, promotions, points), amounts negative; with the commerce backend. */
+  discounts?: { description: string; amount: number }[];
   payment: {
     /** "online" when a hosted gateway took the payment and didn't say which method was used. */
     method: PaymentMethod | "online";
@@ -291,6 +297,12 @@ export interface Quote {
    * (deliveryFee is then 0 and not yet known), "unavailable" when nothing delivers there.
    */
   delivery?: { status: "postcode" | "ok" | "unavailable"; options: DeliveryOption[]; selectedId?: string; promise?: DeliveryPromise };
+  /** At checkout with the commerce backend: the order's discounts (amounts negative, MYR). */
+  discounts?: { description: string; amount: number }[];
+  /** The discount code on the order, or why it was refused. */
+  coupon?: { code?: string; error?: string };
+  /** A signed-in member's points: balance, how many this order can use (0 = none yet), the minimum, MYR per point, how many are used. */
+  points?: { balance: number; usable: number; minimum: number; pointValue: number; applied: number; error?: string };
 }
 
 export interface DeliveryOption {

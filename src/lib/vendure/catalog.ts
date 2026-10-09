@@ -39,7 +39,7 @@ type VProduct = {
     stockLevel: string;
     options: { name: string }[];
     facetValues: { facet: { code: string } }[];
-    customFields: { note?: string | null };
+    customFields: { note?: string | null; compareAtPrice?: number | null };
   }[];
 };
 
@@ -61,7 +61,7 @@ const PRODUCTS = /* GraphQL */ `
           id sku name priceWithTax stockLevel
           options { name }
           facetValues { facet { code } }
-          customFields { note }
+          customFields { note compareAtPrice }
         }
       }
     }
@@ -134,6 +134,7 @@ function toProduct(p: VProduct, namesFee: number): Product | null {
     stock: soldOut ? 0 : null,
     availabilityNote: cf.availabilityNote || undefined,
     price: p.variants[0].priceWithTax / 100,
+    compareAt: withOptions ? undefined : (p.variants[0].customFields.compareAtPrice ?? undefined),
     summary: cf.summary ?? "",
     description: htmlToText(p.description),
     contents: [],
@@ -146,6 +147,7 @@ function toProduct(p: VProduct, namesFee: number): Product | null {
           name: v.options.map((o) => o.name).join(" · ") || v.name,
           price: v.priceWithTax / 100,
           note: v.customFields.note || undefined,
+          compareAt: v.customFields.compareAtPrice ?? undefined,
           containsAlcohol: alcohol || hasFacet(v.facetValues, "alcohol"),
         }))
       : [],

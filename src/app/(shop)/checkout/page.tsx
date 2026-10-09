@@ -21,6 +21,7 @@ export default async function CheckoutPage() {
       // With the commerce backend, payment is live once it has a gateway plugin; else the test page stands in.
       testMode={isVendureConfigured ? !hostedPayments : getPaymentProvider().testMode}
       accounts={isVendureConfigured}
+      backend={isVendureConfigured}
       member={member && { name: member.name, email: member.email, phone: member.phone }}
     />
   );

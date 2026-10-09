@@ -39,6 +39,9 @@ const Body = z.object({
   deliveryNotes: z.string().trim().max(300).optional().or(z.literal("")),
   /** With the commerce backend's delivery zones: the delivery option chosen at checkout. */
   deliveryOptionId: z.string().max(40).optional(),
+  /** With the commerce backend: a discount code, and a member's points to use. */
+  couponCode: z.string().max(60).optional(),
+  loyaltyPoints: z.number().int().min(0).max(10_000_000).optional(),
   paymentMethod: z.enum(["fpx", "card", "ewallet"]),
   ageConfirmed: z.boolean(),
   termsAccepted: z.literal(true, { message: "Please accept the terms of sale" }),
