@@ -17,7 +17,7 @@ import {
     usePermissions,
 } from '@vendure/dashboard';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { FormEvent, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 const LOYALTY_QUERY = `
@@ -111,8 +111,7 @@ function LoyaltyPoints({ context }: { context: { entity?: { id?: string } } }) {
     const amount = Number(points);
     const canSubmit = Number.isInteger(amount) && amount !== 0 && note.trim().length > 0 && !adjust.isPending;
 
-    const submit = (event: FormEvent) => {
-        event.preventDefault();
+    const submit = () => {
         if (canSubmit) adjust.mutate({ customerId, points: amount, note: note.trim() });
     };
 
@@ -168,7 +167,8 @@ function LoyaltyPoints({ context }: { context: { entity?: { id?: string } } }) {
             )}
 
             {hasPermissions(['UpdateCustomer']) ? (
-                <form className="space-y-2 border-t pt-4" onSubmit={submit}>
+                // Not a <form>: the customer page is already one form, and forms can't nest.
+                <div className="space-y-2 border-t pt-4">
                     <p className="text-sm font-medium">Adjust points</p>
                     <Input
                         type="number"
@@ -176,12 +176,19 @@ function LoyaltyPoints({ context }: { context: { entity?: { id?: string } } }) {
                         placeholder="e.g. 500, or -200 to take away"
                         value={points}
                         onChange={e => setPoints(e.target.value)}
+                        onKeyDown={e => {
+                            // Enter would otherwise submit the customer form around this block.
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                submit();
+                            }
+                        }}
                     />
                     <Textarea placeholder="Why (the customer can see this note)" value={note} onChange={e => setNote(e.target.value)} />
-                    <Button type="submit" disabled={!canSubmit}>
+                    <Button type="button" disabled={!canSubmit} onClick={submit}>
                         {adjust.isPending ? 'Saving…' : 'Save adjustment'}
                     </Button>
-                </form>
+                </div>
             ) : null}
         </div>
     );

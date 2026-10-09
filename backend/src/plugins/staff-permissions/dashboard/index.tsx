@@ -153,14 +153,19 @@ function ShipOrder({ context }: { context: { entity?: OrderEntity } }) {
     const canSubmit = canShip && lines.length > 0 && quantitiesValid && !!handler && handlerValid && !ship.isPending;
     const lineName = (orderLineId: string) => order.lines.find(l => l.id === orderLineId)?.productVariant;
 
+    const submit = () => {
+        if (canSubmit && handler) ship.mutate({ orderId: order.id, lines, handler });
+    };
+
     return (
         <div className="space-y-6">
             {canShip ? (
-                <form
+                // Not a <form>: the order page is already one form, and forms can't nest. Enter in a field
+                // would submit that page form, so it is stopped here.
+                <div
                     className="space-y-4"
-                    onSubmit={e => {
-                        e.preventDefault();
-                        if (canSubmit && handler) ship.mutate({ orderId: order.id, lines, handler });
+                    onKeyDown={e => {
+                        if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'INPUT') e.preventDefault();
                     }}
                 >
                     <ul className="divide-y rounded-md border">
@@ -223,10 +228,10 @@ function ShipOrder({ context }: { context: { entity?: OrderEntity } }) {
                     ) : (
                         <p className="text-sm text-muted-foreground">Loading delivery options…</p>
                     )}
-                    <Button type="submit" disabled={!canSubmit}>
+                    <Button type="button" disabled={!canSubmit} onClick={submit}>
                         {ship.isPending ? 'Shipping…' : 'Mark shipped'}
                     </Button>
-                </form>
+                </div>
             ) : null}
 
             {inTransit(order).length ? (
