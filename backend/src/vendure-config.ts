@@ -12,6 +12,7 @@ import { GraphiqlPlugin } from '@vendure/graphiql-plugin';
 import 'dotenv/config';
 import path from 'path';
 import { AgeCheckPlugin } from './plugins/age-check/age-check.plugin';
+import { MalaysianCouriersPlugin } from './plugins/couriers-my/couriers-my.plugin';
 import { GiftMessagePlugin } from './plugins/gift-message/gift-message.plugin';
 import { PersonalisationPlugin } from './plugins/personalisation/personalisation.plugin';
 
@@ -112,6 +113,32 @@ export const config: VendureConfig = {
         PersonalisationPlugin.init({ namesSku: 'personalised-name', defaultMaxLength: 20 }),
         GiftMessagePlugin.init({ maxLength: 200 }),
         AgeCheckPlugin.init({ facetCode: 'alcohol', minimumAge: 21 }),
+        MalaysianCouriersPlugin.init({
+            // Placeholder pickup point (KLCC area); the client supplies the real pickup address and contact.
+            origin: {
+                contactName: 'Moire Co.',
+                company: 'Moire Co.',
+                phone: '+60300000000',
+                addressLine1: 'Jalan Ampang',
+                city: 'Kuala Lumpur',
+                postcode: '50450',
+                state: 'MY-14',
+                lat: 3.1478,
+                lng: 101.713,
+            },
+            publicUrl: process.env.VENDURE_PUBLIC_URL,
+            lalamove: {
+                apiKey: process.env.LALAMOVE_API_KEY,
+                apiSecret: process.env.LALAMOVE_API_SECRET,
+                sandbox: process.env.LALAMOVE_SANDBOX !== 'false',
+            },
+            easyParcel: {
+                clientId: process.env.EASYPARCEL_CLIENT_ID,
+                clientSecret: process.env.EASYPARCEL_CLIENT_SECRET,
+                sandbox: process.env.EASYPARCEL_SANDBOX !== 'false',
+            },
+            googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY,
+        }),
         DashboardPlugin.init({
             route: 'dashboard',
             appDir: IS_DEV ? path.join(__dirname, '../dist/dashboard') : path.join(__dirname, 'dashboard'),
