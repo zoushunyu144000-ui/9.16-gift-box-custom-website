@@ -168,6 +168,23 @@ describe('courier price (my-courier-rates)', () => {
         assert.equal(asked, false);
     });
 
+    it('asks couriers only about postcodes in the official table, and parcels up to the weight limit', async () => {
+        let asked = 0;
+        const liveRates = async () => {
+            asked++;
+            return rates;
+        };
+        const guessed = resolvePlace({ postalCode: '98999', province: 'Sarawak' }, false);
+        const notInTable = await courierQuote({ place: guessed, items: [{ quantity: 1 }], args: courierArgs, fromPostcode: '50450', liveRates, log: noLog });
+        assert.equal(notInTable?.metadata.priceSource, 'table');
+        assert.equal(notInTable?.priceSen, 1600);
+        const heavy = await courierQuote({ place: penang, items: [{ quantity: 31 }], args: courierArgs, fromPostcode: '50450', liveRates, liveRateMaxKg: 30, log: noLog });
+        assert.equal(heavy?.metadata.priceSource, 'table');
+        assert.equal(asked, 0);
+        const atLimit = await courierQuote({ place: penang, items: [{ quantity: 30 }], args: courierArgs, fromPostcode: '50450', liveRates, liveRateMaxKg: 30, log: noLog });
+        assert.equal(atLimit?.metadata.priceSource, 'live');
+    });
+
     it('is not offered in a zone the table has no row for', async () => {
         const quote = await courierQuote({ place: kl, items: [{ quantity: 1 }], args: courierArgs, fromPostcode: '50450', log: noLog });
         assert.equal(quote, undefined);

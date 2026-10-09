@@ -9,7 +9,7 @@ courier rates in here through `LiveRateProvider`.
 | Zones | `klang-valley` (Kuala Lumpur, Selangor; Putrajaya by option), `peninsular`, `sabah-labuan`, `sarawak`, else `unknown`, from the official postcode table |
 | Dispatch dates | Confirmed before the cut-off (15:00 Malaysian time) on a dispatch day (Mon–Sat) → goes out that day; otherwise the next dispatch day. Sundays and closed dates are skipped |
 | Shop API | `deliveryPromise(postalCode)`, `deliveryQuote(input)` (docs/api-contracts.md §2) |
-| Checkout check | A preferred delivery date must be a dispatch day on or after the earliest dispatch date |
+| Checkout check | A preferred delivery date must be a dispatch day on or after the earliest dispatch date; if it no longer is when the order is paid, staff get a note on the order |
 | Shipping | Eligibility checker `my-postcode-zone`; calculators `my-distance-zones` (same-day) and `my-courier-rates` (outstation) |
 | Custom fields | `Order.preferredDeliveryDate`, `Order.deliveryNotes`; `ProductVariant.weightGrams` (default 1000), `lengthCm`, `widthCm`, `heightCm`; `GlobalSettings.deliveryClosedDates` |
 
@@ -42,7 +42,8 @@ Vendure's manual fulfilment until couriers-my is installed, and switches off the
 Running it again leaves existing methods (by code) as staff edited them.
 Options: `sameDayPriceBands`, `sameDayFallbackPrice` (`null` = not offered beyond the last band),
 `courierRates`, `courierMarkupPercent`, `sameDayFulfillmentHandler`, `courierFulfillmentHandler`,
-`disableMethodCodes` (default: every method on Vendure's flat-rate calculator).
+`disableMethodCodes` (default: flat rates charged on every order, i.e. Vendure's default checker with no minimum
+and default calculator above RM0, which is the store.json placeholder; free methods such as store pickup are left alone).
 
 The database changes are in `src/migrations/*-delivery-my.ts`.
 
@@ -62,6 +63,7 @@ The database changes are in `src/migrations/*-delivery-my.ts`.
 | `timeoutMs` | `2500` | Longest wait for Google or a courier before the fallback is used |
 | `distanceCacheDays` | `30` | How long a road distance is reused |
 | `liveRateCacheHours` | `24` | How long live courier rates are reused |
+| `liveRateMaxKg` | `30` | Heavier parcels are priced from the rates table only |
 | `deliveryNotesMaxLength` | `500` | Longest delivery note |
 
 ### Environment
@@ -93,13 +95,15 @@ cached distance is used before the fallback.
 (`weightGrams`, 1000 g when not set) and its volumetric weight (length × width × height ÷ 5000, only when all
 three sizes are set), times the quantity, added up. Then:
 
-1. **Live rates**, when a `LiveRateProvider` is registered and "Use live courier rates" is ticked: every provider
-   is asked at once for the weight rounded up to the whole kg (from the pickup postcode to the address). Rates
+1. **Live rates**, when a `LiveRateProvider` is registered, "Use live courier rates" is ticked, the postcode is in
+   the official table and the parcel is at most 30 kg (`liveRateMaxKg`), so the public quote can't be used to run
+   up the courier account with made-up postcodes or weights: every provider is asked at once for the weight
+   rounded up to the whole kg (from the pickup postcode to the address). Rates
    from providers that answer within 2.5 s are merged; the cheapest from an allowed courier wins ("Allowed
    couriers": part of a courier or service name such as `J&T`, or a service id; empty = any). Price = courier
-   price + markup %, rounded **up** to the next RM1. Rates are cached 24 hours per postcode and kg bracket, but
-   only when every provider answered (so one failing provider can't hide cheaper rates for a day). A provider
-   that times out is left out for a minute.
+   price + markup %, rounded **up** to the next RM1. Rates are cached 24 hours per channel, postcode and kg
+   bracket, but only when every provider answered (so one failing provider can't hide cheaper rates for a day).
+   A provider that times out is left out for a minute.
 2. **Otherwise the zone × weight table**, in ringgit: `{"peninsular":{"firstKg":10,"eachExtraKg":3}, …}` —
    first kg, then each further started kg. A zone without a row isn't offered. No markup is added: the table is
    the customer price.
@@ -116,7 +120,7 @@ prices: tax-inclusive when the channel's prices include tax, at the calculator's
 | Which addresses get which method | Same page, eligibility checker *Zones* |
 | Public holidays and closures | **Settings → Global Settings** → *Closed dates (no dispatch)*: one date per line, `2026-12-25 Christmas Day` (a note after the date is fine; ranges aren't read, so one line per day). Saved only when every line is a date |
 | Parcel weights and sizes | **Catalog → Products** → a variant: *Packed weight (g)* (with the box; 0 for things that add nothing, such as a personalised name), *Packed length / width / height (cm)* |
-| The customer's preferred date and notes | On each order, in its custom fields |
+| The customer's preferred date and notes | On each order, in its custom fields. If the date stopped working between checkout and payment (paid after the cut-off, or changed afterwards), the order history has a staff-only note: "…Please agree a delivery date with the customer." |
 
 ## For the storefront
 
@@ -131,7 +135,12 @@ mutation { setOrderCustomFields(input: { customFields: { preferredDeliveryDate: 
 - `deliveryQuote` runs the same checkers and calculators as checkout (Vendure's `OrderTestingService` on a mock
   order), so its prices equal `eligibleShippingMethods` for the same bag and address. Unknown variants are left out.
 - A refused date comes back from `transitionOrderToState("ArrangingPayment")` as `OrderStateTransitionError.transitionError`,
-  e.g. "We don’t deliver on Sundays. Please choose another delivery date."
+  e.g. "We don’t deliver on Sundays. Please choose another delivery date." To change the date afterwards, go back to
+  `AddingItems` first so it's checked again.
+- The preferred date is compared with the earliest *dispatch* date in every zone (contract §2); for courier zones
+  the storefront may want to suggest dates 3–5 days later.
+- `deliveryPromise` only knows the postcode; for a postcode missing from the official table it says so, and
+  checkout then goes by the state the customer picks.
 
 ## For couriers-my: `LiveRateProvider`
 
@@ -148,7 +157,8 @@ export const easyParcelRateProvider: LiveRateProvider = {
 - `toState` is the state as the data.gov.my table writes it (`MALAYSIAN_STATES`): Johor, Kedah, Kelantan, Melaka,
   Negeri Sembilan, Pahang, Perak, Perlis, Pulau Pinang, Sabah, Sarawak, Selangor, Terengganu, W.P. Kuala Lumpur,
   W.P. Labuan, W.P. Putrajaya.
-- `weightKg` is the chargeable weight already rounded up to the whole kg; sizes are only sent for a single boxed item.
+- `weightKg` is the chargeable weight already rounded up to the whole kg, at most `liveRateMaxKg` (30); sizes are only
+  sent for a single boxed item. Only postcodes in the official table are asked about.
 - Answer within 2.5 s or throw; either way checkout falls back to the table (after a timeout the provider is left
   out for a minute). Return `[]` when no courier serves the address. `priceSen` is what the courier charges the
   shop; the markup and rounding are added here.

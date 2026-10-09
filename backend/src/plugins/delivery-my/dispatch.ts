@@ -130,6 +130,39 @@ export function parseClosedDates(text: string | null | undefined): { dates: stri
     return { dates, errors };
 }
 
+/**
+ * What's wrong with a preferred delivery date, worded for the customer and for staff; undefined when it's fine.
+ * A good date is a dispatch day (not a Sunday or closed date) on or after the earliest dispatch date.
+ */
+export function preferredDateProblem(date: string, earliest: string, rules: DispatchRules): { customer: string; staff: string } | undefined {
+    if (!isValidDate(date)) {
+        return {
+            customer: 'Please choose your delivery date again; we couldn’t read the date chosen.',
+            staff: `The preferred delivery date “${date}” isn’t a date.`,
+        };
+    }
+    if (date < earliest) {
+        return {
+            customer: `The earliest delivery date we can offer is ${dateLabel(earliest)}. Please choose that date or later.`,
+            staff: `The preferred delivery date, ${dateLabel(date)}, is before the earliest dispatch date (${dateLabel(earliest)}).`,
+        };
+    }
+    if (rules.closedDates.has(date)) {
+        return {
+            customer: `We’re closed on ${dateLabel(date)}. Please choose another delivery date.`,
+            staff: `The preferred delivery date, ${dateLabel(date)}, is a closed date.`,
+        };
+    }
+    const weekday = weekdayName(weekdayOf(date));
+    if (!rules.dispatchWeekdays.includes(weekdayOf(date))) {
+        return {
+            customer: `We don’t deliver on ${weekday}s. Please choose another delivery date.`,
+            staff: `The preferred delivery date, ${dateLabel(date)}, is a ${weekday}, when the shop doesn’t dispatch.`,
+        };
+    }
+    return undefined;
+}
+
 /** "15:00" → "3pm", "15:30" → "3.30pm", "12:00" → "12pm". */
 export function timeLabel(time: string): string {
     const minutes = minutesOf(time);
@@ -186,7 +219,8 @@ export function deliveryPromise(input: DeliveryPromiseInput): DeliveryPromise {
 
     let message: string;
     if (zone === 'unknown') {
-        message = 'We couldn’t find this postcode. Please check it, or contact us to arrange delivery.';
+        // A brand-new postcode may be missing from the official table; checkout then goes by the state chosen.
+        message = 'We couldn’t find this postcode. Please check it; if it’s right, delivery goes by the state you choose at checkout.';
     } else if (zone === 'klang-valley') {
         if (sameDayAvailable) {
             message = `Order before ${cutoff} for same-day delivery.`;

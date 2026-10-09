@@ -4,7 +4,7 @@ import type { RequestContext } from '@vendure/core';
 import { LiveRateLookup, RateCache, rateCacheKey } from './live-rates';
 import { LiveRate, LiveRateProvider, LiveRateRequest } from './types';
 
-const ctx = {} as RequestContext;
+const ctx = { channelId: 1 } as unknown as RequestContext;
 const request: LiveRateRequest = { fromPostcode: '50450', toPostcode: '10200', toState: 'Pulau Pinang', weightKg: 3 };
 const jnt: LiveRate = { courier: 'J&T Express', service: 'Standard', priceSen: 980, serviceId: 'EP-CS0I' };
 const poslaju: LiveRate = { courier: 'Pos Laju', service: 'Next Day', priceSen: 1250, serviceId: 'EP-CS0W' };
@@ -38,7 +38,7 @@ describe('live courier rates', () => {
         );
         assert.deepEqual(await lookup.rates(ctx, request), [jnt, poslaju]);
         assert.deepEqual(calls, [request, request]);
-        assert.deepEqual(cache.entries.get('delivery-my:live-rates:50450:10200:3kg'), { rates: [jnt, poslaju], ttlMs: 24 * 60 * 60 * 1000 });
+        assert.deepEqual(cache.entries.get('delivery-my:live-rates:1:50450:10200:Pulau Pinang:3kg'), { rates: [jnt, poslaju], ttlMs: 24 * 60 * 60 * 1000 });
 
         assert.deepEqual(await lookup.rates(ctx, request), [jnt, poslaju]);
         assert.equal(calls.length, 2, 'second quote from the cache');
@@ -123,8 +123,14 @@ describe('live courier rates', () => {
         assert.equal(calls.length, 1);
     });
 
-    it('caches by size too when a single box is sent', () => {
-        assert.equal(rateCacheKey(request), 'delivery-my:live-rates:50450:10200:3kg');
-        assert.equal(rateCacheKey({ ...request, lengthCm: 40, widthCm: 30, heightCm: 20 }), 'delivery-my:live-rates:50450:10200:3kg:40x30x20cm');
+    it('caches per channel, postcode, state and weight bracket, and by size when a single box is sent', () => {
+        assert.equal(rateCacheKey(request, 1), 'delivery-my:live-rates:1:50450:10200:Pulau Pinang:3kg');
+        assert.equal(rateCacheKey(request), 'delivery-my:live-rates:-:50450:10200:Pulau Pinang:3kg');
+        assert.notEqual(rateCacheKey(request, 1), rateCacheKey(request, 2));
+        assert.notEqual(rateCacheKey(request, 1), rateCacheKey({ ...request, toState: 'Kedah' }, 1));
+        assert.equal(
+            rateCacheKey({ ...request, lengthCm: 40, widthCm: 30, heightCm: 20 }, 1),
+            'delivery-my:live-rates:1:50450:10200:Pulau Pinang:3kg:40x30x20cm',
+        );
     });
 });

@@ -1,7 +1,6 @@
 import {
     idsAreEqual,
     Injector,
-    LanguageCode,
     Logger,
     Order,
     ProductVariant,
@@ -11,7 +10,7 @@ import {
     TransactionalConnection,
 } from '@vendure/core';
 import { In } from 'typeorm';
-import { loggerCtx } from './constants';
+import { en, loggerCtx } from './constants';
 import { DistanceService } from './distance.service';
 import { LiveRateService } from './live-rate.service';
 import { resolvePlace } from './postcodes';
@@ -19,7 +18,6 @@ import { DEFAULT_VOLUMETRIC_DIVISOR, ParcelItem, PLACEHOLDER_COURIER_TABLE, PLAC
 import { courierQuote, sameDayQuote } from './quotes';
 import { DELIVERY_ZONES, MalaysianDeliveryOptions } from './types';
 
-const en = (value: string) => [{ languageCode: LanguageCode.en, value }];
 const log = (message: string) => Logger.warn(message, loggerCtx);
 
 /** A list arg as the dashboard saves it, or typed as "peninsular, sarawak". */
@@ -160,6 +158,7 @@ export function courierRatesCalculator(options: MalaysianDeliveryOptions) {
                 args: { ...args, allowedCouriers: stringList(args.allowedCouriers as string[] | string | undefined) },
                 fromPostcode: options.origin.postcode,
                 liveRates: liveRates.hasProviders ? request => liveRates.rates(ctx, request) : undefined,
+                liveRateMaxKg: options.liveRateMaxKg,
                 log,
             });
             if (!quote) return undefined;

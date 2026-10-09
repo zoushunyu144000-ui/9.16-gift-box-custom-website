@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { GlobalSettingsService, ID, OrderTestingService, ProductVariant, RequestContext, TransactionalConnection } from '@vendure/core';
 import { IsNull } from 'typeorm';
 import { DELIVERY_MY_OPTIONS } from './constants';
-import { DeliveryPromise, deliveryPromise, DispatchRules, parseClosedDates } from './dispatch';
+import { DeliveryPromise, deliveryPromise, DispatchRules, earliestDispatchDate, parseClosedDates } from './dispatch';
 import { AddressLike, resolvePlace } from './postcodes';
 import { MalaysianDeliveryOptions } from './types';
 
@@ -45,6 +45,12 @@ export class DeliveryService {
             dispatchWeekdays: this.options.dispatchWeekdays,
             closedDates: new Set([...this.options.closedDates, ...dates]),
         };
+    }
+
+    /** The earliest dispatch date now, with the rules it came from. It's the same for every zone. */
+    async earliestDispatch(ctx: RequestContext, now = new Date()): Promise<{ earliest: string; rules: DispatchRules }> {
+        const rules = await this.dispatchRules(ctx);
+        return { earliest: earliestDispatchDate(now, rules), rules };
     }
 
     async promise(ctx: RequestContext, address: AddressLike, now = new Date()): Promise<DeliveryPromise> {

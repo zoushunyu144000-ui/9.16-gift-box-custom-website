@@ -1,8 +1,8 @@
 import { OnApplicationBootstrap, OnApplicationShutdown } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { InjectableStrategy, Injector, LanguageCode, Logger, PluginCommonModule, VendurePlugin } from '@vendure/core';
+import { InjectableStrategy, Injector, Logger, PluginCommonModule, VendurePlugin } from '@vendure/core';
 import { DeliveryShopResolver, shopApiExtensions } from './api';
-import { DELIVERY_MY_OPTIONS, loggerCtx } from './constants';
+import { DELIVERY_MY_OPTIONS, en, loggerCtx } from './constants';
 import { DeliveryDistance } from './delivery-distance.entity';
 import { deliveryDateCheck } from './delivery-date-check';
 import { DeliveryService } from './delivery.service';
@@ -12,8 +12,6 @@ import { LiveRateService } from './live-rate.service';
 import { postcodeTable } from './postcodes';
 import { courierRatesCalculator, distanceZonesCalculator, postcodeZoneChecker } from './shipping';
 import { DeliveryZone, MalaysianDeliveryOptions, ShopOrigin } from './types';
-
-const en = (value: string) => [{ languageCode: LanguageCode.en, value }];
 
 export type MalaysianDeliveryInitOptions = Partial<Omit<MalaysianDeliveryOptions, 'origin' | 'zoneLabels'>> & {
     origin: ShopOrigin;
@@ -30,12 +28,15 @@ const DEFAULTS: Omit<MalaysianDeliveryOptions, 'origin' | 'zoneLabels'> = {
     timeoutMs: 2500,
     distanceCacheDays: 30,
     liveRateCacheHours: 24,
+    liveRateMaxKg: 30,
     deliveryNotesMaxLength: 500,
 };
 
 /** Checks the options once at startup, so a typo stops the server with a clear message instead of odd prices. */
 function resolveOptions(input: MalaysianDeliveryInitOptions): MalaysianDeliveryOptions {
-    const options = { ...DEFAULTS, ...input };
+    // An option given as undefined or null keeps its default.
+    const given = Object.fromEntries(Object.entries(input).filter(([, value]) => value != null)) as MalaysianDeliveryInitOptions;
+    const options = { ...DEFAULTS, ...given };
     const { origin } = options;
     if (!origin || !Number.isFinite(origin.latitude) || !Number.isFinite(origin.longitude) || !/^\d{5}$/.test(origin.postcode ?? '')) {
         throw new Error('MalaysianDeliveryPlugin.init() needs origin: { latitude, longitude, address, postcode } of the shop’s pickup point.');
@@ -54,7 +55,7 @@ function resolveOptions(input: MalaysianDeliveryInitOptions): MalaysianDeliveryO
             'sabah-labuan': 'Sabah & Labuan',
             sarawak: 'Sarawak',
             unknown: 'Postcode not found',
-            ...input.zoneLabels,
+            ...Object.fromEntries(Object.entries(given.zoneLabels ?? {}).filter(([, label]) => label)),
         },
     };
 }

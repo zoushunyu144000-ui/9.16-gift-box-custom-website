@@ -106,6 +106,8 @@ function singleBoxSize(items: ParcelItem[]): Pick<LiveRateRequest, 'lengthCm' | 
 /**
  * Courier price: the cheapest allowed live rate for the chargeable weight's bracket, plus markup, rounded up to the
  * next RM1; without live rates, the zone × weight table. Not offered when the table has no row for the zone.
+ * Live rates are only asked for postcodes in the official table and parcels up to `liveRateMaxKg`, so the public
+ * quote can't be used to run up the courier account's requests with made-up postcodes or weights.
  */
 export async function courierQuote(input: {
     place: ResolvedPlace;
@@ -113,6 +115,7 @@ export async function courierQuote(input: {
     args: CourierArgs;
     fromPostcode: string;
     liveRates?: (request: LiveRateRequest) => Promise<LiveRate[] | undefined>;
+    liveRateMaxKg?: number;
     log: Log;
 }): Promise<Quote | undefined> {
     const { place, args, log } = input;
@@ -120,7 +123,8 @@ export async function courierQuote(input: {
     const bracketKg = weightBracketKg(weightKg);
     const metadata = { zone: place.zone, chargeableWeightKg: weightKg, weightBracketKg: bracketKg };
 
-    if (args.useLiveRates !== false && input.liveRates && place.postcode && place.state && input.fromPostcode) {
+    const wantLive = args.useLiveRates !== false && place.postcodeKnown && bracketKg <= (input.liveRateMaxKg ?? Infinity);
+    if (wantLive && input.liveRates && input.fromPostcode && place.postcode && place.state) {
         const rates = await input.liveRates({
             fromPostcode: input.fromPostcode,
             toPostcode: place.postcode,

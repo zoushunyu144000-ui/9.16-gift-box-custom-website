@@ -1,5 +1,12 @@
 import { INestApplicationContext } from '@nestjs/common';
-import { defaultShippingCalculator, manualFulfillmentHandler, RequestContext, ShippingMethodService } from '@vendure/core';
+import {
+    defaultShippingCalculator,
+    defaultShippingEligibilityChecker,
+    manualFulfillmentHandler,
+    RequestContext,
+    ShippingMethod,
+    ShippingMethodService,
+} from '@vendure/core';
 import { MalaysianDeliveryPlugin } from './delivery-my.plugin';
 import { timeLabel, weekdaysLabel } from './dispatch';
 import { CourierTable, PLACEHOLDER_COURIER_TABLE, PLACEHOLDER_PRICE_BANDS, PriceBand } from './pricing';
@@ -25,8 +32,9 @@ export interface SetupDeliveryMethodsOptions {
     /** Markup on live courier rates, %. Default 0. */
     courierMarkupPercent?: number;
     /**
-     * Existing methods to switch off, by code. Default: every method on Vendure's flat-rate calculator, which on a new
-     * shop is just the placeholder rate from store.json.
+     * Existing methods to switch off, by code. Default: flat rates charged on every order (Vendure's default checker
+     * with no minimum and default calculator above RM0), i.e. the placeholder rate from store.json. Free ones, such
+     * as store pickup, are left alone.
      */
     disableMethodCodes?: string[];
 }
@@ -35,6 +43,19 @@ export interface SetupDeliveryMethodsResult {
     created: string[];
     alreadyThere: string[];
     disabled: string[];
+}
+
+const argValue = (operation: { args: Array<{ name: string; value: string }> }, name: string) =>
+    operation.args.find(arg => arg.name === name)?.value;
+
+/** The placeholder the shop setup creates from store.json: one flat price for every order. */
+function isFlatPlaceholder(method: ShippingMethod): boolean {
+    return (
+        method.calculator.code === defaultShippingCalculator.code &&
+        Number(argValue(method.calculator, 'rate') ?? 0) > 0 &&
+        method.checker.code === defaultShippingEligibilityChecker.code &&
+        Number(argValue(method.checker, 'orderMinimum') ?? 0) === 0
+    );
 }
 
 const zonesChecker = (zones: DeliveryZone[]) => ({
@@ -53,6 +74,7 @@ export async function setupDeliveryMethods(
     opts: SetupDeliveryMethodsOptions = {},
 ): Promise<SetupDeliveryMethodsResult> {
     const options = MalaysianDeliveryPlugin.options;
+    if (!options) throw new Error('setupDeliveryMethods needs MalaysianDeliveryPlugin.init({ … }) in the Vendure config.');
     const shippingMethodService = app.get(ShippingMethodService);
     const { items: existing } = await shippingMethodService.findAll(ctx);
     const result: SetupDeliveryMethodsResult = { created: [], alreadyThere: [], disabled: [] };
@@ -105,9 +127,7 @@ export async function setupDeliveryMethods(
     const ours = [SAME_DAY_METHOD_CODE, COURIER_METHOD_CODE];
     for (const method of existing) {
         if (ours.includes(method.code)) continue;
-        const wanted = opts.disableMethodCodes
-            ? opts.disableMethodCodes.includes(method.code)
-            : method.calculator.code === defaultShippingCalculator.code;
+        const wanted = opts.disableMethodCodes ? opts.disableMethodCodes.includes(method.code) : isFlatPlaceholder(method);
         const alreadyOff = method.checker.code === 'my-postcode-zone' && method.checker.args.every(a => a.name !== 'zones' || a.value === '[]');
         if (!wanted || alreadyOff) continue;
         // Shipping methods have no on/off switch: with no zones ticked this one matches no address. Staff can

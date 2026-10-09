@@ -68,6 +68,8 @@ export interface MalaysianDeliveryOptions {
     distanceCacheDays: number;
     /** How long live courier rates are reused (hours). */
     liveRateCacheHours: number;
+    /** Heavier parcels are priced from the rates table only (one courier parcel is usually at most 30 kg). */
+    liveRateMaxKg: number;
     /** Longest delivery note a customer can leave. */
     deliveryNotesMaxLength: number;
 }

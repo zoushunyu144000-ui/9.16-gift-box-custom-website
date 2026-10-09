@@ -17,10 +17,14 @@ export interface LiveRateSettings {
     log?: (message: string) => void;
 }
 
-/** One cache entry per destination postcode and weight bracket (plus size, when a single boxed item is sent). */
-export function rateCacheKey(request: LiveRateRequest): string {
+/**
+ * One cache entry per channel (a channel may have its own courier account and rates), destination postcode and
+ * weight bracket, plus size when a single boxed item is sent.
+ */
+export function rateCacheKey(request: LiveRateRequest, channel?: string | number): string {
     const size = request.lengthCm && request.widthCm && request.heightCm ? `:${request.lengthCm}x${request.widthCm}x${request.heightCm}cm` : '';
-    return `delivery-my:live-rates:${request.fromPostcode}:${request.toPostcode}:${request.weightKg}kg${size}`;
+    const { fromPostcode, toPostcode, toState, weightKg } = request;
+    return `delivery-my:live-rates:${channel ?? '-'}:${fromPostcode}:${toPostcode}:${toState}:${weightKg}kg${size}`;
 }
 
 function isUsableRate(rate: LiveRate | null | undefined): rate is LiveRate {
@@ -55,7 +59,7 @@ export class LiveRateLookup {
 
     async rates(ctx: RequestContext, request: LiveRateRequest): Promise<LiveRate[] | undefined> {
         if (!this.providers.length) return undefined;
-        const key = rateCacheKey(request);
+        const key = rateCacheKey(request, ctx.channelId);
         const cached = await this.cache.get(key).catch(() => undefined);
         if (cached?.length) return cached;
         let pending = this.inFlight.get(key);

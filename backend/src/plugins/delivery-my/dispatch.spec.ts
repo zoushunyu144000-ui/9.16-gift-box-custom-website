@@ -8,6 +8,7 @@ import {
     isValidDate,
     nonDispatchDates,
     parseClosedDates,
+    preferredDateProblem,
     shopClock,
     timeLabel,
     weekdaysLabel,
@@ -146,6 +147,31 @@ describe('delivery promise', () => {
         const p = promise('unknown', '2026-10-09T10:00');
         assert.equal(p.sameDayAvailable, false);
         assert.match(p.message, /couldn’t find this postcode/);
+    });
+});
+
+describe('preferred delivery date', () => {
+    const r = rules(['2026-12-25']);
+    const problem = (date: string, earliest = '2026-10-09') => preferredDateProblem(date, earliest, r);
+
+    it('accepts a dispatch day on or after the earliest dispatch date', () => {
+        assert.equal(problem('2026-10-09'), undefined);
+        assert.equal(problem('2026-10-12'), undefined);
+    });
+
+    it('explains each refusal to the customer, and to staff', () => {
+        assert.deepEqual(problem('2026-10-11'), {
+            customer: 'We don’t deliver on Sundays. Please choose another delivery date.',
+            staff: 'The preferred delivery date, Sunday 11 October, is a Sunday, when the shop doesn’t dispatch.',
+        });
+        assert.equal(problem('2026-12-25')?.customer, 'We’re closed on Friday 25 December. Please choose another delivery date.');
+        assert.equal(problem('2026-10-09', '2026-10-10')?.customer, 'The earliest delivery date we can offer is Saturday 10 October. Please choose that date or later.');
+        assert.equal(problem('2026-10-09', '2026-10-10')?.staff, 'The preferred delivery date, Friday 9 October, is before the earliest dispatch date (Saturday 10 October).');
+        assert.equal(problem('12 Oct')?.customer, 'Please choose your delivery date again; we couldn’t read the date chosen.');
+    });
+
+    it('says "earliest" before "Sunday" when a past Sunday is chosen', () => {
+        assert.match(problem('2026-10-04')?.customer ?? '', /earliest delivery date/);
     });
 });
 
