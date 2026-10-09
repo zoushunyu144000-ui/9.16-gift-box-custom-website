@@ -1,98 +1,53 @@
 import { CustomFieldConfig, LanguageCode, PluginCommonModule, VendurePlugin } from '@vendure/core';
-import { checkField, StorefrontContent } from './content';
+import { checkField, StorefrontTextField } from './content';
 
 const en = (value: string) => [{ languageCode: LanguageCode.en, value }];
 
 /**
- * Groups the fields under headings in the dashboard. Without a component the dashboard uses its usual input
- * for the field's type, which is what we want for everything except long texts and the collection picker.
+ * Groups the fields under headings in the dashboard, and `storefront: true` puts them on its Settings →
+ * Storefront page. Without a component the dashboard uses its usual input for the field's type, which is
+ * what we want for everything except long texts and the collection picker.
  */
-const ui = (tab: string, component?: string) => (component ? { tab, component } : { tab }) as CustomFieldConfig['ui'];
+const ui = (tab: string, component?: string) => ({ tab, storefront: true, ...(component ? { component } : {}) }) as CustomFieldConfig['ui'];
 
-const validate = (field: keyof StorefrontContent) => (value: unknown) => checkField(field, value);
+/** A text field for staff, checked by content.ts; a refusal starts with the field's label so it's clear which one. */
+function textField(
+    name: StorefrontTextField,
+    label: string,
+    description: string,
+    tab: string,
+    options: { long?: boolean; component?: string } = {},
+): CustomFieldConfig {
+    return {
+        name,
+        type: options.long ? 'text' : 'string',
+        nullable: true,
+        label: en(label),
+        description: en(description),
+        ui: ui(tab, options.component ?? (options.long ? 'textarea-form-input' : undefined)),
+        validate: (value: unknown) => {
+            const problem = checkField(name, value);
+            return problem ? `${label}: ${problem}` : undefined;
+        },
+    } as CustomFieldConfig;
+}
 
 export const storefrontContentFields: CustomFieldConfig[] = [
-    {
-        name: 'heroEyebrow',
-        type: 'string',
-        nullable: true,
-        label: en('Small heading'),
-        description: en('A short line above the headline, e.g. “Chinese New Year 2027”. Leave empty for none.'),
-        ui: ui('Homepage banner'),
-        validate: validate('heroEyebrow'),
-    },
-    {
-        name: 'heroTitle',
-        type: 'string',
-        nullable: true,
-        label: en('Headline'),
-        description: en('Shown large over the photographs. Use / for a new line, e.g. “More than a gift / A memory”.'),
-        ui: ui('Homepage banner'),
-        validate: validate('heroTitle'),
-    },
-    {
-        name: 'heroText',
-        type: 'text',
-        nullable: true,
-        label: en('Introduction'),
-        description: en('One or two sentences under the headline.'),
-        ui: ui('Homepage banner', 'textarea-form-input'),
-        validate: validate('heroText'),
-    },
-    {
-        name: 'featuredCollectionSlug',
-        type: 'string',
-        nullable: true,
-        label: en('Collection in the spotlight'),
-        description: en('Its gifts lead the homepage, e.g. the festival in season. Choose “None” between seasons.'),
-        ui: ui('Featured collection', 'storefront-collection-slug-input'),
-        validate: validate('featuredCollectionSlug'),
-    },
-    {
-        name: 'featuredTitle',
-        type: 'string',
-        nullable: true,
-        label: en('Section title'),
-        description: en('The heading above those gifts, e.g. “Chinese New Year 2027”.'),
-        ui: ui('Featured collection'),
-        validate: validate('featuredTitle'),
-    },
-    {
-        name: 'featuredIntro',
-        type: 'text',
-        nullable: true,
-        label: en('Section introduction'),
-        description: en('A sentence or two under the heading.'),
-        ui: ui('Featured collection', 'textarea-form-input'),
-        validate: validate('featuredIntro'),
-    },
-    {
-        name: 'whatsappNumber',
-        type: 'string',
-        nullable: true,
-        label: en('WhatsApp number'),
-        description: en('Used by the WhatsApp buttons. Digits only, starting with the country code, e.g. 60123456789.'),
-        ui: ui('Contact'),
-        validate: validate('whatsappNumber'),
-    },
-    {
-        name: 'contactEmail',
-        type: 'string',
-        nullable: true,
-        label: en('Email address'),
-        description: en('Shown to customers. Optional.'),
-        ui: ui('Contact'),
-        validate: validate('contactEmail'),
-    },
-    {
-        name: 'businessHours',
-        type: 'string',
-        nullable: true,
-        label: en('Business hours'),
-        description: en('Shown in the footer and on the order confirmation, e.g. “Mon–Sat, 10am–6pm”. Optional.'),
-        ui: ui('Contact'),
-        validate: validate('businessHours'),
-    },
+    textField('heroEyebrow', 'Small heading', 'A short line above the headline, e.g. “Chinese New Year 2027”. Leave empty for none.', 'Homepage banner'),
+    textField('heroTitle', 'Headline', 'Shown large over the photographs. Use / for a new line, e.g. “More than a gift / A memory”.', 'Homepage banner'),
+    textField('heroText', 'Introduction', 'One or two sentences under the headline.', 'Homepage banner', { long: true }),
+    textField(
+        'featuredCollectionSlug',
+        'Collection in the spotlight',
+        'Its gifts lead the homepage, e.g. the festival in season. Choose “None” between seasons.',
+        'Featured collection',
+        { component: 'storefront-collection-slug-input' },
+    ),
+    textField('featuredTitle', 'Section title', 'The heading above those gifts, e.g. “Chinese New Year 2027”.', 'Featured collection'),
+    textField('featuredIntro', 'Section introduction', 'A sentence or two under the heading.', 'Featured collection', { long: true }),
+    textField('whatsappNumber', 'WhatsApp number', 'Used by the WhatsApp buttons. Digits only, starting with the country code, e.g. 60123456789.', 'Contact'),
+    textField('contactEmail', 'Email address', 'Shown to customers. Optional.', 'Contact'),
+    textField('businessHours', 'Business hours', 'Shown in the footer and on the order confirmation, e.g. “Mon–Sat, 10am–6pm”. Optional.', 'Contact'),
     {
         name: 'showPreviewNotice',
         type: 'boolean',

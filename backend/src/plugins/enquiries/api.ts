@@ -4,6 +4,7 @@ import gql from 'graphql-tag';
 import { readEnquiryPermission, updateEnquiryPermission } from './constants';
 import { Enquiry } from './enquiry.entity';
 import { EnquiryService, UpdateEnquiryInput } from './enquiry.service';
+import { detailRows } from './format';
 import { SubmitEnquiryResult } from './results';
 import { EnquiryInput } from './validation';
 
@@ -90,7 +91,13 @@ export const adminApiExtensions = gql`
         currencyCode: CurrencyCode!
         "The form's other answers, e.g. style, budgetPerGift, deliveryDate, deliveryAddress, notes"
         details: JSON
+        "The details worded for staff, as in the email, e.g. Delivery date: Wed, 20 January 2027"
+        detailRows: [EnquiryDetailRow!]!
         internalNotes: String
+    }
+    type EnquiryDetailRow {
+        label: String!
+        value: String!
     }
     type EnquiryList implements PaginatedList {
         items: [Enquiry!]!
@@ -182,5 +189,10 @@ export class EnquiryEntityResolver {
     @ResolveField()
     contact(@Parent() enquiry: Enquiry) {
         return { name: enquiry.contactName, company: enquiry.contactCompany, email: enquiry.contactEmail, phone: enquiry.contactPhone };
+    }
+
+    @ResolveField()
+    detailRows(@Parent() enquiry: Enquiry) {
+        return detailRows(enquiry.details);
     }
 }

@@ -28,7 +28,6 @@ import {
 import { Store } from 'lucide-react';
 import { Suspense } from 'react';
 import { toast } from 'sonner';
-import { STOREFRONT_FIELDS } from '../content';
 
 const NONE = '__none__';
 
@@ -116,6 +115,9 @@ const SECTION_INTROS: Record<string, string> = {
     Notices: 'Messages shown across the website.',
 };
 
+/** The server's own words (e.g. "Headline: Please keep this to 80 characters"), without the client's prefix. */
+const errorText = (err: unknown) => (err instanceof Error ? err.message : String(err)).replace(/^GraphQL Request Error:\s*/, '');
+
 type LocalizedText = string | Array<{ languageCode: string; value: string }> | null | undefined;
 const text = (value: LocalizedText) => (typeof value === 'string' ? value : (value?.find(t => t.languageCode === 'en') ?? value?.[0])?.value);
 
@@ -132,7 +134,8 @@ function StorefrontPage() {
 }
 
 function StorefrontForm({ channelId }: { channelId: string }) {
-    const fieldConfig = useCustomFieldConfig('Channel').filter(f => (STOREFRONT_FIELDS as string[]).includes(f.name));
+    // The plugin marks its fields with ui.storefront (other plugins' channel fields stay on the channel page).
+    const fieldConfig = useCustomFieldConfig('Channel').filter(f => (f.ui as { storefront?: boolean } | null)?.storefront === true);
     const { form, submitHandler, entity, isPending, resetForm } = useDetailPage({
         pageId: 'storefront-content',
         queryDocument: channelDocument,
@@ -144,11 +147,11 @@ function StorefrontForm({ channelId }: { channelId: string }) {
                 toast.error('The storefront texts were not saved', { description: String(result.message) });
                 return;
             }
-            toast.success('Saved. The website shows the new texts straight away.');
+            toast.success('Storefront texts saved');
             resetForm();
         },
         onError: err => {
-            toast.error('The storefront texts were not saved', { description: err instanceof Error ? err.message : String(err) });
+            toast.error('The storefront texts were not saved', { description: errorText(err) });
         },
     });
 
@@ -176,7 +179,7 @@ function StorefrontForm({ channelId }: { channelId: string }) {
                                 <FormFieldWrapper
                                     key={field.name}
                                     control={form.control}
-                                    name={`customFields.${field.name}`}
+                                    name={`customFields.${field.name}` as never}
                                     label={text(field.label) ?? field.name}
                                     description={text(field.description)}
                                     renderFormControl={!field.ui?.component}

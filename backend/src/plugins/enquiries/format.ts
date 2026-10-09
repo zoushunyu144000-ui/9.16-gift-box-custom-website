@@ -1,5 +1,6 @@
 /**
- * How enquiries are worded for staff, shared by the email and the dashboard (so no server-only imports).
+ * How enquiries are worded for staff: in the email, and in the dashboard through `Enquiry.detailRows`.
+ * (The dashboard is a separate TypeScript project and can't import this file; its few labels mirror these.)
  */
 
 export const ENQUIRY_STATUSES = ['new', 'in_progress', 'quoted', 'confirmed', 'closed'] as const;

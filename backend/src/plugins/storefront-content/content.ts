@@ -33,7 +33,19 @@ export const MAX_LENGTH: Record<StorefrontTextField, number> = {
     businessHours: 80,
 };
 
-export const STOREFRONT_FIELDS = Object.keys(MAX_LENGTH).concat('showPreviewNotice') as Array<keyof StorefrontContent>;
+/** The fields of API contract §5, in the order the dashboard shows them. */
+export const STOREFRONT_FIELDS: ReadonlyArray<keyof StorefrontContent> = [
+    'heroEyebrow',
+    'heroTitle',
+    'heroText',
+    'featuredCollectionSlug',
+    'featuredTitle',
+    'featuredIntro',
+    'whatsappNumber',
+    'contactEmail',
+    'businessHours',
+    'showPreviewNotice',
+];
 
 const isEmpty = (value: string | null | undefined): value is null | undefined | '' => value == null || value.trim() === '';
 
@@ -83,7 +95,7 @@ export function normaliseStorefrontContent(input: Record<string, unknown>): { co
     const content: Record<string, unknown> = {};
     const problems: string[] = [];
     for (const [key, raw] of Object.entries(input)) {
-        if (!(STOREFRONT_FIELDS as string[]).includes(key)) {
+        if (!(STOREFRONT_FIELDS as readonly string[]).includes(key)) {
             problems.push(`${key}: not a storefront field (expected one of ${STOREFRONT_FIELDS.join(', ')}).`);
             continue;
         }

@@ -34,7 +34,26 @@ import {
 } from '@vendure/dashboard';
 import { Inbox, Mail, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { detailRows, ENQUIRY_STATUSES, EnquiryStatus, mailtoLink, STATUS_LABELS, typeLabel, whatsappLink } from '../format';
+
+// The dashboard is its own TypeScript project, so these few labels mirror ../format.ts (used by the email);
+// the details come already worded from the server (Enquiry.detailRows).
+const ENQUIRY_STATUSES = ['new', 'in_progress', 'quoted', 'confirmed', 'closed'] as const;
+type EnquiryStatus = (typeof ENQUIRY_STATUSES)[number];
+const STATUS_LABELS: Record<EnquiryStatus, string> = {
+    new: 'New',
+    in_progress: 'In progress',
+    quoted: 'Quoted',
+    confirmed: 'Confirmed',
+    closed: 'Closed',
+};
+
+/** "semi-customised" → "Semi-customised" */
+const typeLabel = (type: string) => type.charAt(0).toUpperCase() + type.slice(1).replace(/_/g, ' ');
+
+const whatsappLink = (phone: string, name: string, code: string) =>
+    `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${name.trim().split(/\s+/)[0]}, thank you for your enquiry ${code}.`)}`;
+
+const mailtoLink = (email: string, code: string) => `mailto:${email}?subject=${encodeURIComponent(`Your enquiry ${code}`)}`;
 
 const STATUS_BADGES: Record<EnquiryStatus, 'warning' | 'secondary' | 'default' | 'success' | 'outline'> = {
     new: 'warning',
@@ -106,7 +125,10 @@ const enquiryDetailDocument = graphql(`
             totalQuantity
             itemsTotalWithTax
             currencyCode
-            details
+            detailRows {
+                label
+                value
+            }
             internalNotes
         }
     }
@@ -134,7 +156,8 @@ function EnquiryListPage({ route }: { route: AnyRoute }) {
             listQuery={enquiryListDocument}
             route={route}
             defaultSort={[{ id: 'createdAt', desc: true }]}
-            defaultColumnOrder={['code', 'createdAt', 'type', 'contact', 'totalQuantity', 'itemsTotalWithTax', 'status']}
+            // "Received" (createdAt) is always pinned first by the dashboard.
+            defaultColumnOrder={['code', 'type', 'contact', 'totalQuantity', 'itemsTotalWithTax', 'status']}
             defaultVisibility={{ id: false, updatedAt: false, currencyCode: false }}
             onSearchTermChange={term => ({
                 _or: [
@@ -202,12 +225,14 @@ function EnquiryDetailPage({ route }: { route: AnyRoute }) {
             resetForm();
         },
         onError: err => {
-            toast.error('The enquiry was not saved', { description: err instanceof Error ? err.message : String(err) });
+            toast.error('The enquiry was not saved', {
+                description: (err instanceof Error ? err.message : String(err)).replace(/^GraphQL Request Error:\s*/, ''),
+            });
         },
     });
     if (!entity) return null;
     const money = (sen: number) => formatCurrency(sen, entity.currencyCode);
-    const details = detailRows(entity.details);
+    const details = entity.detailRows;
     const { contact } = entity;
 
     return (
@@ -223,10 +248,9 @@ function EnquiryDetailPage({ route }: { route: AnyRoute }) {
                 </ActionBarItem>
             </PageActionBar>
             <PageLayout>
-                <PageBlock column="main" blockId="enquiry-items" title="Gifts chosen" description="At the prices when the enquiry was sent, before customisation and delivery.">
-                    {entity.items.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No gifts were chosen; see the details below.</p>
-                    ) : (
+                {/* Fully customised requests usually come without a list of gifts. */}
+                {entity.items.length > 0 && (
+                    <PageBlock column="main" blockId="enquiry-items" title="Gifts chosen" description="At the prices when the enquiry was sent, before customisation and delivery.">
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -258,8 +282,8 @@ function EnquiryDetailPage({ route }: { route: AnyRoute }) {
                                 </TableRow>
                             </TableFooter>
                         </Table>
-                    )}
-                </PageBlock>
+                    </PageBlock>
+                )}
                 <PageBlock column="main" blockId="enquiry-details" title="Details">
                     {details.length === 0 ? (
                         <p className="text-sm text-muted-foreground">No other details were given.</p>

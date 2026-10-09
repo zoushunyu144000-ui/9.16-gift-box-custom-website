@@ -1,8 +1,13 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { checkEmail, checkField, checkSlug, checkWhatsappNumber, normaliseStorefrontContent } from './content';
+import { checkEmail, checkField, checkSlug, checkWhatsappNumber, MAX_LENGTH, normaliseStorefrontContent, STOREFRONT_FIELDS } from './content';
 
 describe('storefront content rules', () => {
+    it('has a limit for every text field of the contract', () => {
+        assert.deepEqual([...Object.keys(MAX_LENGTH), 'showPreviewNotice'].sort(), [...STOREFRONT_FIELDS].sort());
+        assert.equal(STOREFRONT_FIELDS.length, 10);
+    });
+
     it('takes a WhatsApp number as digits with the country code', () => {
         assert.equal(checkWhatsappNumber('601128691092'), undefined);
         assert.equal(checkWhatsappNumber('6591234567'), undefined);
