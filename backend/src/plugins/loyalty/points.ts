@@ -1,4 +1,6 @@
-/**
+import { assertValidTiers, LoyaltyTier } from './tiers';
+
+/*
  * The points rules, free of Vendure so they can be tested on their own. Amounts are in sen (MYR minor
  * units), like everything in Vendure; "ringgit" below means the currency's major unit.
  */
@@ -14,6 +16,13 @@ export interface LoyaltyOptions {
     maxRedeemPercent: number;
     /** The order state that earns the points; the order must pass through it. */
     earnOnState: string;
+    /**
+     * Member tiers by lifetime spend, each a customer group, e.g. `[{ name: 'Silver members', minSpendSen: 100000 },
+     * { name: 'Gold members', minSpendSen: 500000 }]`. Empty (the default) means no tiers.
+     */
+    tiers: LoyaltyTier[];
+    /** When the nightly tier update runs: a cron expression in server time (03:00 in Malaysia = 19:00 UTC). */
+    tierSchedule: string;
 }
 
 export const DEFAULT_LOYALTY_OPTIONS: LoyaltyOptions = {
@@ -22,6 +31,8 @@ export const DEFAULT_LOYALTY_OPTIONS: LoyaltyOptions = {
     minRedeemPoints: 500,
     maxRedeemPercent: 50,
     earnOnState: 'PaymentSettled',
+    tiers: [],
+    tierSchedule: '0 19 * * *',
 };
 
 /** Why a ledger entry exists. */
@@ -41,6 +52,10 @@ export function assertValidLoyaltyOptions(options: LoyaltyOptions): void {
     wholeNumber('maxRedeemPercent', 0, 100);
     if (typeof options.earnOnState !== 'string' || !options.earnOnState) {
         throw new Error('LoyaltyPlugin: earnOnState must name an order state, e.g. "PaymentSettled".');
+    }
+    assertValidTiers(options.tiers);
+    if (typeof options.tierSchedule !== 'string' || !options.tierSchedule.trim()) {
+        throw new Error('LoyaltyPlugin: tierSchedule must be a cron expression, e.g. "0 19 * * *".');
     }
 }
 

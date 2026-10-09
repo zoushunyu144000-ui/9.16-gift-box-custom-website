@@ -16,6 +16,8 @@ for a discount at checkout. Implements [api-contracts §4](../../../docs/api-con
   each entry and read-only through the APIs, so it always matches the history.
 - **Staff**: the customer page shows the balance and recent history; staff who can edit customers
   add or take away points with a note.
+- **Member tiers** (optional, off by default): customers are kept in the customer group of the tier
+  their lifetime spend reaches, for member prices and perks through ordinary promotions.
 
 ## Options
 
@@ -28,6 +30,8 @@ for a discount at checkout. Implements [api-contracts §4](../../../docs/api-con
 | `minRedeemPoints` | `500` | Fewest points usable on one order. |
 | `maxRedeemPercent` | `50` | Most of the items' price points can pay for. `0` stops redeeming. |
 | `earnOnState` | `'PaymentSettled'` | Order state that earns the points (e.g. `'Delivered'` to wait for delivery). |
+| `tiers` | `[]` | Member tiers, e.g. `[{ name: 'Silver members', minSpendSen: 100000 }, { name: 'Gold members', minSpendSen: 500000 }]`. Empty: no tiers. |
+| `tierSchedule` | `'0 19 * * *'` | When the nightly tier update runs: cron in server time (19:00 UTC = 03:00 in Malaysia). |
 
 ## Setting up a shop
 
@@ -78,6 +82,28 @@ The discount appears on orders as "Loyalty points"; the points used are under th
 To pause redemption, disable the promotion (customers then get "Points can’t be used at the
 moment"); don't delete it.
 
+## Member tiers (optional)
+
+With `tiers` set, each tier is a customer group (created when missing) and every registered
+customer is kept in the group of the highest tier their lifetime spend reaches, and in no other tier
+group. Lifetime spend is the products total after discounts (delivery not counted) of their paid
+orders that aren't cancelled: the same basis as points. It is updated:
+
+- nightly for everyone, by the scheduled task `loyalty-member-tiers` (it runs in the worker; staff
+  can also start it under **System → Scheduled Tasks**);
+- straight away for one customer when an order of theirs is settled or cancelled, inside that
+  order's transaction, so an upgrade (or a downgrade after a cancellation) shows at once.
+
+Joining and leaving a tier group goes through Vendure's customer groups, so it appears in the
+customer's history. Perks are ordinary promotions: **Marketing → Promotions → New**, condition
+"Customer is a member of the specified group" with the tier's group, then any action (a percentage
+off, free delivery…). The tier groups are managed by the plugin, so changes to them by hand are
+undone on the next run; use another group for hand-picked VIPs. Example for Moire:
+
+```ts
+LoyaltyPlugin.init({ /* … */ tiers: [{ name: 'Silver members', minSpendSen: 100000 }, { name: 'Gold members', minSpendSen: 500000 }] }),
+```
+
 ## How it works
 
 - Earning, taking points at placement and reversing on cancellation run as blocking `EventBus`
@@ -94,21 +120,15 @@ moment"); don't delete it.
 ## Tests
 
 `npm test` runs `points.spec.ts` (rounding, minimum, maximum %, value), `ledger.spec.ts` (keys and
-cancellation idempotency) and `wiring.spec.ts` (custom fields, promotion behaviour, permissions).
+cancellation idempotency), `tiers.spec.ts` (tier thresholds and group moves) and `wiring.spec.ts`
+(custom fields, promotion behaviour, permissions, the tier task).
 `node src/plugins/loyalty/e2e-smoke.mjs` drives a running server end to end (see the file header); it
 also covers the staff-permissions plugin.
 
 ## Not done
 
-- **Member tiers by lifetime spend.** Design: a customer group per tier (e.g. Silver from RM 1,000,
-  Gold from RM 5,000) listed in a `tiers` option; a nightly `ScheduledTask` (the `DefaultSchedulerPlugin`
-  is already installed; e.g. 03:00 Asia/Kuala_Lumpur) sums each registered customer's
-  `subTotalWithTax` over orders that are paid and not cancelled (one SQL aggregate, optionally over a
-  rolling 12 months) and moves customers between the tier groups with `CustomerGroupService`, changing
-  only those whose tier changed. Perks then use Vendure's built-in `customer_group` promotion condition
-  (member prices, free delivery), and an optional per-tier multiplier could scale `pointsPerRinggit`.
-  An `OrderStateTransitionEvent` handler can re-check one customer straight after a payment so
-  upgrades show the same day.
+- Tiers don't change how many points are earned (a per-tier multiplier on `pointsPerRinggit` would
+  go in the earning step) and count lifetime spend only (no rolling 12-month window).
 - Partial cancellations and refunds don't change points (only full cancellation reverses); staff
   adjust by hand.
 - Points don't expire.

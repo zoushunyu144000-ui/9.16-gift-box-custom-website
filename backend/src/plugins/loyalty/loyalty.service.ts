@@ -32,6 +32,7 @@ import {
     redemptionProblem,
 } from './points';
 import { LOYALTY_ACTION_CODE } from './promotion';
+import { LoyaltyTierService } from './tier.service';
 
 /**
  * The Shop API's refusal (api-contracts §4). Deliberately not Vendure's ErrorResult class: Vendure looks
@@ -84,6 +85,7 @@ export class LoyaltyService implements OnApplicationBootstrap {
         private orderService: OrderService,
         private activeOrderService: ActiveOrderService,
         private administratorService: AdministratorService,
+        private tierService: LoyaltyTierService,
         @Inject(LOYALTY_OPTIONS) private options: LoyaltyOptions,
     ) {}
 
@@ -231,6 +233,12 @@ export class LoyaltyService implements OnApplicationBootstrap {
     private async onOrderStateChange({ ctx, order, toState }: OrderStateTransitionEvent) {
         if (toState === this.options.earnOnState) await this.safely(ctx, order, 'add the points earned on', tx => this.earn(tx, order));
         if (toState === 'Cancelled') await this.safely(ctx, order, 'reverse the points of', tx => this.reverse(tx, order));
+        // Settling or cancelling an order changes its customer's lifetime spend, so their tier may change now
+        // rather than at the nightly run.
+        const customerId = order.customerId;
+        if ((toState === 'PaymentSettled' || toState === 'Cancelled') && customerId && this.tierService.enabled) {
+            await this.safely(ctx, order, 'update the member tier for', tx => this.tierService.updateTiers(tx, [customerId]));
+        }
     }
 
     private async onOrderPlaced({ ctx, order }: OrderPlacedEvent) {

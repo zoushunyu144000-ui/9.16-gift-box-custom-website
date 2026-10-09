@@ -8,6 +8,7 @@ import { LoyaltyPointsEntry } from './loyalty-points-entry.entity';
 import { LoyaltyService } from './loyalty.service';
 import { assertValidLoyaltyOptions, DEFAULT_LOYALTY_OPTIONS, LoyaltyOptions } from './points';
 import { createLoyaltyPromotionOperations } from './promotion';
+import { LoyaltyTierService, memberTiersTask } from './tier.service';
 
 const en = (value: string) => [{ languageCode: LanguageCode.en, value }];
 
@@ -21,12 +22,14 @@ const en = (value: string) => [{ languageCode: LanguageCode.en, value }];
  *   if it is cancelled.
  * - Every change is a LoyaltyPointsEntry; Customer.customFields.loyaltyPoints is the running balance, updated
  *   in the same transaction. Staff see the balance and history on the customer page and can adjust it.
+ * - Optional member tiers: with `tiers` set, registered customers are kept in the customer group of the tier
+ *   their lifetime spend reaches (nightly, and when an order of theirs is settled or cancelled).
  */
 @VendurePlugin({
     imports: [PluginCommonModule],
     compatibility: '^3.0.0',
     entities: [LoyaltyPointsEntry],
-    providers: [LoyaltyService, { provide: LOYALTY_OPTIONS, useFactory: () => LoyaltyPlugin.options }],
+    providers: [LoyaltyService, LoyaltyTierService, { provide: LOYALTY_OPTIONS, useFactory: () => LoyaltyPlugin.options }],
     shopApiExtensions: { schema: shopApiExtensions, resolvers: [LoyaltyShopResolver, ApplyLoyaltyPointsResultResolver] },
     adminApiExtensions: { schema: adminApiExtensions, resolvers: [LoyaltyAdminResolver] },
     dashboard: './dashboard/index.tsx',
@@ -59,6 +62,9 @@ const en = (value: string) => [{ languageCode: LanguageCode.en, value }];
         config.promotionOptions.promotionConditions = [...(config.promotionOptions.promotionConditions ?? []), condition];
         config.promotionOptions.promotionActions = [...(config.promotionOptions.promotionActions ?? []), action];
         config.orderOptions.process = [...(config.orderOptions.process ?? []), loyaltyCheckoutCheck()];
+        if (options.tiers.length) {
+            config.schedulerOptions.tasks = [...(config.schedulerOptions.tasks ?? []), memberTiersTask(options.tierSchedule)];
+        }
         return config;
     },
 })

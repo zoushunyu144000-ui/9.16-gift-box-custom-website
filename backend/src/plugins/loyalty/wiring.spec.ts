@@ -46,8 +46,28 @@ describe('loyalty plugin wiring', () => {
 
     it('refuses invalid options at start-up', () => {
         assert.throws(() => LoyaltyPlugin.init({ pointValueSen: 0 }), /pointValueSen/);
+        assert.throws(() => LoyaltyPlugin.init({ tiers: [{ name: 'Gold', minSpendSen: 0 }] }), /above 0/);
         LoyaltyPlugin.init({});
         assert.deepEqual(LoyaltyPlugin.options, DEFAULT_LOYALTY_OPTIONS);
+    });
+
+    it('schedules the nightly tier update only when tiers are set', () => {
+        const withScheduler = () =>
+            Reflect.getMetadata('configuration', LoyaltyPlugin)({
+                customFields: { Customer: [], Order: [] },
+                promotionOptions: { promotionConditions: [], promotionActions: [] },
+                orderOptions: { process: [] },
+                schedulerOptions: { tasks: [] },
+            }) as RuntimeVendureConfig;
+        assert.deepEqual(withScheduler().schedulerOptions.tasks, []);
+        try {
+            LoyaltyPlugin.init({ tiers: [{ name: 'Gold members', minSpendSen: 500000 }] });
+            const [task] = withScheduler().schedulerOptions.tasks;
+            assert.equal(task.id, 'loyalty-member-tiers');
+            assert.equal(task.options.schedule, '0 19 * * *'); // 03:00 in Malaysia
+        } finally {
+            LoyaltyPlugin.init({});
+        }
     });
 
     it('guards the APIs with the contract’s permissions', () => {
