@@ -440,14 +440,19 @@ export class ShipmentSyncService implements OnModuleInit, OnApplicationBootstrap
 
     // ── Lookups ──────────────────────────────────────────────────────────
 
+    /**
+     * Courier shipments still in progress. A shipment the courier reports delivered stays in the list
+     * until its fulfillment is Delivered too, so a transition that failed once is tried again.
+     */
     private async openShipments(): Promise<Fulfillment[]> {
         const since = new Date(Date.now() - this.options.reconcileMaxAgeDays * 86_400_000);
         const base = { state: Not(In(['Cancelled', 'Delivered'])), createdAt: MoreThan(since) };
         const provider = In(['lalamove', 'easyparcel']);
+        const ended = FINAL_SHIPMENT_STATUSES.filter(status => status !== 'delivered');
         return this.connection.rawConnection.getRepository(Fulfillment).find({
             where: [
                 { ...base, customFields: { provider, providerOrderId: Not(IsNull()), shipmentStatus: IsNull() } },
-                { ...base, customFields: { provider, providerOrderId: Not(IsNull()), shipmentStatus: Not(In([...FINAL_SHIPMENT_STATUSES])) } },
+                { ...base, customFields: { provider, providerOrderId: Not(IsNull()), shipmentStatus: Not(In(ended)) } },
             ],
             order: { createdAt: 'ASC' },
             take: 500,
