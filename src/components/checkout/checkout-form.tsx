@@ -50,7 +50,21 @@ const EMPTY: Draft = {
   paymentMethod: "fpx",
 };
 
-export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earliestDate: string; deliveryNote: string; testMode: boolean }) {
+export function CheckoutForm({
+  earliestDate,
+  deliveryNote,
+  testMode,
+  accounts = false,
+  member = null,
+}: {
+  earliestDate: string;
+  deliveryNote: string;
+  testMode: boolean;
+  /** The shop has member accounts: guests are offered to sign in. */
+  accounts?: boolean;
+  /** The signed-in member, whose order goes to their account. */
+  member?: { name: string; email: string; phone: string } | null;
+}) {
   const router = useRouter();
   const { lines, ready } = useCart();
   const { quote, error: quoteError } = useQuote(lines, ready);
@@ -59,19 +73,24 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
   const [terms, setTerms] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [needsSignIn, setNeedsSignIn] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
 
-  // Restore a draft so a refresh or failed payment doesn't lose the address.
+  // Restore a draft so a refresh or failed payment doesn't lose the address. A member's own
+  // details fill in what the draft doesn't have, and their email is always the account's.
   useEffect(() => {
+    let draft: Draft = EMPTY;
     try {
       const raw = sessionStorage.getItem(DRAFT_KEY);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore from sessionStorage after mount
-      if (raw) setD({ ...EMPTY, ...JSON.parse(raw) });
+      if (raw) draft = { ...EMPTY, ...JSON.parse(raw) };
     } catch {
       /* ignore */
     }
-  }, []);
+    if (member) draft = { ...draft, name: draft.name || member.name, phone: draft.phone || member.phone, email: member.email };
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore from sessionStorage after mount
+    if (draft !== EMPTY) setD(draft);
+  }, [member]);
   useEffect(() => {
     try {
       sessionStorage.setItem(DRAFT_KEY, JSON.stringify(d));
@@ -115,6 +134,7 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
   async function submit(ev: React.FormEvent) {
     ev.preventDefault();
     setFormError(null);
+    setNeedsSignIn(false);
     const e = validate();
     setErrors(e);
     if (Object.keys(e).length) {
@@ -157,6 +177,7 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
         }
         setErrors(map);
         setFormError(data.error ?? "Something went wrong. Please try again.");
+        setNeedsSignIn(Boolean(data.signIn));
         setSubmitting(false);
         return;
       }
@@ -251,7 +272,22 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
         <form onSubmit={submit} noValidate className="lg:col-span-7">
           <h1 className="display text-[2.4rem] leading-none md:text-[3rem]">Checkout</h1>
           <p className="mt-3 text-[14px] text-ink-2">
-            Guest checkout — no account needed. <Link href="/cart" className="underline underline-offset-4">Back to bag</Link>
+            {member ? (
+              <>
+                Signed in as {member.email}. This order will be saved to your account.{" "}
+              </>
+            ) : accounts ? (
+              <>
+                Guest checkout — no account needed. Have an account?{" "}
+                <Link href="/account/sign-in?next=/checkout" className="underline underline-offset-4">
+                  Sign in
+                </Link>
+                .{" "}
+              </>
+            ) : (
+              <>Guest checkout — no account needed. </>
+            )}
+            <Link href="/cart" className="underline underline-offset-4">Back to bag</Link>
           </p>
 
           <Section n={1} title="Your details">
@@ -260,7 +296,7 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
                 <input id="name" className="field" autoComplete="name" value={d.name} onChange={(e) => set("name", e.target.value)} aria-invalid={!!errors.name} />
               </Field>
               <Field id="email" label="Email" error={errors.email} hint="For your order confirmation">
-                <input id="email" type="email" inputMode="email" className="field" autoComplete="email" value={d.email} onChange={(e) => set("email", e.target.value)} aria-invalid={!!errors.email} />
+                <input id="email" type="email" inputMode="email" className="field read-only:bg-cream/50 read-only:text-ink-2" autoComplete="email" value={d.email} readOnly={Boolean(member)} onChange={(e) => set("email", e.target.value)} aria-invalid={!!errors.email} />
               </Field>
               <Field id="phone" label="Mobile number" error={errors.phone}>
                 <input id="phone" type="tel" inputMode="tel" className="field" autoComplete="tel" placeholder="012 345 6789" value={d.phone} onChange={(e) => set("phone", e.target.value)} aria-invalid={!!errors.phone} />
@@ -368,6 +404,14 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
           {(formError || quoteError) && (
             <p className="mt-6 border border-danger/30 bg-danger/5 px-4 py-3 text-[14px] text-danger" role="alert">
               {formError ?? "We couldn’t load current prices. Please refresh the page."}
+              {needsSignIn && (
+                <>
+                  {" "}
+                  <Link href="/account/sign-in?next=/checkout" className="font-medium underline underline-offset-4">
+                    Sign in
+                  </Link>
+                </>
+              )}
             </p>
           )}
 

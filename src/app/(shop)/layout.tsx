@@ -5,7 +5,7 @@ import { Header } from "@/components/header";
 import { RevealObserver } from "@/components/reveal";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { formatRM } from "@/lib/catalog";
-import { getStore } from "@/lib/store";
+import { getStore, isVendureConfigured } from "@/lib/store";
 
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
   const settings = await (await getStore()).getSettings();
@@ -19,7 +19,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:bg-ink focus:px-4 focus:py-2 focus:text-ivory">
         Skip to content
       </a>
-      <Header />
+      <Header accounts={isVendureConfigured} />
       {/* Space above the footer; a page that ends in a full-width band (the homepage) marks it
           with data-flush-footer so no strip of background shows between that band and the footer. */}
       <main id="main" className="pb-24 md:pb-32 has-[[data-flush-footer]]:pb-0">

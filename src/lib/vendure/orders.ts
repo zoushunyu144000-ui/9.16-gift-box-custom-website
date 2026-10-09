@@ -50,7 +50,8 @@ function orderFields(caps: Capabilities) {
 
 const PAID_STATES = new Set(["PaymentAuthorized", "PaymentSettled", "Modifying", "ArrangingAdditionalPayment"]);
 
-function status(o: VOrder): OrderStatus {
+/** The storefront's status for a backend order. */
+export function orderStatus(o: { state: string; payments: { state: string }[] | null }): OrderStatus {
   if (o.state === "Cancelled") return "cancelled";
   if (o.state === "Delivered" || o.state === "PartiallyDelivered") return "completed";
   if (o.state === "Shipped" || o.state === "PartiallyShipped") return "out_for_delivery";
@@ -95,7 +96,7 @@ export function toStorefrontOrder(o: VOrder): Order {
   const chosen = (paid ?? last)?.metadata?.preferredMethod;
   return {
     id: o.code,
-    status: status(o),
+    status: orderStatus(o),
     createdAt: o.orderPlacedAt ?? o.createdAt,
     updatedAt: o.updatedAt,
     customer: { name: customerName, email: o.customer?.emailAddress ?? "", phone: o.customer?.phoneNumber ?? "" },

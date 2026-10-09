@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Menu, Search, X } from "lucide-react";
+import { Menu, Search, User, X } from "lucide-react";
 import { Logo } from "./logo";
 import { useCart } from "./cart/cart-context";
 import { SearchOverlay } from "./search-overlay";
@@ -15,7 +15,8 @@ export const NAV = [
   { href: "/corporate", label: "Corporate Orders" },
 ];
 
-export function Header() {
+/** `accounts`: the shop has member accounts (with the commerce backend), so the header links to them. */
+export function Header({ accounts = false }: { accounts?: boolean }) {
   const pathname = usePathname();
   const { count, ready, openDrawer } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -97,6 +98,11 @@ export function Header() {
             >
               <Search className="h-[19px] w-[19px]" strokeWidth={1.25} />
             </button>
+            {accounts && (
+              <Link href="/account" className="grid h-11 w-11 place-items-center transition-colors hover:text-bronze" aria-label="My account">
+                <User className="h-[19px] w-[19px]" strokeWidth={1.25} />
+              </Link>
+            )}
             <button
               type="button"
               onClick={openDrawer}
@@ -110,7 +116,7 @@ export function Header() {
         </div>
       </header>
 
-      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} isActive={isActive} />
+      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} isActive={isActive} accounts={accounts} />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
@@ -125,7 +131,7 @@ function BagIcon() {
   );
 }
 
-function MobileMenu({ open, onClose, isActive }: { open: boolean; onClose: () => void; isActive: (h: string) => boolean }) {
+function MobileMenu({ open, onClose, isActive, accounts }: { open: boolean; onClose: () => void; isActive: (h: string) => boolean; accounts: boolean }) {
   return (
     <div className={`fixed inset-0 z-50 lg:hidden ${open ? "" : "pointer-events-none"}`} aria-hidden={!open}>
       <div
@@ -161,6 +167,11 @@ function MobileMenu({ open, onClose, isActive }: { open: boolean; onClose: () =>
               </li>
             ))}
           </ul>
+          {accounts && (
+            <Link href="/account" className="mt-8 flex items-center gap-3 text-[14px] uppercase tracking-[0.14em] text-ink-2">
+              <User className="h-[18px] w-[18px]" strokeWidth={1.25} /> My account
+            </Link>
+          )}
         </nav>
       </div>
     </div>

@@ -80,7 +80,10 @@ export async function POST(req: Request) {
   if (isVendureConfigured) {
     try {
       const result = await placeVendureOrder(body, new URL(req.url).origin);
-      if (!result.ok) return NextResponse.json({ error: result.error, fieldErrors: result.fieldErrors, lineProblems: result.lineProblems }, { status: result.status });
+      if (!result.ok) {
+        const { error, fieldErrors, lineProblems, signIn } = result;
+        return NextResponse.json({ error, fieldErrors, lineProblems, signIn }, { status: result.status });
+      }
       return NextResponse.json({ orderId: result.orderCode, accessToken: "", snapshot: "", redirectUrl: result.redirectUrl });
     } catch (err) {
       console.error("[checkout] backend order failed", err);

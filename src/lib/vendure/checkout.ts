@@ -18,7 +18,7 @@ export interface CheckoutInput {
 
 export type CheckoutResult =
   | { ok: true; orderCode: string; redirectUrl: string }
-  | { ok: false; status: number; error: string; fieldErrors?: Record<string, string>; lineProblems?: Record<string, string> };
+  | { ok: false; status: number; error: string; fieldErrors?: Record<string, string>; lineProblems?: Record<string, string>; signIn?: boolean };
 
 const ORDER_RESULT = `... on Order { code state } ... on ErrorResult { errorCode message }`;
 /** addItemToOrder can also refuse through an interceptor (e.g. names) or for stock. */
@@ -96,7 +96,10 @@ export async function placeVendureOrder(input: CheckoutInput, origin: string): P
     if (isErrorResult(set.setCustomerForOrder)) {
       const e = set.setCustomerForOrder;
       const registered = e.errorCode === "GUEST_CHECKOUT_ERROR" || e.errorCode === "EMAIL_ADDRESS_CONFLICT_ERROR";
-      return fail(422, registered ? "This email address has an account. Please sign in to check out." : errorMessage(e), { fieldErrors: { email: registered ? "Please sign in with this email" : errorMessage(e) } });
+      return fail(422, registered ? "This email address has an account. Please sign in to check out." : errorMessage(e), {
+        fieldErrors: { email: registered ? "Please sign in with this email" : errorMessage(e) },
+        signIn: registered,
+      });
     }
   }
 
