@@ -281,7 +281,7 @@ async function orderAtPayment(label) {
     const moved = await shop(`mutation{ transitionOrderToState(state:"ArrangingPayment"){ ... on Order { code state totalWithTax } ... on OrderStateTransitionError { transitionError } } }`);
     const order = moved.transitionOrderToState;
     if (order?.state !== 'ArrangingPayment') throw new Error(`The order didn't reach ArrangingPayment: ${JSON.stringify(moved)}`);
-    return { shop, order, before: before.createHostedPayment };
+    return { shop, order, before: before.createHostedPayment, add, items: [first, second] };
 }
 
 async function main() {
@@ -424,8 +424,28 @@ async function main() {
             const declined = o.payments.find(p => p.state === 'Declined');
             check('a payment RM 1 short is not accepted', cb.status === 200 && o.state === 'ArrangingPayment' && settledOf(o).length === 0 && /was paid with CHIP, but .* is owed/.test(declined?.errorMessage ?? ''), declined?.errorMessage);
             check('staff get a note about it on the order', notesOf(o).some(n => n.includes(redirect.reference)), notesOf(o).find(n => n.includes(redirect.reference)));
+            const replays = await Promise.all([1, 2].map(() => postCallback('chip', CHIP.code, body, asJson(chip.sign(body)))));
+            const again = await adminOrder(order.code);
+            check(
+                'replaying that callback adds no more notes or declined payments',
+                replays.every(r => r.status === 200) && notesOf(again).filter(n => n.includes(redirect.reference)).length === 1 && again.payments.filter(p => p.state === 'Declined').length === 1,
+                replays.map(r => r.status).join(','),
+            );
             const status = (await shop(STATUS, { code: order.code })).hostedPaymentStatus;
             check('hostedPaymentStatus still says unpaid', status?.paid === false, JSON.stringify(status));
+        }
+
+        // 4b · The customer went back and changed the bag after opening the payment page, then paid the old amount
+        {
+            const { shop, order, add, items } = await orderAtPayment('bagchanged');
+            const redirect = (await shop(CREATE, { input: { paymentMethodCode: CHIP.code, returnUrl: RETURN_URL } })).createHostedPayment;
+            await shop(`mutation{ transitionOrderToState(state:"AddingItems"){ ... on Order { state } ... on OrderStateTransitionError { transitionError } } }`);
+            await add(items[1].id, 1);
+            const body = chip.pay(redirect.reference);
+            const cb = await postCallback('chip', CHIP.code, body, asJson(chip.sign(body)));
+            const o = await adminOrder(order.code);
+            const note = notesOf(o).find(n => n.includes(redirect.reference));
+            check('a payment for the bag as it was isn’t recorded, and the changed bag stays the customer’s', cb.status === 200 && o.state === 'AddingItems' && o.payments.length === 0 && /bag changed afterwards/.test(note ?? ''), `${o.state}: ${note}`);
         }
 
         // 4 · Scheduled check: paid at CHIP, but no callback came and the customer never returned

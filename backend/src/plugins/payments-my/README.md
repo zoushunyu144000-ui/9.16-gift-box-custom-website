@@ -135,7 +135,7 @@ Automated tests (from `backend/`):
 npm test                                         # unit tests: signatures (Billplz docs vectors, RSA), requests, statuses, URLs
 npx ts-node --transpile-only src/index.ts        # in another terminal, on a database set up from stores/moire
 npx ts-node --transpile-only src/index-worker.ts # a third terminal, for the scheduled-check section
-node src/plugins/payments-my/e2e-smoke.mjs       # 34 checks against mock CHIP and Billplz servers
+node src/plugins/payments-my/e2e-smoke.mjs       # 36 checks against mock CHIP and Billplz servers
 ```
 
 The e2e script creates payment methods `e2e-chip` and `e2e-billplz` pointing at its mock servers and switches them

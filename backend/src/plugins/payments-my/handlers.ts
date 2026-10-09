@@ -9,7 +9,7 @@ import {
     PaymentMethodHandler,
     RequestContext,
 } from '@vendure/core';
-import { GatewayFactory } from './gateway-factory';
+import { GatewayFactory, gatewayAccount } from './gateway-factory';
 import { formatMoney } from './gateways/format';
 import { describeError } from './gateways/http';
 import { GatewayRefund, HostedPaymentGateway } from './gateways/types';
@@ -41,8 +41,9 @@ async function confirmWithGateway(
     }
     const reference = typeof metadata.reference === 'string' ? metadata.reference.trim() : '';
     if (!reference) return { amount, state: 'Error', errorMessage: `No ${label} payment was named.` };
-    // Throws when the gateway can't be asked: nothing is recorded and the callback is tried again later.
-    const status = await gateway.getStatus(reference);
+    // The plugin asks the gateway just before recording (outside the order lock) and hands the answer over;
+    // otherwise ask now. Throws when the gateway can't be asked: nothing is recorded, and it is tried again later.
+    const status = gateways.takeRecentlyPaid(code, account, reference) ?? (await gateway.getStatus(reference));
     const check = checkGatewayPayment(status, { gateway: label, orderCode: order.code, amount, currencyCode: order.currencyCode, account });
     const details = {
         gateway: label,
@@ -100,7 +101,7 @@ export const chipPaymentHandler = new PaymentMethodHandler({
         gateways = injector.get(GatewayFactory);
     },
     createPayment: (ctx, order, amount, args, metadata) =>
-        confirmWithGateway('chip', gateways.chip(args), (args.brandId ?? '').trim(), ctx, order, amount, metadata),
+        confirmWithGateway('chip', gateways.chip(args), gatewayAccount('chip', args), ctx, order, amount, metadata),
     // Payments are created Settled; nothing is ever left Authorized.
     settlePayment: () => ({ success: true }),
     createRefund: async (ctx, input, amount, order, payment, args) => {
@@ -153,7 +154,7 @@ export const billplzPaymentHandler = new PaymentMethodHandler({
         gateways = injector.get(GatewayFactory);
     },
     createPayment: (ctx, order, amount, args, metadata) =>
-        confirmWithGateway('billplz', gateways.billplz(args), (args.collectionId ?? '').trim(), ctx, order, amount, metadata),
+        confirmWithGateway('billplz', gateways.billplz(args), gatewayAccount('billplz', args), ctx, order, amount, metadata),
     settlePayment: () => ({ success: true }),
     // Billplz has no refund API: staff send the money back themselves, then settle the refund in the dashboard.
     createRefund: (ctx, input, amount, order, payment) => ({

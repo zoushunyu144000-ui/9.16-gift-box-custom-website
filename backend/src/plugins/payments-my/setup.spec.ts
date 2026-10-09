@@ -76,6 +76,14 @@ describe('setting up the payment methods', () => {
         assert.equal(argsOf(created[0]).brandId, 'from-options');
     });
 
+    it('says so when the code is already taken by a method with another handler', async () => {
+        const { app, created } = fakeApp([{ code: 'chip', enabled: true, handler: { code: 'dummy-payment-handler', args: [] } }]);
+        const [chip] = await setupPaymentMethods(app, ctx, { env: {} as NodeJS.ProcessEnv, billplz: false });
+        assert.equal(created.length, 0);
+        assert.equal(chip.handler, 'dummy-payment-handler');
+        assert.match(chip.problem ?? '', /already exists with the dummy-payment-handler handler/);
+    });
+
     it('leaves existing methods as they are, so it can run again', async () => {
         const { app, created } = fakeApp([
             { code: 'chip', enabled: true, handler: { code: 'chip', args: [{ name: 'brandId', value: 'b' }, { name: 'secretKey', value: 's' }] } },

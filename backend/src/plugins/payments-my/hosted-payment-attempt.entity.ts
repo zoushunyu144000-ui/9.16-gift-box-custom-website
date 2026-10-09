@@ -54,4 +54,8 @@ export class HostedPaymentAttempt extends VendureEntity {
 
     @Column({ type: 'varchar', length: 16, default: 'pending' })
     status: AttemptStatus;
+
+    /** When a status check last asked the gateway about it; the scheduled check takes the least recent first. */
+    @Column({ type: Date, nullable: true })
+    checkedAt: Date | null;
 }

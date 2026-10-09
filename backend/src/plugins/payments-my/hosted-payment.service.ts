@@ -112,6 +112,7 @@ class TryAgainLaterError extends Error {}
 export class HostedPaymentService implements OnApplicationBootstrap {
     /** When each attempt was last asked about by a status check (Billplz limits these requests). */
     private readonly lastChecked = new Map<string, number>();
+    private lastPruned = 0;
 
     constructor(
         @Inject(PAYMENTS_MY_OPTIONS) private readonly options: ResolvedPaymentsMyOptions,
@@ -249,7 +250,7 @@ export class HostedPaymentService implements OnApplicationBootstrap {
 
     /**
      * A gateway's server-to-server callback. Its signature is checked against the raw body with the payment
-     * method's keys; a paid payment is then recorded (createPayment asks the gateway again). Answers 200 when
+     * method's keys; for a paid payment the gateway is asked again and the payment recorded. Answers 200 when
      * nothing more is needed (including replays), 400 for bad signatures and 503 when the gateway should retry.
      */
     async handleCallback(code: HostedGatewayCode, methodCode: string | undefined, rawBody: Buffer, headers: HeaderMap, req?: Request): Promise<CallbackResult> {
@@ -267,10 +268,12 @@ export class HostedPaymentService implements OnApplicationBootstrap {
 
         const ctx = await this.attemptContext(attempt, req);
         const method = await this.findHostedMethod(ctx, attempt.paymentMethodCode);
+        let methodGateway: MethodGateway;
         let verified: VerifiedCallback;
         try {
             if (!method) throw new GatewayConfigError(`payment method ${attempt.paymentMethodCode} no longer exists`);
-            verified = await this.gateways.forMethod(method).gateway.verifyCallback(rawBody, headers);
+            methodGateway = this.gateways.forMethod(method);
+            verified = await methodGateway.gateway.verifyCallback(rawBody, headers);
         } catch (error) {
             if (error instanceof CallbackVerificationError) {
                 Logger.warn(`Rejected a ${label} callback for ${reference}${req?.ip ? ` from ${req.ip}` : ''}: ${error.message}.`, loggerCtx);
@@ -287,6 +290,24 @@ export class HostedPaymentService implements OnApplicationBootstrap {
             await this.noteGatewayState(attempt, verified.state);
             return { status: 200, message: 'OK' };
         }
+        // A replay of a payment already dealt with: nothing to do.
+        if (attempt.status === 'paid' || attempt.status === 'unmatched') return { status: 200, message: 'OK' };
+        // Asked before the order is locked; recording reuses the answer.
+        let status: GatewayPaymentStatus;
+        try {
+            status = await methodGateway.gateway.getStatus(attempt.reference);
+        } catch (error) {
+            Logger.error(`Couldn't confirm ${label} payment ${reference} for order ${attempt.orderCode}: ${describeError(error)}`, loggerCtx);
+            return { status: 503, message: 'Try again later' };
+        }
+        if (status.state !== 'paid') {
+            await this.noteGatewayState(attempt, status.state);
+            if (status.state === 'cancelled' || status.state === 'expired' || status.state === 'refunded') return { status: 200, message: 'OK' };
+            // The signed callback says paid but the API doesn't agree yet: let the gateway try again later.
+            Logger.warn(`${label} reports payment ${reference} as ${status.gatewayStatus} although its callback said paid; waiting for a retry.`, loggerCtx);
+            return { status: 503, message: 'Not confirmed yet' };
+        }
+        this.gateways.rememberPaid(methodGateway.code, methodGateway.account, status);
         try {
             await this.recordPayment(ctx, attempt.id, `${label} callback`);
         } catch (error) {
@@ -309,6 +330,8 @@ export class HostedPaymentService implements OnApplicationBootstrap {
             await this.lockOrderRow(txCtx, unlocked.orderId);
             const attempt = (await attempts.findOne({ where: { id: attemptId }, ...this.rowLock() })) ?? unlocked;
             if (attempt.status === 'paid') return 'already recorded';
+            // Already reported to staff: a replay mustn't add more notes or declined payments.
+            if (attempt.status === 'unmatched') return 'not recorded';
             const label = gatewayLabel(attempt.gateway);
 
             const order = await this.orderService.findOne(txCtx, attempt.orderId, ['payments']);
@@ -330,13 +353,21 @@ export class HostedPaymentService implements OnApplicationBootstrap {
                 await this.unmatched(txCtx, attempt, order, `${this.paidText(attempt)}, but ${why}. Refund it from the ${label} dashboard.`);
                 return 'not recorded';
             }
+            let movedToPayment = false;
             if (order.state === 'AddingItems') {
-                // The customer went back to their bag after opening the payment page.
+                // The customer went back to their bag after opening the payment page. If the bag changed, the
+                // payment can't match: leave the bag alone rather than pull the customer into payment.
+                const owed = order.totalWithTax - totalCoveredByPayments(order);
+                if (owed !== attempt.amount) {
+                    await this.unmatched(txCtx, attempt, order, `${this.paidText(attempt)}, but the bag changed afterwards and ${formatMoney(owed, order.currencyCode)} is owed now. ${this.handAdvice(label)}`);
+                    return 'not recorded';
+                }
                 const moved = await this.orderService.transitionToState(txCtx, order.id, 'ArrangingPayment');
                 if (isGraphQlErrorResult(moved)) {
                     await this.unmatched(txCtx, attempt, order, `${this.paidText(attempt)}, but the order couldn't go to payment: ${moved.transitionError}. ${this.handAdvice(label)}`);
                     return 'not recorded';
                 }
+                movedToPayment = true;
             }
             const method = await this.findHostedMethod(txCtx, attempt.paymentMethodCode);
             if (!method?.enabled) {
@@ -351,6 +382,10 @@ export class HostedPaymentService implements OnApplicationBootstrap {
                 await attempts.update({ id: attempt.id }, { status: 'paid' });
                 Logger.info(`Recorded ${label} payment ${attempt.reference} on order ${order.code} (${source}).`, loggerCtx);
                 return 'recorded';
+            }
+            if (movedToPayment) {
+                // Give the customer their bag back as it was.
+                await this.orderService.transitionToState(txCtx, order.id, 'AddingItems');
             }
             const reason = 'paymentErrorMessage' in result && result.paymentErrorMessage ? result.paymentErrorMessage : result.message;
             await this.unmatched(txCtx, attempt, order, `${this.paidText(attempt)}, but it couldn't be added to this order: ${reason} ${this.handAdvice(label)}`);
@@ -385,7 +420,7 @@ export class HostedPaymentService implements OnApplicationBootstrap {
                 status: In(OPEN_STATUSES),
                 createdAt: Between(new Date(now - newerThanHours * 3_600_000), new Date(now - olderThanMinutes * 60_000)),
             },
-            order: { updatedAt: 'ASC' },
+            order: { checkedAt: { direction: 'ASC', nulls: 'FIRST' }, createdAt: 'ASC' },
             take: batchSize,
         });
         const unreachable = new Set<string>();
@@ -424,20 +459,27 @@ export class HostedPaymentService implements OnApplicationBootstrap {
      */
     private async checkAttempt(attempt: HostedPaymentAttempt, source: string, req?: Request): Promise<RecordOutcome | 'unpaid' | 'unknown' | 'unreachable'> {
         const label = gatewayLabel(attempt.gateway);
+        // Noted first, so a check that fails still counts and the scheduled check moves on to the others.
+        await this.connection.getRepository(HostedPaymentAttempt).update({ id: attempt.id }, { checkedAt: new Date() });
         const ctx = await this.attemptContext(attempt, req);
         const method = await this.findHostedMethod(ctx, attempt.paymentMethodCode);
+        let methodGateway: MethodGateway;
         let status: GatewayPaymentStatus;
         try {
             if (!method) throw new GatewayConfigError(`payment method ${attempt.paymentMethodCode} no longer exists`);
-            status = await this.gateways.forMethod(method).gateway.getStatus(attempt.reference);
+            methodGateway = this.gateways.forMethod(method);
+            status = await methodGateway.gateway.getStatus(attempt.reference);
         } catch (error) {
             Logger.warn(`Couldn't ask ${label} about payment ${attempt.reference} for order ${attempt.orderCode}: ${describeError(error)}`, loggerCtx);
-            return error instanceof GatewayError && !error.retryable ? 'unknown' : 'unreachable';
+            // Wrong keys or broken settings affect every payment of the method; other refusals only this one.
+            const onlyThisOne = error instanceof GatewayError && !error.retryable && error.status !== 401 && error.status !== 403;
+            return onlyThisOne ? 'unknown' : 'unreachable';
         }
         if (status.state !== 'paid') {
             await this.noteGatewayState(attempt, status.state);
             return 'unpaid';
         }
+        this.gateways.rememberPaid(methodGateway.code, methodGateway.account, status);
         try {
             return await this.recordPayment(ctx, attempt.id, source);
         } catch (error) {
@@ -446,19 +488,21 @@ export class HostedPaymentService implements OnApplicationBootstrap {
         }
     }
 
-    /**
-     * Keeps an open attempt's status in step with the gateway, never touching one already recorded. Always
-     * writes, so updatedAt says when it was last checked and the scheduled check takes turns.
-     */
+    /** Keeps an open attempt's status in step with the gateway, never touching one already dealt with. */
     private async noteGatewayState(attempt: HostedPaymentAttempt, state: GatewayPaymentStatus['state']) {
+        if (state === 'paid' || state === attempt.status) return;
         await this.connection
             .getRepository(HostedPaymentAttempt)
-            .update({ id: attempt.id, status: In(OPEN_STATUSES) }, { status: state === 'paid' ? attempt.status : state });
+            .update({ id: attempt.id, status: In(OPEN_STATUSES) }, { status: state });
     }
 
     private dueForCheck(attempt: HostedPaymentAttempt): boolean {
         const now = Date.now();
-        for (const [key, at] of this.lastChecked) if (now - at > 10 * 60_000) this.lastChecked.delete(key);
+        if (now - this.lastPruned > 60_000) {
+            const keep = Math.max(10 * 60_000, this.options.statusCheckIntervalMs);
+            for (const [key, at] of this.lastChecked) if (now - at > keep) this.lastChecked.delete(key);
+            this.lastPruned = now;
+        }
         const key = String(attempt.id);
         const last = this.lastChecked.get(key);
         if (last !== undefined && now - last < this.options.statusCheckIntervalMs) return false;

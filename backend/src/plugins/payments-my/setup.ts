@@ -44,12 +44,15 @@ export interface PaymentMethodsSetupOptions {
 
 export interface PaymentMethodSetupResult {
     code: string;
-    handler: 'chip' | 'billplz';
+    /** The method's handler: chip or billplz, or another one when a method with this code already used it. */
+    handler: string;
     /** False when a method with this code already existed; it is left as it was. */
     created: boolean;
     enabled: boolean;
     /** Settings to fill in under Settings → Payment methods before the method can be switched on. */
     missing: string[];
+    /** Set when the existing method with this code doesn't use the expected handler. */
+    problem?: string;
 }
 
 interface MethodDefinition {
@@ -114,8 +117,13 @@ export async function setupPaymentMethods(
         const { code, handler } = definition;
         const existing = (await service.findAll(ctx, { filter: { code: { eq: code } } })).items[0];
         if (existing) {
+            if (existing.handler.code !== handler) {
+                const problem = `A payment method with code "${code}" already exists with the ${existing.handler.code} handler, so it isn't a ${handler} method.`;
+                results.push({ code, handler: existing.handler.code, created: false, enabled: existing.enabled, missing: [], problem });
+                continue;
+            }
             const saved = Object.fromEntries(existing.handler.args.map(arg => [arg.name, arg.value]));
-            const missing = existing.handler.code === handler ? definition.required.filter(name => !saved[name]?.trim()) : [];
+            const missing = definition.required.filter(name => !saved[name]?.trim());
             results.push({ code, handler, created: false, enabled: existing.enabled, missing });
             continue;
         }
