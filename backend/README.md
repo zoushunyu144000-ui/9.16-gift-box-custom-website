@@ -53,6 +53,8 @@ Each lives in `src/plugins/<name>` and can be used on its own in another shop.
 | `delivery-my` | Malaysian delivery: the zone from the postcode (official data.gov.my table), dispatch days and the 3pm cut-off, closed dates (Global Settings), same-day prices by road distance (Google Routes, `GOOGLE_MAPS_API_KEY`) and courier prices by weight (live courier rates when a rate provider is registered, else a zone × weight table). Checks the preferred delivery date before payment. Details: `src/plugins/delivery-my/README.md`. | `deliveryPromise(postalCode)` for dates and wording, `deliveryQuote(input)` for options and prices before an order exists; `setOrderCustomFields({ customFields: { preferredDeliveryDate, deliveryNotes } })`. |
 | `storefront-content` | The storefront's texts and contact details on the channel (homepage banner, featured collection, WhatsApp number, contact email, business hours, preview notice), edited under **Settings → Storefront**. Set up from `stores/<shop>/content.json`. | `activeChannel { customFields { heroTitle … } }` |
 | `enquiries` | Corporate quote requests: stored with their gifts and indicative value, emailed to `SHOP_NOTIFY_EMAIL` (reply goes to the customer), listed under **Sales → Enquiries** with status and internal notes. Permissions `ReadEnquiry` / `UpdateEnquiry`. A hidden `details.website` field catches bots. | `submitEnquiry(input: { type, contact, items, details })` |
+| `loyalty` | Member points: earned when an order's payment is settled (on products, not delivery; members only), used at checkout as a discount (a promotion, so it shows in `order.discounts`) with a minimum and a cap, taken back if an order is cancelled. Staff see and adjust a customer's points on the customer page. Optional member tiers by lifetime spend (customer groups). Rules in `LoyaltyPlugin.init`. | `loyaltySettings`, `loyaltyHistory`, `applyLoyaltyPoints(points)` before payment; `Customer.customFields.loyaltyPoints`. |
+| `staff-permissions` | `ShipOrder`: ship and mark delivered without the order-editing permission (so without refunds). | Admin API `shipOrder`, `markFulfillmentDelivered`. |
 
 `npm run check:shop-rules` runs these rules against a server set up from `stores/moire` (12 checks).
 
@@ -64,11 +66,13 @@ create more roles under **Settings → Roles**.
 | Role | Can |
 |---|---|
 | owner | Everything except the super admin account |
-| customer-service | Orders and draft orders, customers; catalogue read-only |
-| packer | Sees orders and marks them shipped; catalogue read-only |
+| customer-service | Orders and draft orders, customers, enquiries, shipping; catalogue read-only |
+| packer | Sees orders, ships them and marks them delivered; no refunds, cancellations or order changes; catalogue read-only |
 
-Vendure ties shipping an order to the same `UpdateOrder` permission as refunds and cancellations, so
-until the staff-permissions plugin adds a ship-only permission a packer can technically refund too.
+Vendure ties shipping to `UpdateOrder`, which also allows refunds; the staff-permissions plugin adds a
+ship-only `ShipOrder` permission (the **Ship order** card on an order), which is what packers get.
+A shop set up before this change: under Settings → Roles, take `UpdateOrder` off packer and give
+`ShipOrder` to packer, customer-service and owner.
 
 ## Database changes
 

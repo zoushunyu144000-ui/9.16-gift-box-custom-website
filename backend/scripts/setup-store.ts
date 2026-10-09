@@ -33,9 +33,11 @@ import {
 import { importProductsFromCsv, populateCollections, populateInitialData } from '@vendure/core/cli';
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
-import type { INestApplicationContext } from '@nestjs/common';
+import type { INestApplication } from '@nestjs/common';
 import { setupDeliveryMethods } from '../src/plugins/delivery-my';
 import { readEnquiryPermission, updateEnquiryPermission } from '../src/plugins/enquiries/constants';
+import { setupLoyalty } from '../src/plugins/loyalty/setup';
+import { shipOrderPermission } from '../src/plugins/staff-permissions/permissions';
 import { setupStorefrontContent } from '../src/plugins/storefront-content/setup';
 import { testPaymentsAllowed } from '../src/plugins/test-payments/test-payments-allowed';
 import { config } from '../src/vendure-config';
@@ -57,13 +59,14 @@ interface StoreDefinition {
 const NOT_FOR_STAFF_ROLES = [Permission.SuperAdmin, Permission.Owner, Permission.Public, Permission.Authenticated];
 /** Permissions our plugins add; Vendure's Permission enum doesn't list them, so roles name them here. */
 const ENQUIRY_PERMISSIONS = [readEnquiryPermission.Permission, updateEnquiryPermission.Permission];
+const SHIP_ORDER = shipOrderPermission.Permission;
 
 /** Staff roles every shop starts with. Owners add people in the dashboard: Settings → Administrators. */
 const ROLE_PRESETS = {
     owner: {
         code: 'owner',
         description: 'Owner: everything except the super admin account',
-        permissions: [...Object.values(Permission).filter(p => !NOT_FOR_STAFF_ROLES.includes(p)), ...ENQUIRY_PERMISSIONS],
+        permissions: [...Object.values(Permission).filter(p => !NOT_FOR_STAFF_ROLES.includes(p)), ...ENQUIRY_PERMISSIONS, SHIP_ORDER],
     },
     'customer-service': {
         code: 'customer-service',
@@ -84,16 +87,17 @@ const ROLE_PRESETS = {
             Permission.ReadCountry,
             Permission.ReadZone,
             ...ENQUIRY_PERMISSIONS,
+            SHIP_ORDER,
         ],
     },
     packer: {
         code: 'packer',
-        description: 'Packing: sees orders and marks them shipped; catalogue read-only',
+        description: 'Packing: sees orders and ships them (no refunds or order changes); catalogue read-only',
         permissions: [
             Permission.ReadCatalog,
             Permission.ReadOrder,
-            // Vendure ties fulfilment to UpdateOrder; a fulfil-only permission is added by the staff permissions plugin.
-            Permission.UpdateOrder,
+            // Ships and marks delivered (staff-permissions plugin) without UpdateOrder, which would also allow refunds.
+            SHIP_ORDER,
             Permission.ReadShippingMethod,
             Permission.ReadStockLocation,
             Permission.ReadCountry,
@@ -194,11 +198,13 @@ async function main() {
  * Each shop plugin's starting configuration: what it adds is safe to add twice (existing entries are
  * kept as staff left them), and its placeholder prices and settings are adjusted in the dashboard.
  */
-async function setupPlugins(app: INestApplicationContext, ctx: RequestContext, dir: string) {
+async function setupPlugins(app: INestApplication, ctx: RequestContext, dir: string) {
     const delivery = await setupDeliveryMethods(app, ctx);
     console.log(
         `Delivery: created ${delivery.created.join(', ') || 'nothing'}; already there ${delivery.alreadyThere.join(', ') || 'nothing'}; switched off ${delivery.disabled.join(', ') || 'nothing'}.`,
     );
+    await setupLoyalty(app, ctx);
+    console.log('Loyalty points promotion in place.');
     const contentFile = path.join(dir, 'content.json');
     if (existsSync(contentFile)) {
         await setupStorefrontContent(app, ctx, JSON.parse(readFileSync(contentFile, 'utf8')));

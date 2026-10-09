@@ -18,7 +18,9 @@ import { CatalogDisplayPlugin } from './plugins/catalog-display/catalog-display.
 import { MalaysianDeliveryPlugin } from './plugins/delivery-my/delivery-my.plugin';
 import { EnquiriesPlugin } from './plugins/enquiries/enquiries.plugin';
 import { GiftMessagePlugin } from './plugins/gift-message/gift-message.plugin';
+import { LoyaltyPlugin } from './plugins/loyalty/loyalty.plugin';
 import { PersonalisationPlugin } from './plugins/personalisation/personalisation.plugin';
+import { StaffPermissionsPlugin } from './plugins/staff-permissions/staff-permissions.plugin';
 import { StorefrontContentPlugin } from './plugins/storefront-content/storefront-content.plugin';
 import { testPaymentsAllowed } from './plugins/test-payments/test-payments-allowed';
 
@@ -131,6 +133,8 @@ export const config: VendureConfig = {
         // New-enquiry emails go to SHOP_NOTIFY_EMAIL. The storefront sends enquiries from its server, so
         // every request would share one address here: it limits visitors itself instead.
         EnquiriesPlugin.init({ codePrefix: 'ENQ', rateLimit: false }),
+        LoyaltyPlugin.init({ pointsPerRinggit: 1, pointValueSen: 1, minRedeemPoints: 500, maxRedeemPercent: 50, earnOnState: 'PaymentSettled' }),
+        StaffPermissionsPlugin.init(),
         DashboardPlugin.init({
             route: 'dashboard',
             appDir: IS_DEV ? path.join(__dirname, '../dist/dashboard') : path.join(__dirname, 'dashboard'),
