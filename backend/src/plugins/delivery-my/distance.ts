@@ -1,4 +1,4 @@
-import { errorMessage, withTimeout } from './timeout';
+import { errorMessage, isTimeout, withTimeout } from './timeout';
 
 /**
  * Road distance from the shop to a postcode, from Google's Routes API (computeRoutes), cached per postcode.
@@ -73,8 +73,10 @@ export interface RoadDistanceSettings {
     apiKey: () => string | undefined;
     timeoutMs: number;
     cacheDays: number;
-    /** After Google fails for a postcode, wait this long before asking again (default 5 minutes). */
+    /** After Google fails for a postcode, wait this long before asking about it again (default 5 minutes). */
     retryAfterMs?: number;
+    /** After Google times out, ask it about no postcode for this long (default 1 minute). */
+    coolDownMs?: number;
     fetchFn?: typeof fetch;
     now?: () => number;
     log?: (message: string) => void;
@@ -91,6 +93,7 @@ export class RoadDistanceLookup {
     private memory = new Map<string, StoredDistance>();
     private inFlight = new Map<string, Promise<number | undefined>>();
     private failedUntil = new Map<string, number>();
+    private slowUntil = 0;
 
     constructor(
         private store: DistanceStore,
@@ -119,7 +122,7 @@ export class RoadDistanceLookup {
 
         const apiKey = this.settings.apiKey();
         let meters: number | undefined;
-        if (apiKey && (this.failedUntil.get(key) ?? 0) <= now) {
+        if (apiKey && (this.failedUntil.get(key) ?? 0) <= now && this.slowUntil <= now) {
             let pending = this.inFlight.get(key);
             if (!pending) {
                 pending = this.fetchAndStore(postcode, origin, destination, apiKey).finally(() => this.inFlight.delete(key));
@@ -149,6 +152,8 @@ export class RoadDistanceLookup {
             return meters;
         } catch (err) {
             this.failedUntil.set(key, this.now() + (this.settings.retryAfterMs ?? 5 * 60 * 1000));
+            // Slowness hits every postcode: rather than make each checkout wait out the timeout, skip Google a while.
+            if (isTimeout(err)) this.slowUntil = this.now() + (this.settings.coolDownMs ?? 60 * 1000);
             this.log(`no road distance for ${postcode} (${errorMessage(err)}); same-day delivery uses the fallback price`);
             return undefined;
         }

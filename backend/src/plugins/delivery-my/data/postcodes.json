@@ -1,5 +1,6 @@
 {
   "source": "Postcodes in Malaysia, data.gov.my: https://data.gov.my/data-catalogue/poskod",
+  "dataSource": "MCMC (Malaysian Communications and Multimedia Commission)",
   "file": "https://storage.data.gov.my/dictionaries/postcodes.csv",
   "dataAsOf": "2026-06",
   "converted": "2026-10-09",

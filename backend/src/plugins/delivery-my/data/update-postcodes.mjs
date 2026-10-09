@@ -56,6 +56,7 @@ const lines = [...states.entries()].sort(byName).map(([state, cities]) => {
 });
 const meta = {
     source: 'Postcodes in Malaysia, data.gov.my: https://data.gov.my/data-catalogue/poskod',
+    dataSource: 'MCMC (Malaysian Communications and Multimedia Commission)',
     file: CSV_URL,
     dataAsOf: asOf,
     converted: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kuala_Lumpur' }).format(new Date()),

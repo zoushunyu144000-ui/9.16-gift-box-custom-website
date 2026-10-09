@@ -162,6 +162,32 @@ describe('road distance lookup (cached per postcode)', () => {
         assert.equal(attempts, 2);
     });
 
+    it('after a timeout, leaves Google alone for a minute, so other checkouts get the fallback without waiting', async () => {
+        let now = Date.parse('2026-10-09T02:00:00Z');
+        let attempts = 0;
+        const fetchFn = ((url: string, init: RequestInit) => {
+            attempts++;
+            return hangingFetch(url, init);
+        }) as typeof fetch;
+        const lookup = new RoadDistanceLookup(memoryStore(), settings({ fetchFn, now: () => now }));
+        assert.deepEqual(await lookup.distanceKm('47301', PJ), { source: 'error' });
+        const started = Date.now();
+        assert.deepEqual(await lookup.distanceKm('50450', 'KL'), { source: 'error' });
+        assert.ok(Date.now() - started < 40, 'answered without waiting for Google');
+        assert.equal(attempts, 1);
+        now += 61 * 1000;
+        await lookup.distanceKm('50450', 'KL');
+        assert.equal(attempts, 2, 'asked again after the minute');
+    });
+
+    it('an error about one postcode does not stop Google being asked about others', async () => {
+        const calls: Call[] = [];
+        const lookup = new RoadDistanceLookup(memoryStore(), settings({ fetchFn: stubFetch({ body: {} }, calls) }));
+        assert.deepEqual(await lookup.distanceKm('47301', PJ), { source: 'error' });
+        await lookup.distanceKm('50450', 'KL');
+        assert.equal(calls.length, 2);
+    });
+
     it('when Google fails, an expired distance is better than none', async () => {
         const old = memoryStore(new Map([[`${originKey(SHOP)}|47301`, { distanceMeters: 7342, fetchedAt: new Date('2025-01-01') }]]));
         const lookup = new RoadDistanceLookup(old, settings({ fetchFn: stubFetch({ status: 500 }) }));

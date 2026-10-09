@@ -67,6 +67,42 @@ describe('live courier rates', () => {
         assert.match(logged.join('\n'), /EasyParcel is down/);
     });
 
+    it('leaves a provider that timed out alone for a minute, so checkouts don’t each wait for it', async () => {
+        let now = Date.parse('2026-10-09T02:00:00Z');
+        const slowCalls: LiveRateRequest[] = [];
+        const fastCalls: LiveRateRequest[] = [];
+        const lookup = new LiveRateLookup(
+            [provider(() => new Promise(() => undefined), slowCalls), provider(async () => [jnt], fastCalls)],
+            memoryCache(),
+            { timeoutMs: 50, cacheHours: 24, now: () => now },
+        );
+        assert.deepEqual(await lookup.rates(ctx, request), [jnt]);
+        const started = Date.now();
+        assert.deepEqual(await lookup.rates(ctx, { ...request, toPostcode: '88000' }), [jnt]);
+        assert.ok(Date.now() - started < 40, 'no wait for the slow provider');
+        assert.equal(slowCalls.length, 1);
+        assert.equal(fastCalls.length, 2);
+        now += 61 * 1000;
+        await lookup.rates(ctx, { ...request, toPostcode: '93050' });
+        assert.equal(slowCalls.length, 2, 'asked again after the minute');
+    });
+
+    it('does not cache when a provider failed, so its cheaper rates aren’t hidden for a day', async () => {
+        const cache = memoryCache();
+        const lookup = new LiveRateLookup(
+            [
+                provider(async () => [poslaju]),
+                provider(async () => {
+                    throw new Error('EasyParcel is down');
+                }),
+            ],
+            cache,
+            { timeoutMs: 500, cacheHours: 24 },
+        );
+        assert.deepEqual(await lookup.rates(ctx, request), [poslaju]);
+        assert.equal(cache.entries.size, 0);
+    });
+
     it('answers nothing (so the table is used) when no provider answers in time, and caches nothing', async () => {
         const cache = memoryCache();
         const lookup = new LiveRateLookup([provider(() => new Promise(() => undefined))], cache, { timeoutMs: 50, cacheHours: 24 });
