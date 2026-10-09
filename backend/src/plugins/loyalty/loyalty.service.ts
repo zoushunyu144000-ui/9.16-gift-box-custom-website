@@ -237,7 +237,7 @@ export class LoyaltyService implements OnApplicationBootstrap {
         // rather than at the nightly run.
         const customerId = order.customerId;
         if ((toState === 'PaymentSettled' || toState === 'Cancelled') && customerId && this.tierService.enabled) {
-            await this.safely(ctx, order, 'update the member tier for', tx => this.tierService.updateTiers(tx, [customerId]));
+            await this.safely(ctx, order, 'update the member tier for', tx => this.tierService.updateTiers(tx, [customerId]), 'The nightly tier update will catch up.');
         }
     }
 
@@ -246,12 +246,18 @@ export class LoyaltyService implements OnApplicationBootstrap {
     }
 
     /** Runs points work in a savepoint, so a failure leaves the order's own transaction able to carry on. */
-    private async safely(ctx: RequestContext, order: Order, action: string, work: (tx: RequestContext) => Promise<unknown>) {
+    private async safely(
+        ctx: RequestContext,
+        order: Order,
+        action: string,
+        work: (tx: RequestContext) => Promise<unknown>,
+        fix = 'Correct the balance with adjustLoyaltyPoints.',
+    ) {
         try {
             await this.connection.withTransaction(ctx, work);
         } catch (e) {
             const error = e instanceof Error ? e : new Error(String(e));
-            Logger.error(`Could not ${action} order ${order.code}: ${error.message}. Correct the balance with adjustLoyaltyPoints.`, loggerCtx, error.stack);
+            Logger.error(`Could not ${action} order ${order.code}: ${error.message}. ${fix}`, loggerCtx, error.stack);
         }
     }
 
