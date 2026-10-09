@@ -8,6 +8,7 @@ import { CreateHostedPaymentResultResolver, HostedPaymentShopResolver } from './
 import { HostedPaymentService } from './hosted-payment.service';
 import { PAYMENTS_MY_OPTIONS, PaymentsMyOptions, resolveOptions } from './options';
 import { rawBodyMiddleware } from './raw-body.middleware';
+import { reconcileHostedPaymentsTask } from './reconcile-task';
 import { pendingRefundProcess } from './refund-process';
 
 /**
@@ -18,6 +19,8 @@ import { pendingRefundProcess } from './refund-process';
  *   `hostedPaymentStatus` (contract: docs/api-contracts.md §1).
  * - Gateways notify POST /payments/chip/callback and /payments/billplz/callback. Signatures are checked on the
  *   raw body and every payment is confirmed with the gateway before it is recorded, once, for the exact amount.
+ * - A scheduled task (worker, every 15 minutes) records payments that neither a callback nor the customer's
+ *   return confirmed.
  * - Refunds: CHIP through its API; Billplz by hand (the refund waits as Pending with a note).
  */
 @VendurePlugin({
@@ -34,6 +37,7 @@ import { pendingRefundProcess } from './refund-process';
         config.paymentOptions.paymentMethodHandlers.push(chipPaymentHandler, billplzPaymentHandler);
         // Billplz refunds (and slow CHIP ones) stay Pending until staff settle them.
         config.paymentOptions.refundProcess = [...(config.paymentOptions.refundProcess ?? []), pendingRefundProcess];
+        config.schedulerOptions.tasks = [...(config.schedulerOptions.tasks ?? []), reconcileHostedPaymentsTask];
         // Only these two routes get the raw body; other routes keep Vendure's JSON parsing.
         config.apiOptions.middleware.push(
             { route: '/payments/chip/callback', handler: rawBodyMiddleware(), beforeListen: true },

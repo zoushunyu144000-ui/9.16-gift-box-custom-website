@@ -22,13 +22,13 @@ import {
     TransactionalConnection,
 } from '@vendure/core';
 import { Request } from 'express';
-import { In, MoreThan } from 'typeorm';
+import { Between, In, MoreThan } from 'typeorm';
 import { GatewayFactory, MethodGateway } from './gateway-factory';
 import { billplzCallbackId } from './gateways/billplz';
 import { chipCallbackId, chipCallbackUrlProblem } from './gateways/chip';
 import { formatMoney } from './gateways/format';
 import { describeError } from './gateways/http';
-import { CallbackVerificationError, CheckoutItem, GatewayConfigError, GatewayPaymentStatus, HeaderMap, isPreferredMethod, VerifiedCallback } from './gateways/types';
+import { CallbackVerificationError, CheckoutItem, GatewayConfigError, GatewayError, GatewayPaymentStatus, HeaderMap, isPreferredMethod, VerifiedCallback } from './gateways/types';
 import { AttemptStatus, HostedPaymentAttempt } from './hosted-payment-attempt.entity';
 import { gatewayLabel, HostedGatewayCode, isHostedGateway, loggerCtx, PAYMENTS_MY_OPTIONS, ResolvedPaymentsMyOptions } from './options';
 import { callbackUrl, checkReturnUrl, withOrderCode } from './urls';
@@ -66,6 +66,15 @@ export interface CallbackResult {
 }
 
 type RecordOutcome = 'recorded' | 'already recorded' | 'not recorded' | 'missing';
+
+export interface ReconcileParams {
+    /** Leave payment pages younger than this to the customer and the callback. */
+    olderThanMinutes: number;
+    /** Stop asking about payment pages older than this. */
+    newerThanHours: number;
+    /** Most payment pages to ask about per run. */
+    batchSize: number;
+}
 
 /** Attempts a status check may still find paid. */
 const OPEN_STATUSES: AttemptStatus[] = ['pending', 'failed'];
@@ -364,6 +373,36 @@ export class HostedPaymentService implements OnApplicationBootstrap {
         await this.historyService.createHistoryEntryForOrder({ ctx, orderId: order.id, type: HistoryEntryType.ORDER_NOTE, data: { note } }, false);
     }
 
+    /**
+     * For the scheduled task: asks the gateways about payment pages opened a while ago that nothing has
+     * confirmed (e.g. a customer paid and closed the browser while callbacks couldn't reach this server), least
+     * recently checked first, and records those that were paid.
+     */
+    async reconcile({ olderThanMinutes, newerThanHours, batchSize }: ReconcileParams): Promise<{ checked: number; recorded: number }> {
+        const now = Date.now();
+        const attempts = await this.connection.getRepository(HostedPaymentAttempt).find({
+            where: {
+                status: In(OPEN_STATUSES),
+                createdAt: Between(new Date(now - newerThanHours * 3_600_000), new Date(now - olderThanMinutes * 60_000)),
+            },
+            order: { updatedAt: 'ASC' },
+            take: batchSize,
+        });
+        const unreachable = new Set<string>();
+        let checked = 0;
+        let recorded = 0;
+        for (const attempt of attempts) {
+            // One unreachable gateway shouldn't hold up the run with a timeout per payment.
+            if (unreachable.has(attempt.paymentMethodCode)) continue;
+            const outcome = await this.checkAttempt(attempt, 'scheduled check');
+            checked++;
+            if (outcome === 'unreachable') unreachable.add(attempt.paymentMethodCode);
+            if (outcome === 'recorded') recorded++;
+        }
+        if (recorded) Logger.info(`Scheduled check recorded ${recorded} payment(s) that no callback had confirmed.`, loggerCtx);
+        return { checked, recorded };
+    }
+
     /** Asks the gateway about the order's latest open attempts and records the first one found paid. */
     private async checkWithGateway(ctx: RequestContext, order: Order): Promise<boolean> {
         const attempts = await this.connection.getRepository(ctx, HostedPaymentAttempt).find({
@@ -373,37 +412,48 @@ export class HostedPaymentService implements OnApplicationBootstrap {
         });
         for (const attempt of attempts) {
             if (!this.dueForCheck(attempt)) continue;
-            const label = gatewayLabel(attempt.gateway);
-            const internal = await this.attemptContext(attempt, ctx.req);
-            const method = await this.findHostedMethod(internal, attempt.paymentMethodCode);
-            if (!method) continue;
-            let status: GatewayPaymentStatus;
-            try {
-                status = await this.gateways.forMethod(method).gateway.getStatus(attempt.reference);
-            } catch (error) {
-                Logger.warn(`Couldn't ask ${label} about payment ${attempt.reference} for order ${order.code}: ${describeError(error)}`, loggerCtx);
-                continue;
-            }
-            if (status.state !== 'paid') {
-                await this.noteGatewayState(attempt, status.state);
-                continue;
-            }
-            try {
-                const outcome = await this.recordPayment(internal, attempt.id, 'customer came back');
-                if (outcome === 'recorded' || outcome === 'already recorded') return true;
-            } catch (error) {
-                Logger.error(`Couldn't record ${label} payment ${attempt.reference} on order ${order.code}: ${describeError(error)}`, loggerCtx);
-            }
+            const outcome = await this.checkAttempt(attempt, 'customer came back', ctx.req);
+            if (outcome === 'recorded' || outcome === 'already recorded') return true;
         }
         return false;
     }
 
-    /** Keeps an attempt's status in step with the gateway, without touching one already recorded. */
+    /**
+     * Asks the gateway about one payment page and records the payment when it was paid. 'unreachable' means the
+     * gateway (or the method's settings) can't be used right now; 'unknown' that the gateway refused this one request.
+     */
+    private async checkAttempt(attempt: HostedPaymentAttempt, source: string, req?: Request): Promise<RecordOutcome | 'unpaid' | 'unknown' | 'unreachable'> {
+        const label = gatewayLabel(attempt.gateway);
+        const ctx = await this.attemptContext(attempt, req);
+        const method = await this.findHostedMethod(ctx, attempt.paymentMethodCode);
+        let status: GatewayPaymentStatus;
+        try {
+            if (!method) throw new GatewayConfigError(`payment method ${attempt.paymentMethodCode} no longer exists`);
+            status = await this.gateways.forMethod(method).gateway.getStatus(attempt.reference);
+        } catch (error) {
+            Logger.warn(`Couldn't ask ${label} about payment ${attempt.reference} for order ${attempt.orderCode}: ${describeError(error)}`, loggerCtx);
+            return error instanceof GatewayError && !error.retryable ? 'unknown' : 'unreachable';
+        }
+        if (status.state !== 'paid') {
+            await this.noteGatewayState(attempt, status.state);
+            return 'unpaid';
+        }
+        try {
+            return await this.recordPayment(ctx, attempt.id, source);
+        } catch (error) {
+            Logger.error(`Couldn't record ${label} payment ${attempt.reference} on order ${attempt.orderCode}: ${describeError(error)}`, loggerCtx);
+            return 'unreachable';
+        }
+    }
+
+    /**
+     * Keeps an open attempt's status in step with the gateway, never touching one already recorded. Always
+     * writes, so updatedAt says when it was last checked and the scheduled check takes turns.
+     */
     private async noteGatewayState(attempt: HostedPaymentAttempt, state: GatewayPaymentStatus['state']) {
-        if (state === 'paid' || state === attempt.status) return;
         await this.connection
             .getRepository(HostedPaymentAttempt)
-            .update({ id: attempt.id, status: In(OPEN_STATUSES) }, { status: state });
+            .update({ id: attempt.id, status: In(OPEN_STATUSES) }, { status: state === 'paid' ? attempt.status : state });
     }
 
     private dueForCheck(attempt: HostedPaymentAttempt): boolean {

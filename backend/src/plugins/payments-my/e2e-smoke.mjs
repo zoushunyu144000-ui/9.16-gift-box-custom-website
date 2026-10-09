@@ -6,10 +6,12 @@
 //   node src/plugins/payments-my/e2e-smoke.mjs
 // It starts mock CHIP and Billplz APIs on this machine, points two payment methods at them through the Admin API
 // (e2e-chip, e2e-billplz; disabled again at the end), pays real orders through the Shop API and sends callbacks
-// signed the way the gateways sign them.
+// signed the way the gateways sign them. The scheduled-check section also needs the worker
+// (npx ts-node --transpile-only src/index-worker.ts); without it that section is skipped.
 import 'dotenv/config';
 import { createHmac, generateKeyPairSync, randomBytes, randomUUID, sign } from 'node:crypto';
 import { createServer } from 'node:http';
+import pg from 'pg';
 
 const SERVER = (process.env.VENDURE_URL || `http://localhost:${process.env.PORT || process.env.VENDURE_SERVER_PORT || 3000}`).replace(/\/$/, '');
 const PUBLIC_URL = (process.env.VENDURE_PUBLIC_URL || SERVER).replace(/\/$/, '');
@@ -223,6 +225,36 @@ async function upsertMethod(code, name, handler) {
     return (await admin(`mutation($input:CreatePaymentMethodInput!){ createPaymentMethod(input:$input){ ${fields} } }`, { input })).createPaymentMethod;
 }
 
+const TASK = 'reconcile-hosted-payments';
+const taskInfo = async () => (await admin(`{ scheduledTasks { id lastExecutedAt isRunning lastResult } }`)).scheduledTasks?.find(t => t.id === TASK);
+async function waitFor(probe, timeoutMs) {
+    for (const started = Date.now(); Date.now() - started < timeoutMs; await new Promise(r => setTimeout(r, 1000))) {
+        const value = await probe();
+        if (value) return value;
+    }
+    return undefined;
+}
+
+/** Makes a payment page look older, as the scheduled check leaves young ones to the callback and the customer. */
+async function backdate(reference, minutes) {
+    const db = new pg.Client({
+        host: process.env.DB_HOST,
+        port: +process.env.DB_PORT,
+        user: process.env.DB_USERNAME,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        ssl: process.env.DB_SSL === 'true' ? { ca: process.env.DB_SSL_CA || undefined } : false,
+        options: `-c search_path=${process.env.DB_SCHEMA || 'public'}`,
+    });
+    await db.connect();
+    try {
+        const when = new Date(Date.now() - minutes * 60_000);
+        await db.query('UPDATE hosted_payment_attempt SET "createdAt" = $2, "updatedAt" = $2 WHERE reference = $1', [reference, when]);
+    } finally {
+        await db.end();
+    }
+}
+
 const CREATE = `mutation($input:CreateHostedPaymentInput!){ createHostedPayment(input:$input){
     __typename ... on HostedPaymentRedirect { url reference } ... on HostedPaymentError { errorCode message } } }`;
 const STATUS = `query($code:String!){ hostedPaymentStatus(orderCode:$code){ orderCode orderState paid } }`;
@@ -394,6 +426,28 @@ async function main() {
             check('staff get a note about it on the order', notesOf(o).some(n => n.includes(redirect.reference)), notesOf(o).find(n => n.includes(redirect.reference)));
             const status = (await shop(STATUS, { code: order.code })).hostedPaymentStatus;
             check('hostedPaymentStatus still says unpaid', status?.paid === false, JSON.stringify(status));
+        }
+
+        // 4 · Scheduled check: paid at CHIP, but no callback came and the customer never returned
+        {
+            const { shop, order } = await orderAtPayment('scheduled');
+            const redirect = (await shop(CREATE, { input: { paymentMethodCode: CHIP.code, returnUrl: RETURN_URL } })).createHostedPayment;
+            chip.pay(redirect.reference);
+            await backdate(redirect.reference, 20);
+            const before = await taskInfo();
+            const run = await admin(`mutation($id:String!){ runScheduledTask(id:$id){ success } }`, { id: TASK });
+            const ran = run.runScheduledTask?.success
+                ? await waitFor(async () => {
+                      const task = await taskInfo();
+                      return task && task.lastExecutedAt && task.lastExecutedAt !== before?.lastExecutedAt && !task.isRunning ? task : undefined;
+                  }, 45_000)
+                : undefined;
+            if (!ran) {
+                console.log(`SKIP  the scheduled check: no worker ran ${TASK} within 45 s (start src/index-worker.ts to include it)`);
+            } else {
+                const o = await adminOrder(order.code);
+                check('the scheduled check records a payment nothing else confirmed', o.state === 'PaymentSettled' && settledOf(o)[0]?.transactionId === redirect.reference, `order ${o.state}; task result ${JSON.stringify(ran.lastResult)}`);
+            }
         }
     } finally {
         for (const m of methods.filter(Boolean)) await admin(`mutation($id:ID!){ updatePaymentMethod(input:{ id:$id, enabled:false }){ id } }`, { id: m.id });

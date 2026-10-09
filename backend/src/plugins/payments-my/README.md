@@ -21,6 +21,10 @@ storefront. Each shop uses its own merchant account; the keys live in the paymen
    reason, and a note is added to the order for staff.
 4. The customer lands on `returnUrl?order=<code>`; the storefront calls `hostedPaymentStatus`. If no callback has
    arrived yet, the plugin asks the gateway itself and records the payment the same way.
+5. A scheduled task in the worker, `reconcile-hosted-payments` (every 15 minutes), asks the gateways about payment
+   pages opened between 10 minutes and 3 days ago that are still unconfirmed, and records any that were paid: the
+   customer who paid and closed the browser while callbacks couldn't reach the server. It can be run at once from
+   the dashboard (*Settings → Scheduled tasks*).
 
 Payments are recorded once: the order row is locked while a payment is recorded, so replayed or simultaneous
 callbacks and status checks find it already done. A second payment for an already paid order (a customer who
@@ -130,11 +134,12 @@ Automated tests (from `backend/`):
 ```bash
 npm test                                         # unit tests: signatures (Billplz docs vectors, RSA), requests, statuses, URLs
 npx ts-node --transpile-only src/index.ts        # in another terminal, on a database set up from stores/moire
-node src/plugins/payments-my/e2e-smoke.mjs       # 33 checks against mock CHIP and Billplz servers
+npx ts-node --transpile-only src/index-worker.ts # a third terminal, for the scheduled-check section
+node src/plugins/payments-my/e2e-smoke.mjs       # 34 checks against mock CHIP and Billplz servers
 ```
 
 The e2e script creates payment methods `e2e-chip` and `e2e-billplz` pointing at its mock servers and switches them
-off when it finishes.
+off when it finishes. Without a worker the scheduled-check section is reported as skipped.
 
 ## Go-live checklist
 
@@ -146,6 +151,8 @@ off when it finishes.
 - [ ] `STOREFRONT_URL` and `CORS_ORIGINS` are the live storefront's origins.
 - [ ] One real low-value payment per gateway: it arrives *Settled* on the order, and the refund works (CHIP) or the
       manual refund note appears (Billplz).
+- [ ] The worker runs (the scheduled check lives there): *Settings → Scheduled tasks* shows
+      `reconcile-hosted-payments` with a recent run.
 - [ ] Staff know to look for order notes starting "CHIP payment …" / "Billplz payment …": those are payments that
       need a refund or a manual decision.
 
@@ -179,9 +186,6 @@ callbacks (Billplz's don't say which order they are for) and status checks find 
 
 ## Not done
 
-- Payments are confirmed by callbacks and by customers returning; there is no scheduled job yet that asks the
-  gateways about payments neither confirmed (e.g. a paid customer who closed the browser while callbacks couldn't
-  reach the server).
 - No dashboard view of the payment pages opened per order; staff see recorded payments and the notes on the order.
 - CHIP portal webhooks (signed per webhook) aren't accepted; only the per-purchase callback. CHIP doesn't call back
   on failed attempts; the storefront learns about them from `hostedPaymentStatus`.
