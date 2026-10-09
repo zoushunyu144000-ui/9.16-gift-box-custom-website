@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Lock } from "lucide-react";
 import { formatRM, MALAYSIAN_STATES, PAYMENT_METHODS, personalisationHeading } from "@/lib/catalog";
-import type { PaymentMethod } from "@/lib/types";
+import type { PaymentMethod, Quote } from "@/lib/types";
 import { useCart } from "../cart/cart-context";
 import { rememberOrder, useQuote } from "../cart/use-quote";
 import { ProductImage } from "../product-image";
@@ -30,6 +30,8 @@ interface Draft {
   state: string;
   deliveryDate: string;
   deliveryNotes: string;
+  /** With delivery priced per address: the chosen option (else the first offered). */
+  deliveryOptionId: string;
   paymentMethod: PaymentMethod;
 }
 
@@ -47,6 +49,7 @@ const EMPTY: Draft = {
   state: "",
   deliveryDate: "",
   deliveryNotes: "",
+  deliveryOptionId: "",
   paymentMethod: "fpx",
 };
 
@@ -67,8 +70,12 @@ export function CheckoutForm({
 }) {
   const router = useRouter();
   const { lines, ready } = useCart();
-  const { quote, error: quoteError } = useQuote(lines, ready);
   const [d, setD] = useState<Draft>(EMPTY);
+  const postcodeReady = /^\d{5}$/.test(d.postcode);
+  const { quote, error: quoteError } = useQuote(lines, ready, { postcode: postcodeReady ? d.postcode : "", state: d.state, optionId: d.deliveryOptionId });
+  const delivery = quote?.delivery;
+  // With delivery priced per address, the backend says when this address can receive it.
+  const minDate = delivery?.promise?.earliestDate ?? earliestDate;
   const [age, setAge] = useState(false);
   const [terms, setTerms] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
@@ -124,8 +131,10 @@ export function CheckoutForm({
     if (!/^\d{5}$/.test(d.postcode.trim())) e.postcode = "Postcode must be 5 digits";
     if (d.city.trim().length < 2) e.city = "Please enter the city";
     if (!d.state) e.state = "Please choose a state";
+    if (delivery?.status === "unavailable") e.postcode = "We can’t deliver to this postcode yet";
     if (!d.deliveryDate) e.deliveryDate = "Please choose a delivery date";
-    else if (d.deliveryDate < earliestDate) e.deliveryDate = "Please choose a later date";
+    else if (d.deliveryDate < minDate) e.deliveryDate = "Please choose a later date";
+    else if (delivery?.promise?.closedDates.includes(d.deliveryDate)) e.deliveryDate = "We don’t deliver on this day. Please choose another date.";
     if (quote?.containsAlcohol && !age) e.ageConfirmed = "Please confirm you are 21 or older";
     if (!terms) e.termsAccepted = "Please accept the terms of sale";
     return e;
@@ -155,6 +164,7 @@ export function CheckoutForm({
           address: { line1: d.line1, line2: d.line2, postcode: d.postcode, city: d.city, state: d.state },
           deliveryDate: d.deliveryDate,
           deliveryNotes: d.deliveryNotes,
+          deliveryOptionId: delivery?.selectedId,
           paymentMethod: d.paymentMethod,
           ageConfirmed: age,
           termsAccepted: terms,
@@ -237,7 +247,9 @@ export function CheckoutForm({
         </div>
         <div className="flex justify-between">
           <dt className="text-ink-2">Delivery</dt>
-          <dd className="tabular-nums">{quote ? (quote.deliveryFee ? formatRM(quote.deliveryFee, { decimals: true }) : "Free") : "—"}</dd>
+          <dd className="tabular-nums">
+            {!quote ? "—" : delivery && delivery.status !== "ok" ? <span className="text-ink-3">Enter your postcode</span> : quote.deliveryFee ? formatRM(quote.deliveryFee, { decimals: true }) : "Free"}
+          </dd>
         </div>
         <div className="flex justify-between border-t border-line pt-3 text-[17px]">
           <dt>Total</dt>
@@ -343,8 +355,9 @@ export function CheckoutForm({
                   ))}
                 </select>
               </Field>
-              <Field id="deliveryDate" label="Preferred delivery date" error={errors.deliveryDate} hint={`Earliest available: ${new Date(`${earliestDate}T00:00:00+08:00`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`}>
-                <DateSelect id="deliveryDate" min={earliestDate} value={d.deliveryDate} onChange={(v) => set("deliveryDate", v)} invalid={!!errors.deliveryDate} />
+              {delivery && <DeliveryOptions delivery={delivery} onChoose={(id) => set("deliveryOptionId", id)} />}
+              <Field id="deliveryDate" label="Preferred delivery date" error={errors.deliveryDate} hint={`Earliest available: ${new Date(`${minDate}T00:00:00+08:00`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`}>
+                <DateSelect id="deliveryDate" min={minDate} value={d.deliveryDate} onChange={(v) => set("deliveryDate", v)} invalid={!!errors.deliveryDate} />
               </Field>
               <Field id="deliveryNotes" label="Delivery notes (optional)" className="sm:col-span-2">
                 <textarea id="deliveryNotes" className="field !min-h-[4.5rem]" maxLength={300} placeholder="Gate code, leave with guard, preferred time…" value={d.deliveryNotes} onChange={(e) => set("deliveryNotes", e.target.value)} />
@@ -415,7 +428,7 @@ export function CheckoutForm({
             </p>
           )}
 
-          <button type="submit" disabled={submitting || !quote || quote.hasProblems} className="btn btn-primary mt-8 w-full !min-h-14">
+          <button type="submit" disabled={submitting || !quote || quote.hasProblems || delivery?.status === "unavailable"} className="btn btn-primary mt-8 w-full !min-h-14">
             {submitting ? (
               <span className="flex items-center gap-3">
                 <span className="h-4 w-4 animate-spin rounded-full border border-ivory/40 border-t-ivory" /> Creating your order…
@@ -475,5 +488,37 @@ function Field({
       {children}
       {error ? <p className="field-error">{error}</p> : hint ? <p className="mt-1.5 text-[12px] text-ink-3">{hint}</p> : null}
     </div>
+  );
+}
+
+/** Delivery priced for the address: the options the backend offers for this postcode, and when. */
+function DeliveryOptions({ delivery, onChoose }: { delivery: NonNullable<Quote["delivery"]>; onChoose: (id: string) => void }) {
+  if (delivery.status === "postcode") {
+    return <p className="text-[13px] text-ink-2 sm:col-span-2">Enter the postcode to see delivery options and prices.</p>;
+  }
+  if (delivery.status === "unavailable") {
+    return (
+      <p className="field-error sm:col-span-2" role="alert">
+        We can’t deliver to this postcode yet. Please check it, or message us on WhatsApp.
+      </p>
+    );
+  }
+  return (
+    <fieldset className="sm:col-span-2">
+      <legend className="field-label">Delivery</legend>
+      <div className="divide-y divide-line border border-line-strong">
+        {delivery.options.map((o) => (
+          <label key={o.id} className={`flex items-start gap-3 px-4 py-4 transition-colors ${delivery.selectedId === o.id ? "bg-cream/70" : "hover:bg-cream/40"}`}>
+            <input type="radio" name="deliveryOption" className="check" checked={delivery.selectedId === o.id} onChange={() => onChoose(o.id)} />
+            <span className="flex-1">
+              <span className="block text-[15px]">{o.name}</span>
+              {o.description && <span className="block text-[13px] text-ink-2">{o.description}</span>}
+            </span>
+            <span className="text-[15px] tabular-nums">{o.price ? formatRM(o.price, { decimals: true }) : "Free"}</span>
+          </label>
+        ))}
+      </div>
+      {delivery.promise?.message && <p className="mt-2 text-[13px] text-ink-2">{delivery.promise.message}</p>}
+    </fieldset>
   );
 }

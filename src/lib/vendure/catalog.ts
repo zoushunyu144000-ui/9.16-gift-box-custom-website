@@ -2,6 +2,7 @@ import "server-only";
 import { seedSettings } from "@/data/seed";
 import { CATEGORIES, DEFAULT_PERSONALISATION } from "@/lib/catalog";
 import type { CategorySlug, Festival, Product, ProductImage, SiteSettings } from "@/lib/types";
+import { getCapabilities } from "./capabilities";
 import { shopApi } from "./client";
 
 /** SKU of the backend's "Personalised name" item (one unit per name; its price is the fee per name). */
@@ -207,7 +208,16 @@ async function fetchFestivals(): Promise<Festival[]> {
 }
 
 async function fetchSettings(catalog: Catalog): Promise<SiteSettings> {
-  const base: SiteSettings = { ...seedSettings, personalisationLive: Boolean(catalog.names) };
+  const byAddress = await getCapabilities()
+    .then((caps) => caps.queries.has("deliveryQuote"))
+    .catch(() => false);
+  const base: SiteSettings = {
+    ...seedSettings,
+    personalisationLive: Boolean(catalog.names),
+    // With delivery zones the backend prices and dates each address; checkout asks it.
+    deliveryByAddress: byAddress,
+    deliveryLeadDays: byAddress ? 0 : seedSettings.deliveryLeadDays,
+  };
   try {
     const { data } = await shopApi<{ activeChannel: { customFields: Record<string, string | boolean | null> } }>(CHANNEL_CONTENT);
     const c = data.activeChannel.customFields;

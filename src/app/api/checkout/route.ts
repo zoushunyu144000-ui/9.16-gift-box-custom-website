@@ -9,6 +9,7 @@ import { getStore, isVendureConfigured } from "@/lib/store";
 import type { Order } from "@/lib/types";
 import { earliestDeliveryDate } from "@/lib/dates";
 import { placeVendureOrder } from "@/lib/vendure/checkout";
+import { publicOrigin } from "@/lib/vendure/payments";
 
 const phone = z
   .string()
@@ -36,6 +37,8 @@ const Body = z.object({
   }),
   deliveryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Please choose a delivery date"),
   deliveryNotes: z.string().trim().max(300).optional().or(z.literal("")),
+  /** With the commerce backend's delivery zones: the delivery option chosen at checkout. */
+  deliveryOptionId: z.string().max(40).optional(),
   paymentMethod: z.enum(["fpx", "card", "ewallet"]),
   ageConfirmed: z.boolean(),
   termsAccepted: z.literal(true, { message: "Please accept the terms of sale" }),
@@ -79,7 +82,7 @@ export async function POST(req: Request) {
 
   if (isVendureConfigured) {
     try {
-      const result = await placeVendureOrder(body, new URL(req.url).origin);
+      const result = await placeVendureOrder(body, publicOrigin(req));
       if (!result.ok) {
         const { error, fieldErrors, lineProblems, signIn } = result;
         return NextResponse.json({ error, fieldErrors, lineProblems, signIn }, { status: result.status });

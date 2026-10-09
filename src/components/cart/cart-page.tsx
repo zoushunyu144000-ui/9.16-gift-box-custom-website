@@ -58,10 +58,12 @@ export function CartPageClient() {
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-ink-2">Delivery</dt>
-                  <dd className="tabular-nums">{quote ? (quote.deliveryFee ? formatRM(quote.deliveryFee, { decimals: true }) : "Free") : "—"}</dd>
+                  <dd className="tabular-nums">
+                    {!quote ? "—" : quote.delivery ? <span className="text-ink-2">At checkout</span> : quote.deliveryFee ? formatRM(quote.deliveryFee, { decimals: true }) : "Free"}
+                  </dd>
                 </div>
                 <div className="flex justify-between border-t border-line pt-4 text-[17px]">
-                  <dt>Total</dt>
+                  <dt>{quote?.delivery ? "Total before delivery" : "Total"}</dt>
                   <dd className="tabular-nums">{quote ? formatRM(quote.total, { decimals: true }) : "—"}</dd>
                 </div>
               </dl>

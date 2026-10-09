@@ -3,6 +3,7 @@ import type { Address, PaymentMethod } from "@/lib/types";
 import { getCapabilities } from "./capabilities";
 import { getCatalog } from "./catalog";
 import { errorMessage, isErrorResult, shopApi } from "./client";
+import { paymentPageUrl } from "./payments";
 import { getSessionToken, setSessionToken } from "./session";
 
 export interface CheckoutInput {
@@ -11,6 +12,7 @@ export interface CheckoutInput {
   address: Address;
   deliveryDate: string;
   deliveryNotes?: string;
+  deliveryOptionId?: string;
   paymentMethod: PaymentMethod;
   ageConfirmed: boolean;
   lines: { key: string; productId: string; variantId?: string; quantity: number; personalisation?: string; personalisationCount?: number; giftMessage?: string }[];
@@ -121,14 +123,16 @@ export async function placeVendureOrder(input: CheckoutInput, origin: string): P
   );
   if (isErrorResult(addressed.setOrderShippingAddress)) return fail(422, errorMessage(addressed.setOrderShippingAddress));
 
-  // The backend decides which deliveries reach this address and what they cost; take the first it offers.
-  const methods = await call<{ eligibleShippingMethods: { id: string }[] }>(`{ eligibleShippingMethods { id } }`);
-  if (!methods.eligibleShippingMethods.length) {
+  // The backend decides which deliveries reach this address and what they cost: the customer's
+  // choice when it is still offered, else the first.
+  const { eligibleShippingMethods: offered } = await call<{ eligibleShippingMethods: { id: string }[] }>(`{ eligibleShippingMethods { id } }`);
+  if (!offered.length) {
     return fail(422, "We can’t deliver to this address yet. Please check the postcode, or contact us on WhatsApp.", { fieldErrors: { postcode: "No delivery to this postcode" } });
   }
+  const method = offered.find((m) => m.id === input.deliveryOptionId) ?? offered[0];
   const shipped = await call<{ setOrderShippingMethod: unknown }>(
     `mutation($ids: [ID!]!) { setOrderShippingMethod(shippingMethodId: $ids) { ${ORDER_RESULT} } }`,
-    { ids: [methods.eligibleShippingMethods[0].id] },
+    { ids: [method.id] },
   );
   if (isErrorResult(shipped.setOrderShippingMethod)) return fail(422, errorMessage(shipped.setOrderShippingMethod));
 
@@ -152,28 +156,11 @@ export async function placeVendureOrder(input: CheckoutInput, origin: string): P
   const orderCode = transition?.code;
   if (!orderCode) return fail(500, "We couldn’t create your order. Please try again in a moment.");
 
-  // Pay through a hosted gateway when the shop has one; otherwise the test page stands in for it.
-  let redirectUrl = `/pay/${orderCode}`;
-  if (caps.mutations.has("createHostedPayment")) {
-    const { eligiblePaymentMethods } = await call<{ eligiblePaymentMethods: { code: string; isEligible: boolean }[] }>(`{ eligiblePaymentMethods { code isEligible } }`);
-    const hosted = eligiblePaymentMethods.find((m) => m.isEligible && m.code !== "test-payment");
-    if (hosted) {
-      const res = await call<{ createHostedPayment: { url?: string; errorCode?: string; message?: string } }>(
-        `mutation($input: CreateHostedPaymentInput!) { createHostedPayment(input: $input) { ... on HostedPaymentRedirect { url } ... on ErrorResult { errorCode message } } }`,
-        {
-          input: {
-            paymentMethodCode: hosted.code,
-            returnUrl: `${origin}/order/${orderCode}`,
-            cancelUrl: `${origin}/order/${orderCode}`,
-            preferredMethod: input.paymentMethod === "ewallet" ? "ewallet" : input.paymentMethod,
-          },
-        },
-      );
-      if (!res.createHostedPayment.url) return fail(502, res.createHostedPayment.message || "The payment page couldn’t be opened. Please try again.");
-      redirectUrl = res.createHostedPayment.url;
-    }
-  }
-
+  // Keep the session first, so the customer can still reach the order if opening the payment page fails.
   await setSessionToken(token);
-  return { ok: true, orderCode, redirectUrl };
+  // Pay through a hosted gateway when the shop has one; otherwise the test page stands in for it.
+  const page = await paymentPageUrl(call, orderCode, origin, input.paymentMethod);
+  await setSessionToken(token);
+  if ("error" in page) return fail(502, page.error);
+  return { ok: true, orderCode, redirectUrl: page.url };
 }

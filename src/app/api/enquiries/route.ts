@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { newOrderId } from "@/lib/security";
-import { getStore } from "@/lib/store";
+import { getStore, isVendureConfigured } from "@/lib/store";
 import type { Enquiry } from "@/lib/types";
+import { submitVendureEnquiry } from "@/lib/vendure/enquiries";
 
 const contact = z.object({
   name: z.string().trim().min(2, "Please enter your name").max(80),
@@ -48,6 +49,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Please check the highlighted fields.", fieldErrors }, { status: 422 });
   }
   const body = parsed.data;
+  if (isVendureConfigured) {
+    try {
+      const result = await submitVendureEnquiry(body);
+      return result.ok ? NextResponse.json({ id: result.code }) : NextResponse.json({ error: result.error }, { status: result.status });
+    } catch (err) {
+      console.error("[enquiries] backend submit failed", err);
+      return NextResponse.json({ error: "We couldn't send your request. Please try again or contact us on WhatsApp." }, { status: 502 });
+    }
+  }
   const store = await getStore();
   const now = new Date().toISOString();
   const base = {

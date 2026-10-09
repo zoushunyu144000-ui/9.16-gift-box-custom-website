@@ -9,8 +9,9 @@ import { getStore, isVendureConfigured } from "@/lib/store";
 
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
   const settings = await (await getStore()).getSettings();
-  const deliveryNote =
-    settings.freeDeliveryThreshold != null
+  const deliveryNote = settings.deliveryByAddress
+    ? "Delivery is priced for your address at checkout."
+    : settings.freeDeliveryThreshold != null
       ? `Delivery ${formatRM(settings.deliveryFee)}, free on orders from ${formatRM(settings.freeDeliveryThreshold)}.`
       : `Delivery ${formatRM(settings.deliveryFee)} is added at checkout.`;
 

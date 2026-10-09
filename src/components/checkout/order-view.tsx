@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatRM, ORDER_STATUS, paymentMethodName, personalisationHeading } from "@/lib/catalog";
 import { formatDate } from "@/lib/dates";
 import { useCart } from "../cart/cart-context";
@@ -9,10 +9,22 @@ import { Star } from "../logo";
 import { ProductImage } from "../product-image";
 import { useOrder } from "./use-order";
 
-export function OrderView({ orderId, token }: { orderId: string; token: string }) {
-  const { order, state, token: t } = useOrder(orderId, token);
+/** `backend`: orders live in the commerce backend, which opens a new payment page to retry. */
+export function OrderView({ orderId, token, backend = false }: { orderId: string; token: string; backend?: boolean }) {
+  const { order, state, token: t, reload } = useOrder(orderId, token);
   const { clear } = useCart();
   const cleared = useRef(false);
+  const polls = useRef(0);
+
+  // Back from the payment page before the gateway has confirmed: look again for a couple of minutes.
+  useEffect(() => {
+    if (order?.status !== "pending_payment" || polls.current >= 30) return;
+    const timer = setTimeout(() => {
+      polls.current += 1;
+      reload();
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [order, reload]);
 
   // Empty the bag once payment is confirmed (not before — a failed payment keeps the bag).
   useEffect(() => {
@@ -72,16 +84,7 @@ export function OrderView({ orderId, token }: { orderId: string; token: string }
           {pending && "We haven’t received confirmation of your payment yet. If you’ve just paid, this page will update shortly."}
           {order.status === "cancelled" && "This order has been cancelled. Please contact us if you have questions."}
         </p>
-        {(failed || pending) && (
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link href={`/pay/${order.id}?t=${t}`} className="btn btn-primary">
-              Try payment again
-            </Link>
-            <Link href="/checkout" className="btn btn-outline">
-              Change payment method
-            </Link>
-          </div>
-        )}
+        {(failed || pending) && <PayAgain orderId={order.id} token={t} backend={backend} />}
       </header>
 
       <div className="grid gap-10 py-10 md:grid-cols-2 md:gap-14">
@@ -177,6 +180,49 @@ export function OrderView({ orderId, token }: { orderId: string; token: string }
           </Link>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PayAgain({ orderId, token, backend }: { orderId: string; token: string; backend: boolean }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function retry() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/payments/retry", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ orderId }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.redirectUrl) throw new Error(data.error);
+      window.location.assign(data.redirectUrl);
+    } catch (e) {
+      setError((e as Error).message || "The payment page couldn’t be opened. Please try again.");
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-8">
+      <div className="flex flex-col justify-center gap-3 sm:flex-row">
+        {backend ? (
+          <button type="button" onClick={retry} disabled={busy} className="btn btn-primary">
+            {busy ? "Opening payment…" : "Try payment again"}
+          </button>
+        ) : (
+          <Link href={`/pay/${orderId}?t=${token}`} className="btn btn-primary">
+            Try payment again
+          </Link>
+        )}
+        <Link href="/checkout" className="btn btn-outline">
+          Change payment method
+        </Link>
+      </div>
+      {error && (
+        <p role="alert" className="mx-auto mt-4 max-w-[52ch] text-[14px] text-danger">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

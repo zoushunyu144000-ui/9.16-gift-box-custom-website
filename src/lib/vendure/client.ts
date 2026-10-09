@@ -7,6 +7,14 @@ import "server-only";
 export const VENDURE_SHOP_API_URL = process.env.VENDURE_SHOP_API_URL || "";
 export const isVendureConfigured = Boolean(VENDURE_SHOP_API_URL);
 
+/** Where staff manage the shop: VENDURE_DASHBOARD_URL, else the dashboard beside the Shop API. */
+export function dashboardUrl() {
+  if (process.env.VENDURE_DASHBOARD_URL) return process.env.VENDURE_DASHBOARD_URL;
+  const url = new URL(VENDURE_SHOP_API_URL);
+  url.pathname = url.pathname.replace(/shop-api\/?$/, "dashboard");
+  return url.toString();
+}
+
 export class VendureError extends Error {
   constructor(
     message: string,

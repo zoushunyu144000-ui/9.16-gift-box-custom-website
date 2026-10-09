@@ -3,11 +3,14 @@
 import { useEffect, useState } from "react";
 import type { CartLine, Quote } from "@/lib/types";
 
-/** Ask the server to price the bag. Re-runs whenever lines change. */
-export function useQuote(lines: CartLine[], ready: boolean) {
+/**
+ * Ask the server to price the bag. Re-runs whenever lines change, and, at checkout, when the
+ * address changes (`delivery`), for delivery priced per address.
+ */
+export function useQuote(lines: CartLine[], ready: boolean, delivery?: { postcode: string; state: string; optionId?: string }) {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [error, setError] = useState(false);
-  const signature = JSON.stringify(lines.map((l) => [l.key, l.quantity, l.personalisationCount]));
+  const signature = JSON.stringify([lines.map((l) => [l.key, l.quantity, l.personalisationCount]), delivery]);
 
   useEffect(() => {
     if (!ready || lines.length === 0) return;
@@ -27,6 +30,9 @@ export function useQuote(lines: CartLine[], ready: boolean) {
               personalisationCount,
               giftMessage,
             })),
+            postcode: delivery?.postcode || undefined,
+            state: delivery?.state || undefined,
+            deliveryOptionId: delivery?.optionId || undefined,
           }),
           signal: ctrl.signal,
         });

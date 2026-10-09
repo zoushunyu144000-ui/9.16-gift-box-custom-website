@@ -130,6 +130,8 @@ export interface SiteSettings {
   /** Minimum days between order and the earliest selectable delivery date. */
   deliveryLeadDays: number;
   deliveryNote: string;
+  /** Delivery is priced and dated per address at checkout (the commerce backend's delivery zones). */
+  deliveryByAddress?: boolean;
   /** International format without +, e.g. 60123456789 */
   whatsappNumber: string;
   contactEmail: string;
@@ -284,4 +286,27 @@ export interface Quote {
   total: number;
   containsAlcohol: boolean;
   hasProblems: boolean;
+  /**
+   * Delivery priced for the address (with the commerce backend): "postcode" until there is one
+   * (deliveryFee is then 0 and not yet known), "unavailable" when nothing delivers there.
+   */
+  delivery?: { status: "postcode" | "ok" | "unavailable"; options: DeliveryOption[]; selectedId?: string; promise?: DeliveryPromise };
+}
+
+export interface DeliveryOption {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+}
+
+/** When an address can receive its delivery. Dates are YYYY-MM-DD in Malaysia time. */
+export interface DeliveryPromise {
+  zoneLabel: string;
+  earliestDate: string;
+  /** Days nothing is sent out (holidays), for the date picker. */
+  closedDates: string[];
+  sameDayAvailable: boolean;
+  /** Customer wording, e.g. "Order before 3pm for same-day delivery". */
+  message: string;
 }
