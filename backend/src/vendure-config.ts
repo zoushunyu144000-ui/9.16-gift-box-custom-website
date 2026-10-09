@@ -16,8 +16,10 @@ import { emailHandlers, emailTemplateVars } from './email/branding';
 import { AgeCheckPlugin } from './plugins/age-check/age-check.plugin';
 import { CatalogDisplayPlugin } from './plugins/catalog-display/catalog-display.plugin';
 import { MalaysianDeliveryPlugin } from './plugins/delivery-my/delivery-my.plugin';
+import { EnquiriesPlugin } from './plugins/enquiries/enquiries.plugin';
 import { GiftMessagePlugin } from './plugins/gift-message/gift-message.plugin';
 import { PersonalisationPlugin } from './plugins/personalisation/personalisation.plugin';
+import { StorefrontContentPlugin } from './plugins/storefront-content/storefront-content.plugin';
 import { testPaymentsAllowed } from './plugins/test-payments/test-payments-allowed';
 
 const IS_DEV = process.env.APP_ENV === 'dev';
@@ -125,6 +127,10 @@ export const config: VendureConfig = {
             includePutrajaya: false,
             cutoffTime: '15:00',
         }),
+        StorefrontContentPlugin.init(),
+        // New-enquiry emails go to SHOP_NOTIFY_EMAIL. The storefront sends enquiries from its server, so
+        // every request would share one address here: it limits visitors itself instead.
+        EnquiriesPlugin.init({ codePrefix: 'ENQ', rateLimit: false }),
         DashboardPlugin.init({
             route: 'dashboard',
             appDir: IS_DEV ? path.join(__dirname, '../dist/dashboard') : path.join(__dirname, 'dashboard'),

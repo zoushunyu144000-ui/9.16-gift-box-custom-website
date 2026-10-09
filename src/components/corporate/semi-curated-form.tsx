@@ -170,9 +170,9 @@ export function SemiCuratedForm({ options, earliestDate, whatsappNumber }: { opt
                                 type="number"
                                 inputMode="numeric"
                                 min={1}
-                                max={10000}
+                                max={9999}
                                 value={qty[o.id]}
-                                onChange={(e) => setQty((q) => ({ ...q, [o.id]: Math.max(0, Math.min(10000, parseInt(e.target.value || "0", 10))) }))}
+                                onChange={(e) => setQty((q) => ({ ...q, [o.id]: Math.max(0, Math.min(9999, parseInt(e.target.value || "0", 10))) }))}
                                 className="field !min-h-9 w-20 !px-2 !py-1 text-center tabular-nums"
                                 aria-label={`Quantity of ${o.name}`}
                               />

@@ -1,0 +1,91 @@
+{{> header title="New enquiry" }}
+
+<mj-section background-color="#fafafa">
+    <mj-column>
+        <mj-text color="#525252" font-size="16px">
+            <strong>{{ typeLabel }} enquiry {{ code }}</strong>
+        </mj-text>
+        <mj-text color="#888888" padding-top="0">
+            Received {{ receivedAt }}
+        </mj-text>
+    </mj-column>
+</mj-section>
+
+<mj-section background-color="#fafafa">
+    <mj-column>
+        <mj-text color="#525252">
+            <h3>Contact</h3>
+            {{ contactName }}{{#if contactCompany}}, {{ contactCompany }}{{/if}}<br />
+            <a href="mailto:{{ contactEmail }}">{{ contactEmail }}</a><br />
+            <a href="{{ whatsappUrl }}">{{ contactPhone }}</a> (WhatsApp)
+        </mj-text>
+    </mj-column>
+</mj-section>
+
+{{#if items.length}}
+<mj-section background-color="#fafafa">
+    <mj-column>
+        <mj-text color="#525252">
+            <h3>Gifts chosen</h3>
+        </mj-text>
+        <mj-table color="#525252" cellpadding="4px">
+            <tr style="border-bottom: 1px solid #dddddd; text-align: left;">
+                <th>Qty</th>
+                <th>Gift</th>
+                <th style="text-align: right;">Each</th>
+                <th style="text-align: right;">Total</th>
+            </tr>
+            {{#each items}}
+            <tr style="border-bottom: 1px dashed #eeeeee;">
+                <td style="vertical-align: top;">{{ quantity }}</td>
+                <td style="vertical-align: top;">{{ name }}<br /><span style="color: #999999; font-size: 12px;">{{ sku }}</span></td>
+                <td style="vertical-align: top; text-align: right;">{{ unitPrice }}</td>
+                <td style="vertical-align: top; text-align: right;">{{ lineTotal }}</td>
+            </tr>
+            {{/each}}
+            <tr style="font-weight: bold;">
+                <td>{{ totalQuantity }}</td>
+                <td>Indicative value</td>
+                <td></td>
+                <td style="text-align: right;">{{ itemsTotal }}</td>
+            </tr>
+        </mj-table>
+        <mj-text color="#999999" font-size="12px">
+            At the prices when the enquiry was sent, before customisation and delivery.
+        </mj-text>
+    </mj-column>
+</mj-section>
+{{/if}}
+
+{{#if details.length}}
+<mj-section background-color="#fafafa">
+    <mj-column>
+        <mj-text color="#525252">
+            <h3>Details</h3>
+        </mj-text>
+        <mj-table color="#525252" cellpadding="4px">
+            {{#each details}}
+            <tr>
+                <td style="width: 35%; vertical-align: top; color: #888888;">{{ label }}</td>
+                <td style="vertical-align: top; white-space: pre-line;">{{ value }}</td>
+            </tr>
+            {{/each}}
+        </mj-table>
+    </mj-column>
+</mj-section>
+{{/if}}
+
+<mj-section background-color="#fafafa">
+    <mj-column>
+        <mj-text color="#525252">
+            Reply to this email to answer {{ contactName }} directly.
+        </mj-text>
+        {{#if dashboardLink}}
+        <mj-button font-family="Helvetica" background-color="#375a67" color="white" href="{{ dashboardLink }}">
+            Open in the dashboard
+        </mj-button>
+        {{/if}}
+    </mj-column>
+</mj-section>
+
+{{> footer }}

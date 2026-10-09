@@ -15,6 +15,9 @@ export type EnquiryRequest =
   | { type: "semi-curated"; contact: Contact; items: { productId: string; quantity: number }[]; [detail: string]: unknown }
   | { type: "bespoke"; contact: Contact; [detail: string]: unknown };
 
+/** The storefront's form names and what staff see in the dashboard. */
+const TYPES: Record<string, string> = { "semi-curated": "semi-customised", bespoke: "fully-customised" };
+
 /** Sends a corporate enquiry to the commerce backend, where staff follow it up in the dashboard. */
 export async function submitVendureEnquiry(request: EnquiryRequest): Promise<{ ok: true; code: string } | { ok: false; status: number; error: string }> {
   const caps = await getCapabilities();
@@ -38,7 +41,7 @@ export async function submitVendureEnquiry(request: EnquiryRequest): Promise<{ o
     `mutation($input: SubmitEnquiryInput!) { submitEnquiry(input: $input) { ... on EnquiryReceipt { code } ... on ErrorResult { errorCode message } } }`,
     {
       input: {
-        type,
+        type: TYPES[type] ?? type,
         contact: { name: contact.name, company: contact.company || undefined, email: contact.email || "", phone: contact.phone },
         items,
         details,

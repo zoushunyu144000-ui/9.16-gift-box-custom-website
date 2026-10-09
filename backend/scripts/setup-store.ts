@@ -3,6 +3,7 @@
  *   store.json        currency, language, country, tax rate, placeholder delivery rate, staff roles
  *   products.csv      products in Vendure's import format (photos may be URLs or files in assetsDir)
  *   collections.json  collections, built from the products' facets
+ *   content.json      (optional) the storefront's texts and contact details (storefront-content plugin)
  * then gives the shop the defaults of its plugins (delivery methods, …), which staff adjust in the dashboard.
  * Usage (from backend/): npm run setup:store -- stores/moire
  * Runs the migrations first. Refuses to run on a database that already has a shop, so it can't duplicate data;
@@ -34,6 +35,8 @@ import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 import type { INestApplicationContext } from '@nestjs/common';
 import { setupDeliveryMethods } from '../src/plugins/delivery-my';
+import { readEnquiryPermission, updateEnquiryPermission } from '../src/plugins/enquiries/constants';
+import { setupStorefrontContent } from '../src/plugins/storefront-content/setup';
 import { testPaymentsAllowed } from '../src/plugins/test-payments/test-payments-allowed';
 import { config } from '../src/vendure-config';
 
@@ -52,17 +55,19 @@ interface StoreDefinition {
 }
 
 const NOT_FOR_STAFF_ROLES = [Permission.SuperAdmin, Permission.Owner, Permission.Public, Permission.Authenticated];
+/** Permissions our plugins add; Vendure's Permission enum doesn't list them, so roles name them here. */
+const ENQUIRY_PERMISSIONS = [readEnquiryPermission.Permission, updateEnquiryPermission.Permission];
 
 /** Staff roles every shop starts with. Owners add people in the dashboard: Settings → Administrators. */
 const ROLE_PRESETS = {
     owner: {
         code: 'owner',
         description: 'Owner: everything except the super admin account',
-        permissions: Object.values(Permission).filter(p => !NOT_FOR_STAFF_ROLES.includes(p)),
+        permissions: [...Object.values(Permission).filter(p => !NOT_FOR_STAFF_ROLES.includes(p)), ...ENQUIRY_PERMISSIONS],
     },
     'customer-service': {
         code: 'customer-service',
-        description: 'Customer service: orders, draft orders and customers; catalogue read-only',
+        description: 'Customer service: orders, draft orders, customers and enquiries; catalogue read-only',
         permissions: [
             Permission.ReadCatalog,
             Permission.ReadOrder,
@@ -78,6 +83,7 @@ const ROLE_PRESETS = {
             Permission.ReadStockLocation,
             Permission.ReadCountry,
             Permission.ReadZone,
+            ...ENQUIRY_PERMISSIONS,
         ],
     },
     packer: {
@@ -142,7 +148,7 @@ async function main() {
                 console.log('This database already has a shop. Nothing was changed. (--plugins-only adds missing plugin defaults.)');
                 return;
             }
-            await setupPlugins(app, ctx);
+            await setupPlugins(app, ctx, dir);
             return;
         }
         if (pluginsOnly) {
@@ -174,7 +180,7 @@ async function main() {
         console.log(`Imported ${result.imported} products.`);
         for (const error of result.errors ?? []) console.warn(`  ${error}`);
 
-        await setupPlugins(app, ctx);
+        await setupPlugins(app, ctx, dir);
         await populateCollections(app, initialData);
         await app.get(SearchService).reindex(await app.get(RequestContextService).create({ apiType: 'admin' }));
         await waitForJobs(app.get(ConfigService));
@@ -188,11 +194,16 @@ async function main() {
  * Each shop plugin's starting configuration: what it adds is safe to add twice (existing entries are
  * kept as staff left them), and its placeholder prices and settings are adjusted in the dashboard.
  */
-async function setupPlugins(app: INestApplicationContext, ctx: RequestContext) {
+async function setupPlugins(app: INestApplicationContext, ctx: RequestContext, dir: string) {
     const delivery = await setupDeliveryMethods(app, ctx);
     console.log(
         `Delivery: created ${delivery.created.join(', ') || 'nothing'}; already there ${delivery.alreadyThere.join(', ') || 'nothing'}; switched off ${delivery.disabled.join(', ') || 'nothing'}.`,
     );
+    const contentFile = path.join(dir, 'content.json');
+    if (existsSync(contentFile)) {
+        await setupStorefrontContent(app, ctx, JSON.parse(readFileSync(contentFile, 'utf8')));
+        console.log('Storefront texts and contact details saved from content.json.');
+    }
 }
 
 /** Collections and the search index are built by background jobs; let them finish before closing. */
