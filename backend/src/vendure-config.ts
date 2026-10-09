@@ -13,6 +13,7 @@ import 'dotenv/config';
 import path from 'path';
 import { AgeCheckPlugin } from './plugins/age-check/age-check.plugin';
 import { GiftMessagePlugin } from './plugins/gift-message/gift-message.plugin';
+import { LoyaltyPlugin } from './plugins/loyalty/loyalty.plugin';
 import { PersonalisationPlugin } from './plugins/personalisation/personalisation.plugin';
 
 const IS_DEV = process.env.APP_ENV === 'dev';
@@ -112,6 +113,7 @@ export const config: VendureConfig = {
         PersonalisationPlugin.init({ namesSku: 'personalised-name', defaultMaxLength: 20 }),
         GiftMessagePlugin.init({ maxLength: 200 }),
         AgeCheckPlugin.init({ facetCode: 'alcohol', minimumAge: 21 }),
+        LoyaltyPlugin.init({ pointsPerRinggit: 1, pointValueSen: 1, minRedeemPoints: 500, maxRedeemPercent: 50, earnOnState: 'PaymentSettled' }),
         DashboardPlugin.init({
             route: 'dashboard',
             appDir: IS_DEV ? path.join(__dirname, '../dist/dashboard') : path.join(__dirname, 'dashboard'),
