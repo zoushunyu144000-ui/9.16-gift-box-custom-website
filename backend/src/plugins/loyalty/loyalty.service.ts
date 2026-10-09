@@ -161,7 +161,7 @@ export class LoyaltyService implements OnApplicationBootstrap {
         if (!customer) return new LoyaltyPointsError('Please sign in to use your points.');
         const activeOrder = await this.activeOrderService.getActiveOrder(ctx, undefined);
         const order = activeOrder && (await this.orderService.findOne(ctx, activeOrder.id));
-        if (!order || order.lines.length === 0) return new LoyaltyPointsError('Please add something to your bag first.');
+        if (!order) return new LoyaltyPointsError('Please add something to your bag first.');
         if (!order.customerId || !idsAreEqual(order.customerId, customer.id)) {
             return new LoyaltyPointsError('Please sign in again to use your points.');
         }
@@ -174,6 +174,7 @@ export class LoyaltyService implements OnApplicationBootstrap {
             await this.setPointsRequested(ctx, order, 0);
             return this.orderService.applyPriceAdjustments(ctx, order);
         }
+        if (order.lines.length === 0) return new LoyaltyPointsError('Please add something to your bag first.');
         try {
             // Price the order without points to measure the subtotal they may pay for, then with them. A refusal
             // throws, which rolls back to a savepoint, so the order keeps the points it had before.

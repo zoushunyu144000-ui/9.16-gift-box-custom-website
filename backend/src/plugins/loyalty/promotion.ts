@@ -22,7 +22,10 @@ export function createLoyaltyPromotionOperations(options: LoyaltyOptions) {
         priorityValue: 1000,
         check(ctx, order) {
             const points = pointsRequestedOn(order);
-            if (points === 0 || points < options.minRedeemPoints) return false;
+            if (points === 0) return false;
+            // Once the order is placed its points have been taken, so the discount stays when staff modify the order.
+            if (order.orderPlacedAt) return { points };
+            if (points < options.minRedeemPoints) return false;
             const subtotal = productsSubtotalSen(order, ctx.channel.pricesIncludeTax);
             return points <= maxRedeemablePoints(subtotal, options) ? { points } : false;
         },
@@ -34,7 +37,9 @@ export function createLoyaltyPromotionOperations(options: LoyaltyOptions) {
         args: {},
         conditions: [condition],
         execute(ctx, order, args, state) {
-            return -pointsValue(state[LOYALTY_CONDITION_CODE].points, options.pointValueSen);
+            const value = pointsValue(state[LOYALTY_CONDITION_CODE].points, options.pointValueSen);
+            // Never more than the items cost; only reachable when staff remove items from a placed order.
+            return -Math.min(value, Math.max(productsSubtotalSen(order, ctx.channel.pricesIncludeTax), 0));
         },
     });
 

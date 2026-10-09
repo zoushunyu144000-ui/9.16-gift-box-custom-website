@@ -63,8 +63,8 @@ describe('points discount promotion', () => {
     const { condition, action } = createLoyaltyPromotionOperations(DEFAULT_LOYALTY_OPTIONS);
     const ctx = { channel: { pricesIncludeTax: true } } as unknown as RequestContext;
     const promotion = {} as Promotion;
-    const order = (points: number, subTotalWithTax: number) =>
-        ({ customFields: { loyaltyPointsApplied: points }, subTotal: subTotalWithTax, subTotalWithTax }) as unknown as Order;
+    const order = (points: number, subTotalWithTax: number, orderPlacedAt?: Date) =>
+        ({ customFields: { loyaltyPointsApplied: points }, subTotal: subTotalWithTax, subTotalWithTax, orderPlacedAt }) as unknown as Order;
 
     it('applies when the points fit the order, passing them to the action', async () => {
         assert.deepEqual(await condition.check(ctx, order(1000, 40000), [], promotion), { points: 1000 });
@@ -80,6 +80,15 @@ describe('points discount promotion', () => {
     it('takes exactly the points’ value off', async () => {
         const state = { [LOYALTY_CONDITION_CODE]: { points: 1000 } };
         assert.equal(await action.execute(ctx, order(1000, 40000), [], state, promotion), -1000);
+    });
+
+    it('keeps the discount on a placed order whose points were taken, even after staff change it', async () => {
+        const placed = order(2000, 3000, new Date()); // items cut to RM 30 after 2,000 points were used
+        assert.deepEqual(await condition.check(ctx, placed, [], promotion), { points: 2000 });
+        const state = { [LOYALTY_CONDITION_CODE]: { points: 2000 } };
+        assert.equal(await action.execute(ctx, placed, [], state, promotion), -2000);
+        // ...but never takes off more than the items cost.
+        assert.equal(await action.execute(ctx, order(2000, 1500, new Date()), [], state, promotion), -1500);
     });
 
     it('applies only together with its condition', () => {

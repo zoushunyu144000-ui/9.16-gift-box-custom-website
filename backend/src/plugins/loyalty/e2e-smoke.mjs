@@ -196,6 +196,13 @@ async function main() {
     points = await balance();
     expect('order 3 earns floor(RM 138) points', points === 500 + 138, `balance ${points}`);
 
+    // Removing points always works, even from a bag that has been emptied.
+    await addItem(shop, variants, 'leather-journal', 1);
+    r = (await shop(APPLY, { points: 500 })).applyLoyaltyPoints;
+    await shop(`mutation { removeAllOrderLines { ... on Order { id } ... on ErrorResult { message } } }`);
+    r = (await shop(APPLY, { points: 0 })).applyLoyaltyPoints;
+    expect('points can be removed from an emptied bag', r.__typename === 'Order' && r.customFields.loyaltyPointsApplied === 0, r.message ?? `balance ${await balance()}`);
+
     // ── Guests don't earn ────────────────────────────────────────────────────
     const guest = session('shop-api');
     await addItem(guest, variants, 'notebook-and-pen-set', 1);
