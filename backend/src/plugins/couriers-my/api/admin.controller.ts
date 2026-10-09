@@ -65,9 +65,12 @@ export class CourierAdminController {
         else res.redirect(302, url);
     }
 
-    /** EasyParcel sends the merchant back here with a code; the tokens are stored for the channel. */
+    /**
+     * EasyParcel sends the merchant back here with a code; the tokens are stored for the channel. No @Allow:
+     * the redirect carries no channel token, so the permission is checked on the channel sealed in the state
+     * (see EasyParcelAuthService.completeAuthorization), for the administrator who started the flow.
+     */
     @Get('easyparcel/oauth/callback')
-    @Allow(Permission.UpdateSettings)
     async callback(
         @Ctx() ctx: RequestContext,
         @Query('code') code: string | undefined,
@@ -89,7 +92,7 @@ export class CourierAdminController {
         } catch (e) {
             const message = e instanceof OAuthStateError || e instanceof ProviderError ? e.message : 'The connection could not be completed.';
             if (!(e instanceof OAuthStateError)) Logger.warn(`EasyParcel connection failed: ${(e as Error).message}`, loggerCtx);
-            reply(400, 'EasyParcel not connected', message);
+            reply(e instanceof OAuthStateError ? e.status : 400, 'EasyParcel not connected', message);
         }
     }
 

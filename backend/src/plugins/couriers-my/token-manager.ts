@@ -37,6 +37,8 @@ export class TokenManager {
         private readonly refreshTokens: (refreshToken: string) => Promise<EasyParcelTokens>,
         private readonly now: () => number = Date.now,
         private readonly marginMs = DEFAULT_REFRESH_MARGIN_MS,
+        /** Told about every failed refresh, including ones covered by a still-valid token, so they get logged. */
+        private readonly onRefreshError?: (key: string, error: unknown) => void,
     ) {}
 
     async getAccessToken(key: string, options: { forceRefresh?: boolean; marginMs?: number } = {}): Promise<string> {
@@ -69,6 +71,7 @@ export class TokenManager {
         } catch (error) {
             const latest = await this.store.load(key);
             if (latest && latest.accessToken !== current.accessToken && !isExpired(latest, this.now())) return latest.accessToken;
+            this.onRefreshError?.(key, error);
             // A routine early refresh can wait for the next call; a forced one (after a 401) can't.
             if (!forced && !isExpired(current, this.now())) return current.accessToken;
             throw error;

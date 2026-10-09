@@ -177,10 +177,12 @@ const completedData = {
     },
     updatedAt: '2026-04-01T15:17.00Z',
 };
-const keys = { apiKey: 'pk_test_69d70a31a0e00e80d02050750984a7ee', apiSecret: 'sk_test_webhook_secret', paths: ['/delivery/lalamove/webhook'] };
+const SENT_AT = 1775027867;
+// The clock a minute after the sample was sent, for the age check.
+const keys = { apiKey: 'pk_test_69d70a31a0e00e80d02050750984a7ee', apiSecret: 'sk_test_webhook_secret', paths: ['/delivery/lalamove/webhook'], now: (SENT_AT + 60) * 1000 };
 const envelope = (data: unknown, signature: string, extra: Record<string, unknown> = {}) => ({
     apiKey: keys.apiKey,
-    timestamp: 1775027867,
+    timestamp: SENT_AT,
     signature,
     eventId: 'A784FE12-D336-4776-ABDB-CFEE9A9DB995',
     eventType: 'ORDER_STATUS_CHANGED',
@@ -229,6 +231,43 @@ describe('Lalamove webhook verification', () => {
         const signed = JSON.stringify(envelope(completedData, COMPLETED_SIGNATURE));
         const smuggled = `${signed.slice(0, -1)},"data":${JSON.stringify({ order: { orderId: '999', status: 'COMPLETED' } })}}`;
         assert.equal(verifyLalamoveWebhook(smuggled, keys).kind, 'rejected');
+    });
+
+    it('rejects every event while Lalamove has no credentials (an empty secret would sign anything)', () => {
+        const unsigned = { ...envelope(completedData, ''), apiKey: '' };
+        unsigned.signature = createHmac('sha256', '')
+            .update(`${SENT_AT}\r\nPOST\r\n/delivery/lalamove/webhook\r\n\r\n${JSON.stringify(completedData)}`)
+            .digest('hex');
+        const result = verifyLalamoveWebhook(JSON.stringify(unsigned), { ...keys, apiKey: '', apiSecret: '' });
+        assert.deepEqual(result, { kind: 'rejected', reason: 'Lalamove is not configured' });
+        assert.equal(verifyLalamoveWebhook('', { ...keys, apiKey: '', apiSecret: '' }).kind, 'ping');
+    });
+
+    it('acknowledges but does not process a signed body older than 48 hours or an hour ahead of our clock', () => {
+        const body = JSON.stringify(envelope(completedData, COMPLETED_SIGNATURE));
+        assert.equal(verifyLalamoveWebhook(body, { ...keys, now: (SENT_AT + 47 * 3600) * 1000 }).kind, 'event');
+        assert.equal(verifyLalamoveWebhook(body, { ...keys, now: (SENT_AT + 49 * 3600) * 1000 }).kind, 'expired');
+        assert.equal(verifyLalamoveWebhook(body, { ...keys, now: (SENT_AT - 50 * 60) * 1000 }).kind, 'event');
+        assert.equal(verifyLalamoveWebhook(body, { ...keys, now: (SENT_AT - 2 * 3600) * 1000 }).kind, 'expired');
+        // The window applies only after the signature: an old forged body is still rejected.
+        assert.equal(verifyLalamoveWebhook(JSON.stringify(envelope(completedData, '0'.repeat(64))), { ...keys, now: (SENT_AT + 49 * 3600) * 1000 }).kind, 'rejected');
+    });
+
+    it('dedupes on the signed content: the unsigned eventId and whitespace do not change the key', () => {
+        const key = (body: string) => {
+            const result = verifyLalamoveWebhook(body, keys);
+            assert.equal(result.kind, 'event');
+            return result.kind === 'event' ? result.event.eventKey : '';
+        };
+        const original = key(JSON.stringify(envelope(completedData, COMPLETED_SIGNATURE)));
+        assert.match(original, /^lalamove:[0-9a-f]{64}$/);
+        assert.equal(key(JSON.stringify(envelope(completedData, COMPLETED_SIGNATURE, { eventId: 'replayed-with-a-new-id' }))), original);
+        assert.equal(key(JSON.stringify(envelope(completedData, COMPLETED_SIGNATURE), null, 2)), original);
+        const later = SENT_AT + 30;
+        const resent = createHmac('sha256', keys.apiSecret)
+            .update(`${later}\r\nPOST\r\n/delivery/lalamove/webhook\r\n\r\n${JSON.stringify(completedData)}`)
+            .digest('hex');
+        assert.notEqual(key(JSON.stringify(envelope(completedData, resent, { timestamp: later }))), original);
     });
 
     it('answers pings: an empty body or a body without an event', () => {

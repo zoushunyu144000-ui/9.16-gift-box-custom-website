@@ -64,8 +64,10 @@ Run the migration (`npm run migrate`, or just start the server).
    Set `EASYPARCEL_CLIENT_ID` / `EASYPARCEL_CLIENT_SECRET`. One app serves every client shop.
 2. Connect the shop's account: signed in to the dashboard (UpdateSettings), open
    `<VENDURE_PUBLIC_URL>/delivery/easyparcel/connect` in the same browser, log in to EasyParcel (a **demo** account
-   for sandbox, the live account for production) and allow access. Multi-channel: add `?vendure-token=<channel token>`;
-   channels without their own account use the default channel's.
+   for sandbox, the live account for production) and allow access. The callback checks that the same administrator
+   is still signed in with UpdateSettings on that channel. Multi-channel: add `?vendure-token=<channel token>`;
+   channels without their own account use the default channel's. Rates, bookings, tracking and cancellations for an
+   order all use its own channel's account.
 3. `GET /delivery/easyparcel/status` shows the connection and the **webhook URL** (with its secret). Add it in the
    Developer Hub → App → Webhook with the topics *Shipment Status Update*, *Shipment AWB Update* and *Tracking
    Status Update*.
@@ -99,7 +101,8 @@ tracking page and label links, last update.
 order { fulfillments { state method trackingCode customFields { trackingUrl shipmentStatus } } }
 ```
 
-`provider`, `providerOrderId`, `labelUrl` and `lastEventAt` are admin-only.
+`provider`, `providerOrderId`, `labelUrl` and `lastEventAt` are admin-only. One more field, `labelSize` (the size
+chosen when booking, for a label that arrives with a later AWB), is internal and in neither API.
 
 ### Statuses
 
@@ -116,6 +119,10 @@ order { fulfillments { state method trackingCode customFields { trackingUrl ship
 Failed and cancelled shipments are not moved automatically: staff cancel the fulfillment and book again.
 Manual-courier fulfillments follow staff actions (Shipped → `in_transit`, Delivered → `delivered`).
 
+`delivered`, `failed` and `cancelled` are final: a later reading can't change them (except a Lalamove
+ORDER_REPLACED, which moves a cancelled booking to its clone). EasyParcel statuses only move forward; a Lalamove
+order may step back to `booked` when a driver rejects it after a match, as Lalamove's docs describe.
+
 ### Customer emails
 
 `static/email/templates/shipment-update/body.hbs`, sent for every fulfillment (any handler) on Shipped ("Your order
@@ -128,21 +135,28 @@ plugin adds the handlers to the EmailPlugin (`customerEmails: false` to turn off
 - **Lalamove webhooks** are verified as the webhook spec (v1.5) describes: the `apiKey` must match and the
   `signature` must equal HMAC-SHA256(secret, `timestamp\r\nPOST\r\n<path>\r\n\r\n<data JSON>`), checked on the exact
   bytes received (with the spec's re-serialised form as a fallback). Only the signed `data` is used. Empty bodies
-  (Lalamove's URL check) get 200; bad signatures 401.
+  (Lalamove's URL check) get 200; bad signatures 401, and so does every event while the Lalamove keys aren't set. A
+  correctly signed body more than 48 hours old (Lalamove retries for 24) or over an hour ahead of the server clock
+  gets 200 but is not processed, with a warning: a late retry never counts towards Lalamove disabling the URL,
+  and the reconcile catches up.
 - **EasyParcel webhooks** carry no signature: the URL has a secret (404 otherwise) and the body only says *which*
   shipment changed. Its state is always re-fetched from the API.
 - Webhooks are answered at once and processed by the **worker** (job queue `couriers-my-sync`, retried), which
   re-fetches the shipment from the provider and applies what the provider reports.
-- **Idempotent**: each event's key (Lalamove `eventId`, a hash of the EasyParcel delivery) is stored in
-  `courier_shipment_event`; a delivery already processed is ignored, and applying the same state twice changes nothing.
+- **Idempotent**: each event's key is stored in `courier_shipment_event`: for Lalamove a hash of the signed
+  timestamp and data (not `eventId`, which isn't signed, so a replay under a new id is still caught), for EasyParcel
+  a hash of the delivery. A delivery already processed is ignored, and applying the same state twice changes nothing.
 - **Out of order**: a Lalamove event older than the last one applied (`lastEventAt`, provider time) is logged and
-  skipped. If an event announces a final status the API doesn't show yet, the job retries.
+  skipped, final statuses stay final and EasyParcel statuses never step back (see Statuses). If an event announces a
+  final status the API doesn't show yet, the job retries.
 - **ORDER_REPLACED** (Lalamove cancels and clones an order): the fulfillment moves to the new order id (tracking code
   and link updated); the old order's CANCELED event is then ignored.
 - **Reconcile** every 30 minutes (scheduled task `couriers-my-reconcile`, in the worker) for shipments that are not
-  failed, cancelled or Delivered (up to 30 days old), batching EasyParcel tracking 50 AWBs at a time. It also
-  refreshes EasyParcel tokens expiring within the hour, so an idle shop stays connected. Run it from the dashboard's scheduled tasks or
-  `POST /delivery/shipments/reconcile`; one shipment: `POST /delivery/shipments/<fulfillmentId>/refresh`.
+  failed, cancelled or Delivered (up to 30 days old), batching EasyParcel tracking per connected account, 50 AWBs at
+  a time. EasyParcel shipments still `booked` also get their details re-read, which is where a cancellation made on
+  EasyParcel's side shows. It also refreshes EasyParcel tokens expiring within the hour, so an idle shop stays
+  connected. Run it from the dashboard's scheduled tasks or `POST /delivery/shipments/reconcile`; one shipment:
+  `POST /delivery/shipments/<fulfillmentId>/refresh`.
 
 ## Admin routes
 
@@ -151,7 +165,7 @@ All need an admin session (dashboard cookie) or Admin API bearer token.
 | Route | Permission | |
 |---|---|---|
 | `GET /delivery/easyparcel/connect` | UpdateSettings | Redirects to EasyParcel's authorise page (`?format=json` → `{ url }`). |
-| `GET /delivery/easyparcel/oauth/callback` | UpdateSettings | EasyParcel returns here; stores the tokens. |
+| `GET /delivery/easyparcel/oauth/callback` | UpdateSettings on the channel in the state | EasyParcel returns here; stores the tokens. Checked in the handler (the redirect can't carry a channel token): the admin who started, still signed in. |
 | `GET /delivery/easyparcel/status` | UpdateSettings | Connection, token expiry, redirect URI, webhook URL. Never tokens. |
 | `POST /delivery/easyparcel/disconnect` | UpdateSettings | Forgets the channel's tokens. |
 | `GET /delivery/easyparcel/rates?toPostcode=&toState=&weightKg=` | ReadSettings | What checkout would get from `easyParcelRateProvider`. |
@@ -187,8 +201,9 @@ initialises providers like Vendure strategies; it doesn't have to.
 
 - `npm test` runs the unit tests (`*.spec.ts`): Lalamove signing (vectors computed independently; the docs' own
   example elides the body), request bodies, webhook verification (pretty-printed bodies, forged and smuggled data,
-  proxy paths), status mapping, update planning (idempotency, stale events, transitions, replaced orders),
-  EasyParcel payloads, service choice, subdivision codes, phone numbers, token refresh and sealing.
+  proxy paths, missing keys, the time window, dedupe keys), status mapping, update planning (idempotency, stale
+  events, final and forward-only statuses, transitions, replaced orders), EasyParcel payloads, service choice,
+  subdivision codes, phone numbers, token refresh and sealing.
 - `node src/plugins/couriers-my/e2e-smoke.mjs` (from `backend/`, with nothing on port 3013) starts the server and
   worker against local mock Lalamove, EasyParcel and Google servers and walks through connect, rates, bookings,
   webhooks, reconcile, cancellations, emails and the Shop API order.

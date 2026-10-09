@@ -401,7 +401,7 @@ async function placeOrder(items, address) {
 
 let eventSeq = 0;
 async function lalamoveWebhook(eventType, data, options = {}) {
-    const timestamp = Math.floor(Date.now() / 1000);
+    const timestamp = options.timestamp ?? Math.floor(Date.now() / 1000);
     const secret = options.secret ?? LALAMOVE.secret;
     const signature = createHmac('sha256', secret).update(`${timestamp}\r\nPOST\r\n/delivery/lalamove/webhook\r\n\r\n${JSON.stringify(data)}`).digest('hex');
     const body = options.body ?? JSON.stringify({ apiKey: LALAMOVE.key, timestamp, signature, eventId: options.eventId ?? `E2E-${RUN}-${++eventSeq}`, eventType, eventVersion: 'v3', data });
@@ -538,8 +538,16 @@ async function main() {
 
     const getsBeforeDuplicate = lm.calls.get;
     const duplicate = await lalamoveWebhook(null, null, { body: pickedUp.body });
+    // eventId isn't signed: a replay under a new one must still be recognised.
+    const renamed = await lalamoveWebhook(null, null, { body: pickedUp.body.replace(/"eventId":"[^"]+"/, `"eventId":"E2E-${RUN}-replayed"`) });
+    const old = await lalamoveWebhook('ORDER_STATUS_CHANGED', statusEvent(replacement.orderId, 'PICKED_UP', minutesFromNow(5)), {
+        timestamp: Math.floor(Date.now() / 1000) - 3 * 86_400,
+    });
     await sleep(1500);
-    expect('a redelivered webhook is answered 200 and not processed again', duplicate.status === 200 && lm.calls.get === getsBeforeDuplicate);
+    expect(
+        'a redelivered webhook (same body, or a new eventId) and a signed one 3 days old get 200 and are not processed',
+        duplicate.status === 200 && renamed.status === 200 && old.status === 200 && lm.calls.get === getsBeforeDuplicate,
+    );
     const forged = await lalamoveWebhook('ORDER_STATUS_CHANGED', statusEvent(replacement.orderId, 'COMPLETED', minutesFromNow(6)), { secret: 'sk_test_wrong' });
     const empty = await fetch(`${BASE}/delivery/lalamove/webhook`, { method: 'POST' });
     expect('a webhook with a wrong signature is rejected (401); an empty ping gets 200', forged.status === 401 && empty.status === 200);

@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import { describe, it } from 'node:test';
-import { RequestContext } from '@vendure/core';
+import { Channel, RequestContext } from '@vendure/core';
 import { rawBodyMiddleware, RawBodyRequest } from './api/raw-body.middleware';
 import { EasyParcelQuotationResult } from './clients/easyparcel';
 import { EasyParcelRateService, easyParcelRateProvider } from './easyparcel-rate-provider';
 import { manualCourierHandler, trackingLink } from './handlers/manual-courier.handler';
 import { originAddress, PLACEHOLDER_ORIGIN, resolveOptions } from './options';
 import { EasyParcelAuthService } from './services/easyparcel-auth.service';
+import { ownChannel } from './services/fulfillment-orders';
 
 describe('plugin options', () => {
     it('defaults to the Lalamove sandbox and builds URLs from the public URL', () => {
@@ -155,5 +156,17 @@ describe('EasyParcel rate provider', () => {
     it('matches delivery-my\'s LiveRateProvider shape', () => {
         assert.equal(typeof easyParcelRateProvider.getRates, 'function');
         assert.equal(easyParcelRateProvider.getRates.length, 2);
+    });
+});
+
+describe('the channel a shipment belongs to', () => {
+    const channel = (id: number) => ({ id }) as Channel;
+    const defaultChannel = channel(1);
+
+    it('is the order\'s own channel, else the default one', () => {
+        assert.equal(ownChannel([{ channels: [channel(1), channel(4)] }], defaultChannel).id, 4);
+        assert.equal(ownChannel([{ channels: [channel(4), channel(1)] }], defaultChannel).id, 4);
+        assert.equal(ownChannel([{ channels: [channel(1)] }], defaultChannel).id, 1);
+        assert.equal(ownChannel([], defaultChannel).id, 1);
     });
 });

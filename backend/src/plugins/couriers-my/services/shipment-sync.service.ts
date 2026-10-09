@@ -1,6 +1,5 @@
 import { Inject, Injectable, OnApplicationBootstrap, OnModuleInit } from '@nestjs/common';
 import {
-    Channel,
     ChannelService,
     EventBus,
     Fulfillment,
@@ -19,7 +18,7 @@ import {
     TransactionalConnection,
 } from '@vendure/core';
 import { In, IsNull, MoreThan, Not } from 'typeorm';
-import { EasyParcelApi, EasyParcelTrackingResult, parseEasyParcelTime, withLabelSize } from '../clients/easyparcel';
+import { EasyParcelApi, EasyParcelTrackingResult, LabelSize, parseEasyParcelTime, withLabelSize } from '../clients/easyparcel';
 import { EasyParcelWebhookEvent } from '../clients/easyparcel-webhook';
 import { lastStopPodStatus, LalamoveOrder } from '../clients/lalamove';
 import { LalamoveWebhookEvent } from '../clients/lalamove-webhook';
@@ -32,6 +31,7 @@ import { easyParcelStatus, lalamoveStatus } from '../status';
 import { CourierFulfillmentFields, FINAL_SHIPMENT_STATUSES, isFinalShipmentStatus, ShipmentStatus } from '../types';
 import { CourierBookingService } from './courier-booking.service';
 import { EasyParcelAuthService } from './easyparcel-auth.service';
+import { ordersByFulfillment, ownChannel } from './fulfillment-orders';
 
 /** A verified webhook, queued for the worker. Only identifiers travel: the state is re-fetched. */
 export interface SyncJob {
@@ -150,7 +150,7 @@ export class ShipmentSyncService implements OnModuleInit, OnApplicationBootstrap
         await this.queue.add(
             {
                 provider: 'lalamove',
-                eventKey: `lalamove:${event.eventId}`,
+                eventKey: event.eventKey,
                 eventType: event.eventType,
                 orderId: event.orderId,
                 prevOrderId: event.prevOrderId,
@@ -204,9 +204,10 @@ export class ShipmentSyncService implements OnModuleInit, OnApplicationBootstrap
             ...lalamoveObservation(order, occurredAt),
             ...(replaced ? { providerOrderId: order.orderId, trackingCode: order.orderId } : {}),
         };
-        // An event announcing a final status the API doesn't show yet is looked at again by a job retry.
+        // An event announcing a final status the API doesn't show yet is looked at again by a job retry. (The
+        // API may legitimately end elsewhere: COMPLETED with a failed proof of delivery reads as failed.)
         const announced = lalamoveStatus(job.status);
-        const lagging = !!announced && isFinalShipmentStatus(announced) && observation.status !== announced;
+        const lagging = !!announced && isFinalShipmentStatus(announced) && !isFinalShipmentStatus(observation.status);
         await this.apply(fulfillment.id, observation, {
             provider: 'lalamove',
             source: 'webhook',
@@ -253,10 +254,16 @@ export class ShipmentSyncService implements OnModuleInit, OnApplicationBootstrap
         }
 
         // EasyParcel: one tracking call per connected account for up to 50 AWBs at a time.
+        const easyParcelShipments = open.filter(f => fields(f).provider === 'easyparcel');
+        const orders = await ordersByFulfillment(this.connection, easyParcelShipments.map(f => f.id));
+        const defaultChannel = await this.channelService.getDefaultChannel();
+        const accountOfChannel = new Map<string, Promise<string>>();
         const byAccount = new Map<string, Fulfillment[]>();
-        for (const fulfillment of open.filter(f => fields(f).provider === 'easyparcel')) {
+        for (const fulfillment of easyParcelShipments) {
             try {
-                const account = await this.easyParcelAuth.connectionChannelId(await this.channelIdOf(fulfillment.id));
+                const channelId = String(ownChannel(orders.get(String(fulfillment.id)) ?? [], defaultChannel).id);
+                if (!accountOfChannel.has(channelId)) accountOfChannel.set(channelId, this.easyParcelAuth.connectionChannelId(channelId));
+                const account = await accountOfChannel.get(channelId)!;
                 byAccount.set(account, [...(byAccount.get(account) ?? []), fulfillment]);
             } catch (error) {
                 summary.checked++;
@@ -313,9 +320,14 @@ export class ShipmentSyncService implements OnModuleInit, OnApplicationBootstrap
         prefetched: { api?: EasyParcelApi; track?: EasyParcelTrackingResult } = {},
     ): Promise<ShipmentObservation> {
         const custom = fields(fulfillment);
-        const api = prefetched.api ?? this.easyParcelAuth.api(await this.easyParcelAuth.connectionChannelId(await this.channelIdOf(fulfillment.id)));
-        // The details call is only needed for what tracking doesn't give: the AWB, links and cancellations.
-        const needsDetails = !prefetched.track || !fulfillment.trackingCode || !custom.trackingUrl || !custom.labelUrl;
+        const api = prefetched.api ?? this.easyParcelAuth.api(await this.easyParcelAuth.accountForFulfillment(fulfillment.id));
+        const prefetchedStatus = prefetched.track
+            ? easyParcelStatus(prefetched.track.latest_shipment_status_code, prefetched.track.latest_tracking_status)
+            : undefined;
+        // Details give what tracking doesn't: the AWB, the links, and a cancellation made on EasyParcel's side
+        // (only possible before the courier has the parcel, so while it is still booked).
+        const needsDetails =
+            !prefetched.track || !fulfillment.trackingCode || !custom.trackingUrl || !custom.labelUrl || (prefetchedStatus ?? 'booked') === 'booked';
         const details = needsDetails ? (await api.shipmentDetails(custom.providerOrderId!))?.shipment_details : undefined;
         const awb = details?.awb_number || fulfillment.trackingCode || undefined;
         const track =
@@ -323,14 +335,16 @@ export class ShipmentSyncService implements OnModuleInit, OnApplicationBootstrap
         const fromDetails = easyParcelStatus(details?.shipment_status_code, details?.shipment_status);
         const fromTracking = track ? easyParcelStatus(track.latest_shipment_status_code, track.latest_tracking_status) : undefined;
         const status: ShipmentStatus | undefined = fromDetails === 'cancelled' ? 'cancelled' : (fromTracking ?? fromDetails);
+        const labelSize = (['A4', 'A5', 'A6'].includes(custom.labelSize ?? '') ? custom.labelSize : this.options.easyParcel.defaultLabelSize) as LabelSize;
         return {
             status,
             providerStatus: (track?.latest_tracking_status ?? details?.shipment_status ?? undefined)?.slice(0, 255),
             eventAt: parseEasyParcelTime(track?.latest_event_date),
             trackingCode: awb,
             trackingUrl: details?.tracking_url,
-            // The booking stored the label in the chosen size; only fill it in when the AWB came later.
-            labelUrl: custom.labelUrl ? undefined : withLabelSize(details?.awb_url, this.options.easyParcel.defaultLabelSize),
+            // The booking stored the label when it had one; otherwise it comes with the AWB, in the size chosen then.
+            labelUrl: custom.labelUrl ? undefined : withLabelSize(details?.awb_url, labelSize),
+            forwardOnly: true,
         };
     }
 
@@ -479,12 +493,7 @@ export class ShipmentSyncService implements OnModuleInit, OnApplicationBootstrap
     }
 
     private async ordersOf(fulfillmentId: ID): Promise<Order[]> {
-        return this.connection.rawConnection
-            .getRepository(Order)
-            .createQueryBuilder('order')
-            .innerJoin('order.fulfillments', 'fulfillment', 'fulfillment.id = :id', { id: fulfillmentId })
-            .leftJoinAndSelect('order.channels', 'channel')
-            .getMany();
+        return (await ordersByFulfillment(this.connection, [fulfillmentId])).get(String(fulfillmentId)) ?? [];
     }
 
     private async belongsToChannel(fulfillmentId: ID, channelId: ID): Promise<boolean> {
@@ -492,19 +501,9 @@ export class ShipmentSyncService implements OnModuleInit, OnApplicationBootstrap
         return orders.length > 0 && orders.every(order => order.channels.some(channel => idsAreEqual(channel.id, channelId)));
     }
 
-    /** The order's own channel (every order also belongs to the default channel). */
-    private async channelOf(fulfillmentId: ID): Promise<Channel> {
-        const defaultChannel = await this.channelService.getDefaultChannel();
-        const [order] = await this.ordersOf(fulfillmentId);
-        return order?.channels.find(channel => !idsAreEqual(channel.id, defaultChannel.id)) ?? defaultChannel;
-    }
-
-    private async channelIdOf(fulfillmentId: ID): Promise<ID> {
-        return (await this.channelOf(fulfillmentId)).id;
-    }
-
-    /** A system context in the order's channel: fulfillment transitions are checked against it. */
+    /** A system context in the order's own channel: fulfillment transitions are checked against it. */
     private async contextFor(fulfillmentId: ID): Promise<RequestContext> {
-        return this.requestContextService.create({ apiType: 'admin', channelOrToken: await this.channelOf(fulfillmentId) });
+        const channel = ownChannel(await this.ordersOf(fulfillmentId), await this.channelService.getDefaultChannel());
+        return this.requestContextService.create({ apiType: 'admin', channelOrToken: channel });
     }
 }

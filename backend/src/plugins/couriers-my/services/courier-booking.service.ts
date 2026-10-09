@@ -144,9 +144,9 @@ export class CourierBookingService {
 
     /** Quotes the parcel, picks the service and submits it to EasyParcel (debits the prepaid wallet). */
     async bookEasyParcel(ctx: RequestContext, orders: Order[], lines: OrderLineRef[], args: EasyParcelBookingArgs): Promise<BookingResult> {
-        const channelId = await this.easyParcelAuth.connectionChannelId(ctx.channelId);
-        const api = this.easyParcelAuth.api(channelId);
         const order = await this.singleOrder(ctx, orders);
+        // The order's channel picks the account, as tracking and cancelling do (not the admin's channel).
+        const api = this.easyParcelAuth.api(await this.easyParcelAuth.accountForOrders([order]));
         const recipient = this.recipient(order);
         const parcel = buildParcel(await this.parcelLines(ctx, lines), this.options.defaultParcel, {
             weightKg: args.weightKg,
@@ -209,6 +209,8 @@ export class CourierBookingService {
                 shipmentStatus: 'booked',
                 // Only courier event times go here (webhook ordering compares them), never this server's clock.
                 lastEventAt: null,
+                // For a label that only comes with a later AWB.
+                labelSize,
             },
         };
     }
@@ -227,15 +229,16 @@ export class CourierBookingService {
                     await this.lalamove().cancelOrder(id);
                     Logger.info(`Cancelled Lalamove order ${id}`, loggerCtx);
                 } catch (error) {
-                    // Refused because the order already ended at Lalamove (before its webhook reached us)? Then
-                    // there is nothing left to cancel there.
+                    // Refused because Lalamove already cancelled, rejected or expired the order (before its
+                    // webhook reached us)? Then there is nothing left to cancel there. A delivered one stays.
                     const current = await this.lalamove().getOrder(id).catch(() => undefined);
-                    if (!current || !isFinalShipmentStatus(lalamoveStatus(current.status))) throw error;
-                    Logger.info(`Lalamove order ${id} had already ended (${current.status})`, loggerCtx);
+                    const ended = lalamoveStatus(current?.status);
+                    if (ended === 'delivered') return `Lalamove has already delivered order ${id}, so the fulfillment can't be cancelled.`;
+                    if (ended !== 'cancelled' && ended !== 'failed') throw error;
+                    Logger.info(`Lalamove order ${id} had already ended (${current?.status})`, loggerCtx);
                 }
             } else if (fields.provider === 'easyparcel') {
-                const channelId = await this.easyParcelAuth.connectionChannelId(ctx.channelId);
-                const result = await this.easyParcelAuth.api(channelId).cancel(id, 'Cancelled by the shop');
+                const result = await this.easyParcelAuth.api(await this.easyParcelAuth.accountForFulfillment(fulfillment.id)).cancel(id, 'Cancelled by the shop');
                 if (result.status !== 'success' && !/already cancel/i.test(result.message ?? '')) {
                     return `EasyParcel would not cancel shipment ${id}: ${result.message ?? 'no reason given'}`;
                 }
@@ -250,7 +253,7 @@ export class CourierBookingService {
     /** One booking goes to one address, so a courier fulfillment covers a single order. */
     private async singleOrder(ctx: RequestContext, orders: Order[]): Promise<Order & { customer?: Customer }> {
         if (orders.length !== 1) throw new Error('Book a courier for one order at a time.');
-        const order = await this.connection.getRepository(ctx, Order).findOne({ where: { id: orders[0].id }, relations: { customer: true } });
+        const order = await this.connection.getRepository(ctx, Order).findOne({ where: { id: orders[0].id }, relations: { customer: true, channels: true } });
         if (!order) throw new Error('Order not found.');
         if (!order.shippingAddress?.streetLine1) throw new Error(`Order ${order.code} has no shipping address.`);
         return order;

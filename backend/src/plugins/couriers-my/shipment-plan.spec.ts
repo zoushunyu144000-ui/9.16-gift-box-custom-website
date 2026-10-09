@@ -84,6 +84,35 @@ describe('planning a shipment update', () => {
         assert.equal(plan.changes.status, 'booked');
     });
 
+    it('keeps delivered, failed and cancelled once reached (a late reading cannot reopen them)', () => {
+        assert.equal(planShipmentUpdate(booked({ fulfillmentState: 'Delivered', status: 'delivered' }), { status: 'in_transit' }).changes.status, undefined);
+        assert.equal(planShipmentUpdate(booked({ status: 'failed' }), { status: 'out_for_delivery' }).changes.status, undefined);
+        assert.equal(planShipmentUpdate(booked({ status: 'failed' }), { status: 'out_for_delivery' }).transitionTo, null);
+        assert.equal(planShipmentUpdate(booked({ status: 'cancelled' }), { status: 'booked' }).changes.status, undefined);
+        // Final is final, also between final statuses: the fulfillment can't leave Delivered either.
+        assert.equal(planShipmentUpdate(booked({ status: 'delivered' }), { status: 'failed' }).changes.status, undefined);
+    });
+
+    it('never steps a forward-only source back (EasyParcel), but follows Lalamove driver rejections', () => {
+        const inTransit = booked({ fulfillmentState: 'Shipped', status: 'in_transit' });
+        assert.equal(planShipmentUpdate(inTransit, { status: 'picked_up', forwardOnly: true }).changes.status, undefined);
+        assert.equal(planShipmentUpdate(inTransit, { status: 'booked', forwardOnly: true }).changes.status, undefined);
+        assert.equal(planShipmentUpdate(inTransit, { status: 'out_for_delivery', forwardOnly: true }).changes.status, 'out_for_delivery');
+        assert.equal(planShipmentUpdate(inTransit, { status: 'cancelled', forwardOnly: true }).changes.status, 'cancelled');
+        // Lalamove: a driver rejection reverts PICKED_UP to ASSIGNING_DRIVER; the fulfillment stays Shipped.
+        const pickedUp = booked({ fulfillmentState: 'Shipped', status: 'out_for_delivery' });
+        const rejected = planShipmentUpdate(pickedUp, { status: 'booked' });
+        assert.equal(rejected.changes.status, 'booked');
+        assert.equal(rejected.transitionTo, null);
+    });
+
+    it('lets a replaced Lalamove order reopen a cancelled shipment, and only with a new id', () => {
+        const replaced = planShipmentUpdate(booked({ status: 'cancelled' }), { status: 'booked', providerOrderId: '3463513590991397328' });
+        assert.equal(replaced.changes.status, 'booked');
+        const sameId = planShipmentUpdate(booked({ status: 'cancelled' }), { status: 'booked', providerOrderId: '3463513590991397204' });
+        assert.equal(sameId.changes.status, undefined);
+    });
+
     it('keeps the current status when the provider status is unknown', () => {
         const plan = planShipmentUpdate(booked({ status: 'in_transit', fulfillmentState: 'Shipped' }), { providerStatus: 'Weird' });
         assert.ok(!plan.statusChanged);

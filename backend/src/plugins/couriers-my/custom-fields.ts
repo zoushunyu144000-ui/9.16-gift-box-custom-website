@@ -66,4 +66,6 @@ export const fulfillmentCustomFields: CustomFieldConfig[] = [
         readonly: true,
         label: en('Last courier update'),
     },
+    // Not in any API: the EasyParcel label size chosen at booking, for an AWB that arrives later.
+    { name: 'labelSize', type: 'string', length: 4, nullable: true, internal: true },
 ];

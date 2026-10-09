@@ -31,8 +31,9 @@ export class CourierWebhookController {
             res.status(401).json({ ok: false });
             return;
         }
+        if (result.kind === 'expired') Logger.warn(`Ignored a Lalamove webhook: ${result.reason} (check the server clock if this repeats)`, loggerCtx);
         // Wallet events and the URL check carry no order.
-        if (result.kind === 'event' && result.event.orderId && !(await this.sync.isProcessed(`lalamove:${result.event.eventId}`))) {
+        if (result.kind === 'event' && result.event.orderId && !(await this.sync.isProcessed(result.event.eventKey))) {
             await this.sync.enqueueLalamove(result.event);
         }
         res.status(200).json({ ok: true });

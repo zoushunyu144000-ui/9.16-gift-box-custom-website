@@ -77,6 +77,26 @@ describe('EasyParcel token refresh', () => {
         await assert.rejects(() => manager.getAccessToken('1', { forceRefresh: true }), /EasyParcel is down/);
     });
 
+    it('reports failed refreshes, also those covered by a still-valid token, but not recovered ones', async () => {
+        const reported: string[] = [];
+        const onError = (key: string, error: unknown) => reported.push(`${key}: ${(error as Error).message}`);
+        const failing = new TokenManager(memoryStore({ accessToken: 'a1', refreshToken: 'r1', expiresAt: minutes(2) }).store, async () => {
+            throw new Error('EasyParcel is down');
+        }, () => NOW, undefined, onError);
+        assert.equal(await failing.getAccessToken('1'), 'a1');
+        await assert.rejects(() => failing.getAccessToken('1', { forceRefresh: true }));
+        assert.deepEqual(reported, ['1: EasyParcel is down', '1: EasyParcel is down']);
+
+        reported.length = 0;
+        const { store, data } = memoryStore({ accessToken: 'a1', refreshToken: 'r1', expiresAt: minutes(-1) });
+        const recovered = new TokenManager(store, async () => {
+            data.set('1', { accessToken: 'a-worker', refreshToken: 'r-worker', expiresAt: minutes(600) });
+            throw new Error('invalid_grant');
+        }, () => NOW, undefined, onError);
+        assert.equal(await recovered.getAccessToken('1'), 'a-worker');
+        assert.deepEqual(reported, []);
+    });
+
     it('reports a missing or expired connection', async () => {
         await assert.rejects(() => new TokenManager(memoryStore().store, async () => ({ accessToken: 'x' })).getAccessToken('1'), NotConnectedError);
         const { store } = memoryStore({ accessToken: 'a1', refreshToken: null, expiresAt: minutes(-5) });

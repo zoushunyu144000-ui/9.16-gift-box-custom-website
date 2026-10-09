@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ChannelService, ID, Logger, RequestContext, TransactionalConnection } from '@vendure/core';
+import { ChannelService, ID, idsAreEqual, Logger, Order, Permission, RequestContext, TransactionalConnection } from '@vendure/core';
 import { LessThan } from 'typeorm';
 import { EasyParcelApi, EasyParcelOAuth, EasyParcelTokens } from '../clients/easyparcel';
 import { COURIERS_OPTIONS, EASYPARCEL_CALLBACK_PATH, EASYPARCEL_WEBHOOK_PATH, loggerCtx } from '../constants';
@@ -7,6 +7,7 @@ import { deriveKey, pkcePair, randomToken, seal, unseal } from '../crypto';
 import { EasyParcelConnection } from '../entities/easyparcel-connection.entity';
 import { ResolvedCouriersOptions } from '../options';
 import { NotConnectedError, TokenManager, TokenStore } from '../token-manager';
+import { ordersByFulfillment, ownChannel } from './fulfillment-orders';
 
 /** What the OAuth `state` carries through the merchant's browser, sealed so it can't be read or forged. */
 interface OAuthState {
@@ -26,7 +27,14 @@ interface SealedTokens {
     r?: string | null;
 }
 
-export class OAuthStateError extends Error {}
+export class OAuthStateError extends Error {
+    constructor(
+        message: string,
+        readonly status = 400,
+    ) {
+        super(message);
+    }
+}
 
 /**
  * Connects a channel's EasyParcel merchant account to our developer app (OAuth 2.0 authorization code
@@ -45,7 +53,13 @@ export class EasyParcelAuthService {
     ) {
         this.tokenKey = deriveKey(options.easyParcel.clientSecret, 'easyparcel-tokens');
         this.stateKey = deriveKey(options.easyParcel.clientSecret, 'easyparcel-oauth-state');
-        this.tokens = new TokenManager(this.store(), refreshToken => this.oauth().refresh(refreshToken, this.redirectUri()));
+        this.tokens = new TokenManager(
+            this.store(),
+            refreshToken => this.oauth().refresh(refreshToken, this.redirectUri()),
+            Date.now,
+            undefined,
+            (channelId, error) => Logger.warn(`Refreshing the EasyParcel token of channel ${channelId} failed: ${(error as Error).message}`, loggerCtx),
+        );
     }
 
     get configured(): boolean {
@@ -78,14 +92,24 @@ export class EasyParcelAuthService {
         return this.oauth().authorizeUrl({ redirectUri: this.redirectUri(), state: seal(state, this.stateKey), codeChallenge: challenge });
     }
 
-    /** Exchanges the code from the callback and stores the tokens for the channel that started the flow. */
+    /**
+     * Exchanges the code from the callback and stores the tokens for the channel that started the flow.
+     * EasyParcel's redirect can't carry a channel token, so the checks don't use the request's channel: the
+     * signed-in administrator must be the one who started (sealed in the state) and still hold UpdateSettings
+     * on the state's channel.
+     */
     async completeAuthorization(ctx: RequestContext, code: string, sealedState: string): Promise<{ channelId: string }> {
         const state = unseal<OAuthState>(sealedState, this.stateKey);
         if (!state || state.e < Date.now()) {
             throw new OAuthStateError('This EasyParcel connection link is invalid or has expired. Please start again from /delivery/easyparcel/connect.');
         }
-        if (state.u && state.u !== String(ctx.activeUserId ?? '')) {
-            throw new OAuthStateError('This EasyParcel connection was started by another administrator. Please start again.');
+        const user = ctx.session?.user;
+        if (!user || !state.u || state.u !== String(user.id)) {
+            throw new OAuthStateError('Please sign in to the dashboard in this browser as the administrator who started connecting EasyParcel, then start again.', 403);
+        }
+        const permissions = user.channelPermissions.find(channel => idsAreEqual(channel.id, state.c))?.permissions ?? [];
+        if (!permissions.includes(Permission.UpdateSettings)) {
+            throw new OAuthStateError('You need permission to update settings on this channel to connect EasyParcel.', 403);
         }
         const tokens = await this.oauth().exchangeCode({ code, redirectUri: this.redirectUri(), codeVerifier: state.v });
         await this.saveTokens(state.c, tokens, state.u || null);
@@ -105,6 +129,15 @@ export class EasyParcelAuthService {
             fetch: this.options.fetch,
             accessToken: refresh => this.accessToken(channelId, refresh),
         });
+    }
+
+    /** The account an order's shipments use: its own channel's connection, else the default channel's. */
+    async accountForOrders(orders: Array<Pick<Order, 'channels'>>): Promise<string> {
+        return this.connectionChannelId(ownChannel(orders, await this.channelService.getDefaultChannel()).id);
+    }
+
+    async accountForFulfillment(fulfillmentId: ID): Promise<string> {
+        return this.accountForOrders((await ordersByFulfillment(this.connection, [fulfillmentId])).get(String(fulfillmentId)) ?? []);
     }
 
     /** The channel whose connection serves this channel: its own, else the default channel's. */
@@ -153,10 +186,12 @@ export class EasyParcelAuthService {
         let refreshed = 0;
         for (const row of rows) {
             try {
-                await this.tokens.getAccessToken(row.channelId, { marginMs: withinMs });
+                // Forced, so a failure surfaces here (and in the count) instead of falling back to the old token.
+                await this.tokens.getAccessToken(row.channelId, { forceRefresh: true });
                 refreshed++;
             } catch (error) {
-                Logger.warn(`Could not refresh the EasyParcel connection of channel ${row.channelId}: ${(error as Error).message}`, loggerCtx);
+                // Failed refreshes are logged by the token manager; a connection without a refresh token here.
+                if (error instanceof NotConnectedError) Logger.warn(`EasyParcel (channel ${row.channelId}): ${error.message}`, loggerCtx);
             }
         }
         return refreshed;

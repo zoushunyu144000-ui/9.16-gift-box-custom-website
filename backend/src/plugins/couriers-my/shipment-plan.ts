@@ -1,5 +1,5 @@
-import { fulfillmentStateFor } from './status';
-import { isShipmentStatus, ShipmentStatus } from './types';
+import { fulfillmentStateFor, STATUS_PROGRESS } from './status';
+import { isFinalShipmentStatus, isShipmentStatus, ShipmentStatus } from './types';
 
 /** What we hold for a shipment: the Vendure fulfillment and its courier custom fields. */
 export interface ShipmentSnapshot {
@@ -25,6 +25,11 @@ export interface ShipmentObservation {
     trackingCode?: string | null;
     trackingUrl?: string | null;
     labelUrl?: string | null;
+    /**
+     * The source's statuses only move forward (EasyParcel: its "latest" status can lag behind its own log).
+     * Lalamove's can step back (a driver rejection returns PICKED_UP to ASSIGNING_DRIVER).
+     */
+    forwardOnly?: boolean;
 }
 
 export interface ShipmentChanges {
@@ -55,16 +60,22 @@ export function isStaleEvent(snapshot: Pick<ShipmentSnapshot, 'lastEventAt'>, ev
 
 /**
  * Works out what to change for an observation. Applying the same observation twice plans no changes,
- * so redelivered webhooks and overlapping reconcile runs are harmless.
+ * so redelivered webhooks and overlapping reconcile runs are harmless. A reading taken before a newer
+ * one was applied can't undo it: delivered, failed and cancelled stay put (unless the provider moved the
+ * shipment to a new order id), and forward-only sources never step back.
  */
 export function planShipmentUpdate(snapshot: ShipmentSnapshot, observation: ShipmentObservation): ShipmentPlan {
     const changes: ShipmentChanges = {};
     const currentStatus = isShipmentStatus(snapshot.status) ? snapshot.status : undefined;
-    if (observation.status && observation.status !== currentStatus) changes.status = observation.status;
-
-    if (observation.providerOrderId && observation.providerOrderId !== snapshot.providerOrderId) {
-        changes.providerOrderId = observation.providerOrderId;
+    const newOrderId = !!observation.providerOrderId && observation.providerOrderId !== snapshot.providerOrderId;
+    const proposed = observation.status;
+    if (proposed && proposed !== currentStatus) {
+        const finished = !!currentStatus && isFinalShipmentStatus(currentStatus) && !newOrderId;
+        const backwards = !!currentStatus && !!observation.forwardOnly && STATUS_PROGRESS[proposed] < STATUS_PROGRESS[currentStatus];
+        if (!finished && !backwards) changes.status = proposed;
     }
+
+    if (newOrderId) changes.providerOrderId = observation.providerOrderId;
     const setIfNew = (key: 'trackingCode' | 'trackingUrl' | 'labelUrl', value: string | null | undefined) => {
         // Providers sometimes omit links they sent before (e.g. AWB details without a label), so a blank
         // value never clears a stored one.

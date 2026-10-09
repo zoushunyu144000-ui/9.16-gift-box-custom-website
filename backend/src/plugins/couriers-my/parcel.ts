@@ -1,4 +1,4 @@
-import { LabelSize, round2, SubmitItem, SubmitParty, SubmitShipment } from './clients/easyparcel';
+import { round2, SubmitItem, SubmitParty, SubmitShipment } from './clients/easyparcel';
 import { easyParcelPhone } from './phone';
 import { resolveSubdivision } from './subdivisions';
 
@@ -184,5 +184,3 @@ export function defaultCollectionDate(now: Date = new Date()): string {
     if (myt.getUTCDay() === 0) myt.setUTCDate(myt.getUTCDate() + 1);
     return myt.toISOString().slice(0, 10);
 }
-
-export const LABEL_SIZES: LabelSize[] = ['A6', 'A5', 'A4'];

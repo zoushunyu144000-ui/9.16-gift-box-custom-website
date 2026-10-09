@@ -8,17 +8,19 @@ export type ShipmentStatus = (typeof SHIPMENT_STATUSES)[number];
 /** No further provider updates are expected once a shipment reaches one of these. */
 export const FINAL_SHIPMENT_STATUSES: readonly ShipmentStatus[] = ['delivered', 'failed', 'cancelled'];
 
-export const COURIER_PROVIDERS = ['lalamove', 'easyparcel', 'manual'] as const;
-export type CourierProvider = (typeof COURIER_PROVIDERS)[number];
-
-/** Fulfillment custom fields added by this plugin (`trackingUrl` and `shipmentStatus` are public). */
+/**
+ * Fulfillment custom fields added by this plugin (`trackingUrl` and `shipmentStatus` are public;
+ * `labelSize` is internal: not in any API).
+ */
 export interface CourierFulfillmentFields {
+    /** lalamove | easyparcel | manual */
     provider?: string | null;
     providerOrderId?: string | null;
     trackingUrl?: string | null;
     labelUrl?: string | null;
     shipmentStatus?: string | null;
     lastEventAt?: Date | null;
+    labelSize?: string | null;
 }
 
 declare module '@vendure/core/dist/entity/custom-entity-fields' {
@@ -29,6 +31,7 @@ declare module '@vendure/core/dist/entity/custom-entity-fields' {
         labelUrl?: string | null;
         shipmentStatus?: string | null;
         lastEventAt?: Date | null;
+        labelSize?: string | null;
     }
 }
 
