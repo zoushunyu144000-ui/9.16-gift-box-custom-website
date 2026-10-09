@@ -19,6 +19,7 @@ import { MalaysianDeliveryPlugin } from './plugins/delivery-my/delivery-my.plugi
 import { EnquiriesPlugin } from './plugins/enquiries/enquiries.plugin';
 import { GiftMessagePlugin } from './plugins/gift-message/gift-message.plugin';
 import { LoyaltyPlugin } from './plugins/loyalty/loyalty.plugin';
+import { MalaysianPaymentsPlugin } from './plugins/payments-my/payments-my.plugin';
 import { PersonalisationPlugin } from './plugins/personalisation/personalisation.plugin';
 import { StaffPermissionsPlugin } from './plugins/staff-permissions/staff-permissions.plugin';
 import { StorefrontContentPlugin } from './plugins/storefront-content/storefront-content.plugin';
@@ -95,7 +96,8 @@ export const config: VendureConfig = {
         orderByCodeAccessStrategy: new DefaultOrderByCodeAccessStrategy(process.env.ORDER_LINK_VALID_FOR || '30d'),
     },
     paymentOptions: {
-        // Test payments only until the Malaysian gateway plugins are added.
+        // The test payment (development and staging only, see testPaymentsAllowed); CHIP and Billplz
+        // are added by the payments-my plugin.
         paymentMethodHandlers: [dummyPaymentHandler],
         paymentMethodEligibilityCheckers: [testPaymentsAllowed],
     },
@@ -135,6 +137,8 @@ export const config: VendureConfig = {
         EnquiriesPlugin.init({ codePrefix: 'ENQ', rateLimit: false }),
         LoyaltyPlugin.init({ pointsPerRinggit: 1, pointValueSen: 1, minRedeemPoints: 500, maxRedeemPercent: 50, earnOnState: 'PaymentSettled' }),
         StaffPermissionsPlugin.init(),
+        // CHIP and Billplz; callback base from VENDURE_PUBLIC_URL, return origins from STOREFRONT_URL + CORS_ORIGINS.
+        MalaysianPaymentsPlugin.init({}),
         DashboardPlugin.init({
             route: 'dashboard',
             appDir: IS_DEV ? path.join(__dirname, '../dist/dashboard') : path.join(__dirname, 'dashboard'),

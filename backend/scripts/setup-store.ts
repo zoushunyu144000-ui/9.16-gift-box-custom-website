@@ -37,6 +37,7 @@ import type { INestApplication } from '@nestjs/common';
 import { setupDeliveryMethods } from '../src/plugins/delivery-my';
 import { readEnquiryPermission, updateEnquiryPermission } from '../src/plugins/enquiries/constants';
 import { setupLoyalty } from '../src/plugins/loyalty/setup';
+import { setupPaymentMethods } from '../src/plugins/payments-my/setup';
 import { shipOrderPermission } from '../src/plugins/staff-permissions/permissions';
 import { setupStorefrontContent } from '../src/plugins/storefront-content/setup';
 import { testPaymentsAllowed } from '../src/plugins/test-payments/test-payments-allowed';
@@ -203,6 +204,9 @@ async function setupPlugins(app: INestApplication, ctx: RequestContext, dir: str
     console.log(
         `Delivery: created ${delivery.created.join(', ') || 'nothing'}; already there ${delivery.alreadyThere.join(', ') || 'nothing'}; switched off ${delivery.disabled.join(', ') || 'nothing'}.`,
     );
+    for (const m of await setupPaymentMethods(app, ctx)) {
+        console.log(`Payment method ${m.code}: ${m.enabled ? 'on' : `off until ${m.missing.join(', ')} are filled in`}.`);
+    }
     await setupLoyalty(app, ctx);
     console.log('Loyalty points promotion in place.');
     const contentFile = path.join(dir, 'content.json');
