@@ -141,7 +141,7 @@ plugin adds the handlers to the EmailPlugin (`customerEmails: false` to turn off
   and link updated); the old order's CANCELED event is then ignored.
 - **Reconcile** every 30 minutes (scheduled task `couriers-my-reconcile`, in the worker) for shipments that are not
   failed, cancelled or Delivered (up to 30 days old), batching EasyParcel tracking 50 AWBs at a time. It also
-  refreshes EasyParcel tokens expiring within a day. Run it from the dashboard's scheduled tasks or
+  refreshes EasyParcel tokens expiring within the hour, so an idle shop stays connected. Run it from the dashboard's scheduled tasks or
   `POST /delivery/shipments/reconcile`; one shipment: `POST /delivery/shipments/<fulfillmentId>/refresh`.
 
 ## Admin routes

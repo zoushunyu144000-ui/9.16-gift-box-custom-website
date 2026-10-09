@@ -179,6 +179,7 @@ const FRIENDLY_ERRORS: Record<string, string> = {
     ERR_REVERSE_GEOCODE_FAILURE: 'Lalamove could not locate the address',
     ERR_INVALID_QUOTATION_ID: 'the quotation expired; try again',
     ERR_RATE_LIMIT_EXCEEDED: 'too many requests to Lalamove; try again in a minute',
+    ERR_ORDER_NOT_FOUND: 'Lalamove has no such order (booked with the other environment’s keys?)',
 };
 
 function lalamoveError(response: HttpResponse): ProviderError {
@@ -186,8 +187,14 @@ function lalamoveError(response: HttpResponse): ProviderError {
     const errors = Array.isArray(body?.errors) ? body?.errors : body?.errors ? [body.errors] : [];
     const first = errors[0] as { id?: string; message?: string; detail?: string } | undefined;
     const code = first?.id ?? (body?.message?.startsWith('ERR_') ? body.message : undefined);
-    const detail = (code && FRIENDLY_ERRORS[code]) || first?.detail || first?.message || body?.message || snippet(response.text) || 'no details';
-    const message = response.status === 401 ? 'Lalamove rejected the API key or signature (check LALAMOVE_API_KEY, LALAMOVE_API_SECRET and LALAMOVE_SANDBOX)' : `Lalamove: ${detail}`;
+    const detail =
+        (code && FRIENDLY_ERRORS[code]) || first?.detail || first?.message || (body?.message && body.message !== code ? body.message : undefined);
+    const message =
+        response.status === 401
+            ? 'Lalamove rejected the API key or signature (check LALAMOVE_API_KEY, LALAMOVE_API_SECRET and LALAMOVE_SANDBOX)'
+            : detail
+              ? `Lalamove: ${detail}`
+              : `Lalamove answered HTTP ${response.status}${code ? '' : `: ${snippet(response.text) || 'no details'}`}`;
     return new ProviderError('lalamove', code ? `${message} [${code}]` : message, response.status, code);
 }
 

@@ -22,6 +22,8 @@ const LALAMOVE = { key: 'pk_test_e2e_key', secret: 'sk_test_e2e_secret' };
 const EASYPARCEL = { clientId: 'e2e-client', clientSecret: 'e2e-client-secret' };
 const GOOGLE_KEY = 'e2e-google-key';
 const RUN = randomBytes(3).toString('hex');
+// Mock ids differ per run: earlier runs leave open shipments in the database that the reconcile still checks.
+const RUN_DIGITS = String(100000 + (parseInt(RUN, 16) % 900000));
 const CUSTOMER_EMAIL = `couriers-e2e-${RUN}@example.com`;
 const EMAIL_DIR = path.join(backendDir, 'static/email/test-emails');
 
@@ -110,7 +112,7 @@ const lalamoveMock = await listen(({ req, url, raw, send }) => {
 });
 
 function newLalamoveOrder(from) {
-    const orderId = `3463513590991${String(397000 + ++lm.seq).padStart(6, '0')}`;
+    const orderId = `3463${RUN_DIGITS}${String(++lm.seq).padStart(9, '0')}`;
     const order = {
         orderId,
         quotationId: from?.quotationId ?? `q${lm.seq}`,
@@ -455,7 +457,8 @@ async function main() {
     expect('rate check uses ISO subdivisions (KL → Penang)', ep.lastQuote?.sender.subdivision_code === 'MY-14' && ep.lastQuote?.receiver.subdivision_code === 'MY-07' && ep.lastQuote?.weight === 2);
 
     // 2 · Orders: A to Petaling Jaya (Lalamove + a hand-booked courier), B to Penang (EasyParcel), C for cancelling
-    const klAddress = { fullName: 'Aisyah Tan', streetLine1: '1 Jalan SS2/24', city: 'Petaling Jaya', province: 'Selangor', postalCode: '47300', countryCode: 'MY', phoneNumber: '012-345 6789' };
+    // A new address each run, so the first booking geocodes it and the second one finds it cached.
+    const klAddress = { fullName: 'Aisyah Tan', streetLine1: `Lot ${RUN_DIGITS}, Jalan SS2/24`, city: 'Petaling Jaya', province: 'Selangor', postalCode: '47300', countryCode: 'MY', phoneNumber: '012-345 6789' };
     const orderA = await placeOrder([['tea-ceremony-set', 1], ['leather-journal', 1]], klAddress);
     const orderB = await placeOrder([['spring-blessings-box', 2]], { fullName: 'Tan Mei Ling', streetLine1: '12 Lorong Kampung Jawa', streetLine2: 'Taman Bayan', city: 'Bayan Lepas', province: 'Pulau Pinang', postalCode: '11950', countryCode: 'MY', phoneNumber: '+60 16-777 8888' });
     const orderC = await placeOrder([['artisan-chocolate-box', 1]], klAddress);
@@ -634,6 +637,9 @@ async function main() {
         refused.__typename === 'FulfillmentStateTransitionError' && /no longer allows cancelling/.test(refused.transitionError) && (await fulfillmentOf(orderC.id, rebooked.id)).state === 'Pending',
         refused.transitionError,
     );
+    lm.orders.get(rebooked.trackingCode).status = 'EXPIRED';
+    const afterExpiry = await transition(rebooked.id, 'Cancelled');
+    expect('an order that already ended at Lalamove can be cancelled here', afterExpiry.state === 'Cancelled', afterExpiry.state ?? afterExpiry.transitionError);
 
     // 10 · Setup helpers
     const registered = await fetch(`${BASE}/delivery/lalamove/register-webhook`, { method: 'POST', headers: asAdmin() }).then(r => r.json());

@@ -141,8 +141,11 @@ export class EasyParcelAuthService {
         return !!result.affected;
     }
 
-    /** Refreshes connections whose access token expires within `withinMs` (run by the reconcile task). */
-    async refreshExpiring(withinMs = 24 * 3600_000): Promise<number> {
+    /**
+     * Refreshes connections whose access token expires within `withinMs` (run by the reconcile task every
+     * 30 minutes), so an idle shop's connection never lapses. API calls refresh on their own as well.
+     */
+    async refreshExpiring(withinMs = 3600_000): Promise<number> {
         if (!this.configured) return 0;
         const rows = await this.connection.rawConnection
             .getRepository(EasyParcelConnection)

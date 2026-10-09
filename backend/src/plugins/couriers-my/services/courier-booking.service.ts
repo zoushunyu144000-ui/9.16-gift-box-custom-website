@@ -223,8 +223,16 @@ export class CourierBookingService {
         if (!id || isFinalShipmentStatus(fields.shipmentStatus)) return undefined;
         try {
             if (fields.provider === 'lalamove') {
-                await this.lalamove().cancelOrder(id);
-                Logger.info(`Cancelled Lalamove order ${id}`, loggerCtx);
+                try {
+                    await this.lalamove().cancelOrder(id);
+                    Logger.info(`Cancelled Lalamove order ${id}`, loggerCtx);
+                } catch (error) {
+                    // Refused because the order already ended at Lalamove (before its webhook reached us)? Then
+                    // there is nothing left to cancel there.
+                    const current = await this.lalamove().getOrder(id).catch(() => undefined);
+                    if (!current || !isFinalShipmentStatus(lalamoveStatus(current.status))) throw error;
+                    Logger.info(`Lalamove order ${id} had already ended (${current.status})`, loggerCtx);
+                }
             } else if (fields.provider === 'easyparcel') {
                 const channelId = await this.easyParcelAuth.connectionChannelId(ctx.channelId);
                 const result = await this.easyParcelAuth.api(channelId).cancel(id, 'Cancelled by the shop');
