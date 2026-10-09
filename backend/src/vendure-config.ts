@@ -15,6 +15,7 @@ import { AgeCheckPlugin } from './plugins/age-check/age-check.plugin';
 import { GiftMessagePlugin } from './plugins/gift-message/gift-message.plugin';
 import { LoyaltyPlugin } from './plugins/loyalty/loyalty.plugin';
 import { PersonalisationPlugin } from './plugins/personalisation/personalisation.plugin';
+import { StaffPermissionsPlugin } from './plugins/staff-permissions/staff-permissions.plugin';
 
 const IS_DEV = process.env.APP_ENV === 'dev';
 // PORT wins because hosting platforms inject it into the environment at runtime, and that
@@ -114,6 +115,7 @@ export const config: VendureConfig = {
         GiftMessagePlugin.init({ maxLength: 200 }),
         AgeCheckPlugin.init({ facetCode: 'alcohol', minimumAge: 21 }),
         LoyaltyPlugin.init({ pointsPerRinggit: 1, pointValueSen: 1, minRedeemPoints: 500, maxRedeemPercent: 50, earnOnState: 'PaymentSettled' }),
+        StaffPermissionsPlugin.init(),
         DashboardPlugin.init({
             route: 'dashboard',
             appDir: IS_DEV ? path.join(__dirname, '../dist/dashboard') : path.join(__dirname, 'dashboard'),
