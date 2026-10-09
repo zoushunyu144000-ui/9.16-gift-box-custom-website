@@ -4,9 +4,10 @@ import { Column, Entity, Index, ManyToOne } from 'typeorm';
 /**
  * pending: page opened, not paid yet · failed: an attempt failed, the customer may still pay ·
  * paid: recorded on the order · cancelled / expired / refunded: the gateway closed it ·
- * unmatched: paid at the gateway but not recorded (a note on the order says why).
+ * held: paid, but its payment method is switched off; recorded once it is back on (a note says so) ·
+ * unmatched: paid at the gateway but never to be recorded automatically (a note on the order says why).
  */
-export type AttemptStatus = 'pending' | 'failed' | 'paid' | 'cancelled' | 'expired' | 'refunded' | 'unmatched';
+export type AttemptStatus = 'pending' | 'failed' | 'paid' | 'cancelled' | 'expired' | 'refunded' | 'held' | 'unmatched';
 
 /**
  * One hosted payment page opened for an order: a CHIP purchase or a Billplz bill. It lets callbacks and

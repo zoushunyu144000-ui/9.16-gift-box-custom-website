@@ -26,10 +26,13 @@ storefront. Each shop uses its own merchant account; the keys live in the paymen
    customer who paid and closed the browser while callbacks couldn't reach the server. It can be run at once from
    the dashboard (*Settings → Scheduled tasks*).
 
-Payments are recorded once: the order row is locked while a payment is recorded, so replayed or simultaneous
-callbacks and status checks find it already done. A second payment for an already paid order (a customer who
-paid twice), a payment after the order was cancelled, or a payment for the wrong amount is never recorded; the
-order gets a note telling staff to refund it.
+Payments are recorded once: the order row is locked while a payment is recorded (the gateway is asked just
+before, not while the lock is held), so replayed or simultaneous callbacks and status checks find it already done.
+A second payment for an already paid order (a customer who paid twice), a payment after the order was cancelled,
+or a payment that no longer matches the order (the bag changed after the payment page was opened) is never
+recorded; the order gets one note telling staff to refund it. If staff switch a payment method off while a customer
+is paying, that payment waits: the order gets a note, and it is recorded once the method is back on. As with
+Vendure's own `addPaymentToOrder`, a new customer's addresses are saved to their account when the order is placed.
 
 ## Setting up a shop (dashboard)
 
@@ -135,7 +138,7 @@ Automated tests (from `backend/`):
 npm test                                         # unit tests: signatures (Billplz docs vectors, RSA), requests, statuses, URLs
 npx ts-node --transpile-only src/index.ts        # in another terminal, on a database set up from stores/moire
 npx ts-node --transpile-only src/index-worker.ts # a third terminal, for the scheduled-check section
-node src/plugins/payments-my/e2e-smoke.mjs       # 36 checks against mock CHIP and Billplz servers
+node src/plugins/payments-my/e2e-smoke.mjs       # 39 checks against mock CHIP and Billplz servers
 ```
 
 The e2e script creates payment methods `e2e-chip` and `e2e-billplz` pointing at its mock servers and switches them
@@ -187,6 +190,8 @@ callbacks (Billplz's don't say which order they are for) and status checks find 
 ## Not done
 
 - No dashboard view of the payment pages opened per order; staff see recorded payments and the notes on the order.
+- The scheduled check only looks at orders not yet placed; a second payment for an order that is already paid is
+  noticed through that payment's callback (or the customer's return), not by the scheduled check.
 - CHIP portal webhooks (signed per webhook) aren't accepted; only the per-purchase callback. CHIP doesn't call back
   on failed attempts; the storefront learns about them from `hostedPaymentStatus`.
 - Billplz: no refunds through the API (none exists), and `preferredMethod` is ignored (Billplz can only skip its

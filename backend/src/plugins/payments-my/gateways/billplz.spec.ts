@@ -94,10 +94,10 @@ describe('Billplz: X Signature', () => {
         await assert.rejects(client(undefined, { xSignatureKey: 'another-key' }).verifyCallback(body, {}), CallbackVerificationError);
     });
 
-    it('accepts the documented redirect, ignoring our own ?order= parameter', () => {
-        const verified = client().verifyRedirect(`order=ABC123&${DOCS_REDIRECT}`);
-        assert.deepEqual(verified, { id: 'zq0tm2wc', paid: true, state: 'paid', gatewayStatus: 'paid' });
-        assert.throws(() => client().verifyRedirect(DOCS_REDIRECT.replace('paid]=true', 'paid]=false')), CallbackVerificationError);
+    it('signs the documented redirect too (bracketed keys, "_" sorting before letters)', () => {
+        const params = new URLSearchParams(DOCS_REDIRECT);
+        assert.equal(billplzSourceString(params), 'billplzidzq0tm2wc|billplzpaid_at2018-09-27 15:15:09 +0800|billplzpaidtrue');
+        assert.equal(billplzSignature(params, DOCS_KEY), params.get('billplz[x_signature]'));
     });
 });
 

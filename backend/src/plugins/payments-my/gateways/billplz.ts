@@ -180,22 +180,6 @@ export class BillplzClient implements HostedPaymentGateway {
         return { id, paid: state === 'paid', state, gatewayStatus: params.get('state') || (state === 'paid' ? 'paid' : 'due') };
     }
 
-    /**
-     * Checks the billplz[...] parameters Billplz adds to the redirect URL. Other parameters (e.g. our own
-     * ?order=) aren't signed and are ignored.
-     */
-    verifyRedirect(query: URLSearchParams | string): VerifiedCallback {
-        const params = typeof query === 'string' ? new URLSearchParams(query) : query;
-        const pairs = [...params].filter(([key]) => key.startsWith('billplz['));
-        const signature = params.get('billplz[x_signature]');
-        if (!signature) throw new CallbackVerificationError('billplz[x_signature] is missing');
-        if (!signatureMatches(pairs, signature, this.xSignatureKey)) throw new CallbackVerificationError("the signature doesn't match");
-        const id = params.get('billplz[id]');
-        if (!id) throw new CallbackVerificationError('billplz[id] is missing');
-        const state = billplzState({ paid: params.get('billplz[paid]') ?? undefined });
-        return { id, paid: state === 'paid', state, gatewayStatus: state === 'paid' ? 'paid' : 'due' };
-    }
-
     private call<T>(method: 'GET' | 'POST', path: string, form?: URLSearchParams): Promise<T> {
         return requestJson<T>('Billplz', this.http, new URL(path, this.baseUrl), {
             method,

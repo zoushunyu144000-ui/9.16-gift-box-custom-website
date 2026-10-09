@@ -207,6 +207,7 @@ const asForm = { type: 'application/x-www-form-urlencoded' };
 
 const admin = graphql(`${SERVER}/admin-api`);
 const ORDER_FIELDS = `id code state totalWithTax
+    customer { addresses { streetLine1 } }
     payments { id state amount method transactionId errorMessage metadata }
     history(options: { take: 100 }) { items { type data } }`;
 const adminOrder = async code => (await admin(`query($code:String!){ orders(options:{ filter:{ code:{ eq:$code } } }){ items { ${ORDER_FIELDS} } } }`, { code })).orders.items[0];
@@ -367,6 +368,7 @@ async function main() {
 
             status = (await shop(STATUS, { code: order.code })).hostedPaymentStatus;
             check('hostedPaymentStatus says paid', status?.paid === true && status.orderState === 'PaymentSettled', JSON.stringify(status));
+            check('the new customer’s address is saved, as Vendure does for other payments', o.customer?.addresses?.some(a => a.streetLine1 === '1 Jalan Test'), JSON.stringify(o.customer?.addresses));
 
             const body2 = chip.pay(second.reference);
             cb = await postCallback('chip', CHIP.code, body2, asJson(chip.sign(body2)));
@@ -445,7 +447,25 @@ async function main() {
             const cb = await postCallback('chip', CHIP.code, body, asJson(chip.sign(body)));
             const o = await adminOrder(order.code);
             const note = notesOf(o).find(n => n.includes(redirect.reference));
-            check('a payment for the bag as it was isn’t recorded, and the changed bag stays the customer’s', cb.status === 200 && o.state === 'AddingItems' && o.payments.length === 0 && /bag changed afterwards/.test(note ?? ''), `${o.state}: ${note}`);
+            check('a payment for the bag as it was isn’t recorded, and the changed bag stays the customer’s', cb.status === 200 && o.state === 'AddingItems' && o.payments.length === 0 && /order changed afterwards/.test(note ?? ''), `${o.state}: ${note}`);
+        }
+
+        // 4c · Staff switch the method off while a customer is paying: the payment waits, then is recorded
+        {
+            const { shop, order } = await orderAtPayment('held');
+            const redirect = (await shop(CREATE, { input: { paymentMethodCode: CHIP.code, returnUrl: RETURN_URL } })).createHostedPayment;
+            const setEnabled = enabled => admin(`mutation($id:ID!,$on:Boolean!){ updatePaymentMethod(input:{ id:$id, enabled:$on }){ id enabled } }`, { id: methods[0].id, on: enabled });
+            await setEnabled(false);
+            const body = chip.pay(redirect.reference);
+            const first = await postCallback('chip', CHIP.code, body, asJson(chip.sign(body)));
+            const second = await postCallback('chip', CHIP.code, body, asJson(chip.sign(body)));
+            let o = await adminOrder(order.code);
+            const notes = notesOf(o).filter(n => n.includes(redirect.reference));
+            check('a payment made while the method is off waits, with one note for staff', first.status === 503 && second.status === 503 && o.state === 'ArrangingPayment' && notes.length === 1 && /switched off/.test(notes[0]), notes[0]);
+            await setEnabled(true);
+            const retry = await postCallback('chip', CHIP.code, body, asJson(chip.sign(body)));
+            o = await adminOrder(order.code);
+            check('once the method is back on, the gateway’s retry records it', retry.status === 200 && o.state === 'PaymentSettled' && settledOf(o)[0]?.transactionId === redirect.reference, `HTTP ${retry.status}, ${o.state}`);
         }
 
         // 4 · Scheduled check: paid at CHIP, but no callback came and the customer never returned
