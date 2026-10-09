@@ -96,14 +96,13 @@ cached distance is used before the fallback.
 three sizes are set), times the quantity, added up. Then:
 
 1. **Live rates**, when a `LiveRateProvider` is registered, "Use live courier rates" is ticked, the postcode is in
-   the official table and the parcel is at most 30 kg (`liveRateMaxKg`), so the public quote can't be used to run
-   up the courier account with made-up postcodes or weights: every provider is asked at once for the weight
-   rounded up to the whole kg (from the pickup postcode to the address). Rates
-   from providers that answer within 2.5 s are merged; the cheapest from an allowed courier wins ("Allowed
-   couriers": part of a courier or service name such as `J&T`, or a service id; empty = any). Price = courier
-   price + markup %, rounded **up** to the next RM1. Rates are cached 24 hours per channel, postcode and kg
-   bracket, but only when every provider answered (so one failing provider can't hide cheaper rates for a day).
-   A provider that times out is left out for a minute.
+   the official table and the parcel is at most 30 kg (`liveRateMaxKg`; the limits stop the public quote being
+   used to run up the courier account). Every provider is asked at once for the weight rounded up to the whole kg,
+   from the pickup postcode to the address. Rates from providers that answer within 2.5 s are merged, and the
+   cheapest from an allowed courier wins ("Allowed couriers": part of a courier or service name such as `J&T`, or a
+   service id; empty = any). Price = courier price + markup %, rounded **up** to the next RM1. Rates are cached
+   24 hours per channel, postcode and kg bracket, but only when every provider answered (so one failing provider
+   can't hide cheaper rates for a day). A provider that times out is left out for a minute.
 2. **Otherwise the zone × weight table**, in ringgit: `{"peninsular":{"firstKg":10,"eachExtraKg":3}, …}` —
    first kg, then each further started kg. A zone without a row isn't offered. No markup is added: the table is
    the customer price.
@@ -120,7 +119,7 @@ prices: tax-inclusive when the channel's prices include tax, at the calculator's
 | Which addresses get which method | Same page, eligibility checker *Zones* |
 | Public holidays and closures | **Settings → Global Settings** → *Closed dates (no dispatch)*: one date per line, `2026-12-25 Christmas Day` (a note after the date is fine; ranges aren't read, so one line per day). Saved only when every line is a date |
 | Parcel weights and sizes | **Catalog → Products** → a variant: *Packed weight (g)* (with the box; 0 for things that add nothing, such as a personalised name), *Packed length / width / height (cm)* |
-| The customer's preferred date and notes | On each order, in its custom fields. If the date stopped working between checkout and payment (paid after the cut-off, or changed afterwards), the order history has a staff-only note: "…Please agree a delivery date with the customer." |
+| The customer's preferred date and notes | **Sales → Orders** → an order, in its custom fields. If the date stopped working between checkout and payment (paid after the cut-off, or changed afterwards), the order history has a staff-only note: "…Please agree a delivery date with the customer." |
 
 ## For the storefront
 
