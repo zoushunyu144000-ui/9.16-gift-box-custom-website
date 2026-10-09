@@ -136,7 +136,8 @@ export class CourierBookingService {
                 trackingUrl: placed.shareLink || null,
                 labelUrl: null,
                 shipmentStatus: lalamoveStatus(placed.status) ?? 'booked',
-                lastEventAt: new Date(),
+                // Only courier event times go here (webhook ordering compares them), never this server's clock.
+                lastEventAt: null,
             },
         };
     }
@@ -206,7 +207,8 @@ export class CourierBookingService {
                 trackingUrl: submitted.tracking_url || null,
                 labelUrl: labelUrlFor(submitted, labelSize) ?? null,
                 shipmentStatus: 'booked',
-                lastEventAt: new Date(),
+                // Only courier event times go here (webhook ordering compares them), never this server's clock.
+                lastEventAt: null,
             },
         };
     }

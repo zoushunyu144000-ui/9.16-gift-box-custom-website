@@ -3,6 +3,7 @@ import { Allow, Ctx, Logger, Permission, RequestContext } from '@vendure/core';
 import type { Request, Response } from 'express';
 import { ProviderError } from '../clients/http';
 import { COURIERS_OPTIONS, LALAMOVE_WEBHOOK_PATH, loggerCtx } from '../constants';
+import { easyParcelRateProvider } from '../easyparcel-rate-provider';
 import { ResolvedCouriersOptions } from '../options';
 import { CourierBookingService } from '../services/courier-booking.service';
 import { EasyParcelAuthService, OAuthStateError } from '../services/easyparcel-auth.service';
@@ -103,6 +104,26 @@ export class CourierAdminController {
     @Allow(Permission.UpdateSettings)
     async disconnect(@Ctx() ctx: RequestContext) {
         return { disconnected: await this.easyParcelAuth.disconnect(ctx) };
+    }
+
+    /**
+     * The live rates checkout would get for a parcel (through the same `easyParcelRateProvider` delivery-my
+     * calls), e.g. ?toPostcode=11950&toState=Penang&weightKg=2. An empty list means no rates (not connected,
+     * unknown state, or EasyParcel unavailable).
+     */
+    @Get('easyparcel/rates')
+    @Allow(Permission.ReadSettings)
+    rates(@Ctx() ctx: RequestContext, @Query() query: Record<string, string | undefined>) {
+        const number = (value?: string) => (value && Number.isFinite(Number(value)) ? Number(value) : undefined);
+        return easyParcelRateProvider.getRates(ctx, {
+            fromPostcode: query.fromPostcode || this.options.origin.postcode,
+            toPostcode: query.toPostcode ?? '',
+            toState: query.toState,
+            weightKg: number(query.weightKg) ?? this.options.defaultParcel.weightKg,
+            lengthCm: number(query.lengthCm),
+            widthCm: number(query.widthCm),
+            heightCm: number(query.heightCm),
+        });
     }
 
     /** Lalamove's service types per city for the market (the values for the handler's Vehicle field). */

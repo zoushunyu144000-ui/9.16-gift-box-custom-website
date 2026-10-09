@@ -394,7 +394,10 @@ export class ShipmentSyncService implements OnModuleInit, OnApplicationBootstrap
         }
         if (!status) return;
         const now = new Date();
-        await this.connection.rawConnection.getRepository(Fulfillment).update(event.fulfillment.id, { customFields: { shipmentStatus: status, lastEventAt: now } });
+        // lastEventAt orders courier webhooks, so it only takes this server's clock for manual couriers.
+        await this.connection.rawConnection
+            .getRepository(Fulfillment)
+            .update(event.fulfillment.id, { customFields: { shipmentStatus: status, ...(custom.provider === 'manual' ? { lastEventAt: now } : {}) } });
         await this.recordEvent({
             fulfillmentId: event.fulfillment.id,
             provider: custom.provider,
