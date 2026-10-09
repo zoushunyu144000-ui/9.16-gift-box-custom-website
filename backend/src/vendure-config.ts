@@ -12,6 +12,7 @@ import { GraphiqlPlugin } from '@vendure/graphiql-plugin';
 import 'dotenv/config';
 import path from 'path';
 import { AgeCheckPlugin } from './plugins/age-check/age-check.plugin';
+import { MalaysianDeliveryPlugin } from './plugins/delivery-my/delivery-my.plugin';
 import { GiftMessagePlugin } from './plugins/gift-message/gift-message.plugin';
 import { PersonalisationPlugin } from './plugins/personalisation/personalisation.plugin';
 
@@ -112,6 +113,12 @@ export const config: VendureConfig = {
         PersonalisationPlugin.init({ namesSku: 'personalised-name', defaultMaxLength: 20 }),
         GiftMessagePlugin.init({ maxLength: 200 }),
         AgeCheckPlugin.init({ facetCode: 'alcohol', minimumAge: 21 }),
+        MalaysianDeliveryPlugin.init({
+            // Placeholder pickup point (central KL): the client must supply the real pickup address and its coordinates.
+            origin: { latitude: 3.1478, longitude: 101.713, address: 'Kuala Lumpur City Centre, 50450 Kuala Lumpur', postcode: '50450' },
+            includePutrajaya: false,
+            cutoffTime: '15:00',
+        }),
         DashboardPlugin.init({
             route: 'dashboard',
             appDir: IS_DEV ? path.join(__dirname, '../dist/dashboard') : path.join(__dirname, 'dashboard'),
