@@ -1,5 +1,8 @@
 # Commerce backend plan: reusable base on Vendure
 
+> The backend has moved to its own repository, `zoushunyu144000-ui/zoushunyu144000-ui-commerce-backend`, with an up-to-date copy of this plan in
+> its `docs/`. This copy is kept for the history of the decision.
+
 Updated: 2026-10-08. Supersedes the custom-admin route in `commerce-system-plan.md`.
 
 ## Goal

@@ -1,7 +1,7 @@
 import "server-only";
 
 /**
- * Server-side client for the commerce backend's Shop API (Vendure, see backend/).
+ * Server-side client for the commerce backend's Shop API (Vendure; repository zoushunyu144000-ui/zoushunyu144000-ui-commerce-backend).
  * The storefront switches to it when VENDURE_SHOP_API_URL is set; without it the site runs in demo mode.
  */
 export const VENDURE_SHOP_API_URL = process.env.VENDURE_SHOP_API_URL || "";

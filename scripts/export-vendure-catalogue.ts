@@ -1,18 +1,23 @@
 /**
- * Writes the storefront's catalogue (src/data/seed.ts) in the backend's import format:
- *   backend/stores/moire/products.csv     products, variants, prices, stock, photos, facets
- *   backend/stores/moire/collections.json Festive Collection (one child per festival), Fixed Gift Collection, Wine Gift Boxes
- * Usage: npx tsx scripts/export-vendure-catalogue.ts
- * Then load it with `npm run setup:store -- stores/moire` in backend/.
+ * Writes the storefront's catalogue (src/data/seed.ts) in the commerce backend's import format, into a
+ * store folder of the backend repository (zoushunyu144000-ui/zoushunyu144000-ui-commerce-backend):
+ *   products.csv      products, variants, prices, stock, photos, facets
+ *   collections.json  Festive Collection (one child per festival), Fixed Gift Collection, Wine Gift Boxes
+ *   assets/           the local photos the products use (copied from public/)
+ * Usage: npx tsx scripts/export-vendure-catalogue.ts <backend repository>/stores/moire
+ * Then load it with `npm run setup:store -- stores/moire` in the backend repository.
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { CATEGORIES, DEFAULT_PERSONALISATION, sortFestivals } from "../src/lib/catalog";
 import { isUnsplash } from "../src/lib/images";
 import { seedFestivals, seedProducts } from "../src/data/seed";
 import type { CategorySlug, ProductImage } from "../src/lib/types";
 
-const OUT = path.join(import.meta.dirname, "../backend/stores/moire");
+const [outArg] = process.argv.slice(2);
+if (!outArg) throw new Error("Usage: npx tsx scripts/export-vendure-catalogue.ts <backend repository>/stores/moire");
+const OUT = path.resolve(outArg);
+const PUBLIC = path.join(import.meta.dirname, "../public");
 
 const COLUMNS = [
   "name", "slug", "description", "assets", "facets", "optionGroups", "optionValues", "sku", "price", "taxCategory", "stockOnHand", "trackInventory", "variantAssets", "variantFacets",
@@ -30,10 +35,13 @@ function csvCell(v: string | number | undefined) {
   return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-/** Placeholder photos are fetched at a sensible size; local photos are read from the storefront's public/ folder. */
+/** Placeholder photos are fetched at a sensible size; local photos are copied into the store's assets/ folder. */
+const localPhotos = new Set<string>();
 function assetPath(img: ProductImage) {
   if (isUnsplash(img.src)) return `${img.src}${img.src.includes("?") ? "&" : "?"}w=1600&q=80&fm=jpg`;
-  return img.src.replace(/^\//, "");
+  const file = img.src.replace(/^\//, "");
+  localPhotos.add(file);
+  return file;
 }
 
 const CATEGORY_FACET: Record<CategorySlug, string> = {
@@ -128,4 +136,5 @@ const collections = [
 mkdirSync(OUT, { recursive: true });
 writeFileSync(path.join(OUT, "products.csv"), [COLUMNS.join(","), ...rows.map((r) => COLUMNS.map((c) => csvCell(r[c])).join(","))].join("\n") + "\n");
 writeFileSync(path.join(OUT, "collections.json"), JSON.stringify(collections, null, 2) + "\n");
+for (const file of localPhotos) cpSync(path.join(PUBLIC, file), path.join(OUT, "assets", file));
 console.log(`Wrote ${seedProducts.length} products and the personalised name item (${rows.length} rows), and ${collections.length} collections, to ${path.relative(process.cwd(), OUT)}`);

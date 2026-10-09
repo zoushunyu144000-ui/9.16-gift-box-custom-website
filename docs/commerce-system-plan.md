@@ -2,7 +2,7 @@
 
 Updated: 2026-10-02
 
-> Superseded on 2026-10-08 by [commerce-backend-plan.md](commerce-backend-plan.md): the admin, payments and delivery move to a reusable Vendure backend (`backend/`).
+> Superseded on 2026-10-08 by [commerce-backend-plan.md](commerce-backend-plan.md): the admin, payments and delivery move to a reusable Vendure backend (now its own repository, `zoushunyu144000-ui/zoushunyu144000-ui-commerce-backend`).
 
 ## Goal
 

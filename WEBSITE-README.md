@@ -27,14 +27,16 @@ Without Supabase variables the site runs in **demo mode**: the sample catalogue 
 
 ## With the commerce backend (from 2026-10)
 
-The shop now runs on the commerce backend in `backend/` (Vendure: products, stock, orders,
-payments, delivery, members, staff roles; see `backend/README.md`). Set `VENDURE_SHOP_API_URL`
+The shop now runs on the commerce backend, which has its own repository: `zoushunyu144000-ui/zoushunyu144000-ui-commerce-backend`
+(Vendure: products, stock, orders, payments, delivery, members, discounts, staff roles; see its
+README). Set `VENDURE_SHOP_API_URL`
 and the storefront switches over; without it, everything below about Supabase and demo mode
 still applies.
 
 ```bash
-# terminal 1: the backend (Postgres needed, see backend/README.md)
-cd backend && npm run dev                      # http://localhost:3000, dashboard at /dashboard
+# terminal 1: the backend (Postgres needed, see its README)
+git clone https://github.com/zoushunyu144000-ui/zoushunyu144000-ui-commerce-backend.git commerce-backend
+cd commerce-backend && npm ci && npm run dev   # http://localhost:3000, dashboard at /dashboard
 # terminal 2: the storefront
 VENDURE_SHOP_API_URL=http://localhost:3000/shop-api npx next dev -p 3001
 ```
@@ -49,7 +51,7 @@ What changes with the backend:
 - Delivery options, prices and dates come from the backend for the customer's postcode.
 - Customers can have accounts (`/account`): orders, points, details, password reset.
 - Corporate enquiries are stored in the backend for staff to follow up.
-- Order emails are sent by the backend (`backend/static/email/templates`).
+- Order emails are sent by the backend (its `static/email/templates`).
 
 Code: `src/lib/vendure/` (Shop API client, catalogue mapping, checkout, orders, accounts, delivery,
 payments, enquiries) and `src/lib/store/vendure.ts`. Each backend feature is switched on only when the
@@ -94,7 +96,7 @@ connected backend offers it (`src/lib/vendure/capabilities.ts`).
 
 ## Going live — checklist
 
-With the commerce backend, follow `backend/README.md` (backend, gateway and courier accounts) and set
+With the commerce backend, follow its README (backend, gateway and courier accounts) and set
 `VENDURE_SHOP_API_URL`, `NEXT_PUBLIC_SITE_URL` (and `VENDURE_DASHBOARD_URL` if the dashboard has its
 own address) here. The list below is for the original Supabase setup.
 
@@ -117,7 +119,7 @@ src/components/…        UI (cart, checkout, product, corporate, admin)
 src/lib/store/          data layer: vendure.ts (commerce backend), supabase.ts, demo.ts (preview)
 src/lib/vendure/        commerce backend: Shop API client, checkout, orders, accounts, delivery, payments
 src/app/(shop)/account  member accounts (commerce backend only)
-backend/                the commerce backend (Vendure), see backend/README.md
+scripts/export-vendure-catalogue.ts  the sample catalogue as a store folder for the commerce backend
 src/lib/pricing.ts      server-side pricing & validation
 src/lib/payments/       payment provider interface (test provider included)
 src/data/seed.ts        SAMPLE catalogue + default settings
