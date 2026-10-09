@@ -82,5 +82,10 @@ npm run migrate                        # or just start the server: pending migra
 - `APP_ENV` anything but `dev`; set `CORS_ORIGINS` to the storefront's origins and `ASSET_URL_PREFIX`.
 - Managed Postgres such as Supabase: `DB_SSL=true` (plus `DB_SSL_CA` if needed), session pooler port 5432.
 - Email goes out through SMTP when `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` are set, and is skipped otherwise.
+  Emails carry the shop's name, logo and colours (`SHOP_NAME`, `EMAIL_LOGO_URL`, `EMAIL_BRAND_COLOR`,
+  `EMAIL_ACCENT_COLOR`, `EMAIL_BACKGROUND_COLOR`; see `src/email/branding.ts`), and the contact line from
+  the shop's settings. Templates are in `static/email/templates`; preview them in dev at `/mailbox`.
+  Emails are sent by the worker, so it must be running.
+- `ORDER_LINK_VALID_FOR` (default `30d`): how long the order link opens without signing in.
 - Login CSRF protection (`apiOptions.csrfPrevention`) is on; the storefront must call the APIs with JSON POSTs.
 - Run the server (`npm run start:server`) and the worker (`npm run start:worker`) as two processes.

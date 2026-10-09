@@ -1,10 +1,13 @@
-<!--suppress ALL -->
-<mj-section background-color="#375a67">
-    <mj-column width="100%">
-        <mj-text align="center" color="#eee">
-            <span>[footer text]</span>
-        </mj-text>
-    </mj-column>
-</mj-section>
-</mj-body>
+        <mj-section padding="20px 24px 36px">
+            <mj-column>
+                <mj-text align="center" font-size="13px" line-height="1.7" color="#6f675d">
+                    {{ shopName }}
+                    {{#if whatsappNumber}}<br />WhatsApp <a href="https://wa.me/{{ whatsappNumber }}">+{{ whatsappNumber }}</a>{{/if}}
+                    {{#if contactEmail}}<br /><a href="mailto:{{ contactEmail }}">{{ contactEmail }}</a>{{/if}}
+                    {{#if businessHours}}<br />{{ businessHours }}{{/if}}
+                    <br /><a href="{{ shopUrl }}">{{ shopHost }}</a>
+                </mj-text>
+            </mj-column>
+        </mj-section>
+    </mj-body>
 </mjml>

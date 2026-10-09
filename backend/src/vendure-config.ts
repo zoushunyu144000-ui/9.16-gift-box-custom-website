@@ -6,12 +6,13 @@ import {
     DefaultSearchPlugin,
     VendureConfig,
 } from '@vendure/core';
-import { defaultEmailHandlers, EmailPlugin, EmailPluginOptions, FileBasedTemplateLoader } from '@vendure/email-plugin';
+import { EmailPlugin, EmailPluginOptions, FileBasedTemplateLoader } from '@vendure/email-plugin';
 import { AssetServerPlugin } from '@vendure/asset-server-plugin';
 import { DashboardPlugin } from '@vendure/dashboard/plugin';
 import { GraphiqlPlugin } from '@vendure/graphiql-plugin';
 import 'dotenv/config';
 import path from 'path';
+import { emailHandlers, emailTemplateVars } from './email/branding';
 import { AgeCheckPlugin } from './plugins/age-check/age-check.plugin';
 import { CatalogDisplayPlugin } from './plugins/catalog-display/catalog-display.plugin';
 import { GiftMessagePlugin } from './plugins/gift-message/gift-message.plugin';
@@ -106,14 +107,9 @@ export const config: VendureConfig = {
         DefaultSearchPlugin.init({ bufferUpdates: false, indexStockStatus: true }),
         EmailPlugin.init({
             ...emailTransport,
-            handlers: defaultEmailHandlers,
+            handlers: emailHandlers,
             templateLoader: new FileBasedTemplateLoader(path.join(__dirname, '../static/email/templates')),
-            globalTemplateVars: {
-                fromAddress: process.env.EMAIL_FROM || '"Shop" <noreply@example.com>',
-                verifyEmailAddressUrl: `${storefrontUrl}/account/verify`,
-                passwordResetUrl: `${storefrontUrl}/account/reset-password`,
-                changeEmailAddressUrl: `${storefrontUrl}/account/verify-email`,
-            },
+            globalTemplateVars: emailTemplateVars(storefrontUrl),
         } as EmailPluginOptions),
         // Shop features, each reusable on its own.
         PersonalisationPlugin.init({ namesSku: 'personalised-name', defaultMaxLength: 20 }),
