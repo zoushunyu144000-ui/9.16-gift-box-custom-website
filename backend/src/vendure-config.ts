@@ -17,6 +17,7 @@ import { AgeCheckPlugin } from './plugins/age-check/age-check.plugin';
 import { CatalogDisplayPlugin } from './plugins/catalog-display/catalog-display.plugin';
 import { GiftMessagePlugin } from './plugins/gift-message/gift-message.plugin';
 import { PersonalisationPlugin } from './plugins/personalisation/personalisation.plugin';
+import { testPaymentsAllowed } from './plugins/test-payments/test-payments-allowed';
 
 const IS_DEV = process.env.APP_ENV === 'dev';
 // PORT wins because hosting platforms inject it into the environment at runtime, and that
@@ -91,6 +92,7 @@ export const config: VendureConfig = {
     paymentOptions: {
         // Test payments only until the Malaysian gateway plugins are added.
         paymentMethodHandlers: [dummyPaymentHandler],
+        paymentMethodEligibilityCheckers: [testPaymentsAllowed],
     },
     // When adding or altering custom field definitions, generate a migration (npm run migration:generate).
     customFields: {},

@@ -19,6 +19,7 @@ import {
     JobQueueService,
     LanguageCode,
     LogLevel,
+    PaymentMethodService,
     Permission,
     ProductService,
     RequestContextService,
@@ -28,6 +29,7 @@ import {
 import { importProductsFromCsv, populateCollections, populateInitialData } from '@vendure/core/cli';
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
+import { testPaymentsAllowed } from '../src/plugins/test-payments/test-payments-allowed';
 import { config } from '../src/vendure-config';
 
 interface StoreDefinition {
@@ -137,6 +139,11 @@ async function main() {
 
         console.log(`Setting up ${store.name}…`);
         await populateInitialData(app, initialData);
+
+        // The test payment works only in development (or with ALLOW_TEST_PAYMENTS=true), even if left enabled.
+        const paymentMethods = app.get(PaymentMethodService);
+        const testMethod = (await paymentMethods.findAll(ctx)).items.find(m => m.code === 'test-payment');
+        if (testMethod) await paymentMethods.update(ctx, { id: testMethod.id, checker: { code: testPaymentsAllowed.code, arguments: [] } });
 
         // Prices are stored in the channel's currency, so set it before the products come in.
         const channelService = app.get(ChannelService);
