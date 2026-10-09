@@ -66,6 +66,9 @@ describe('enquiry checks', () => {
         assert.match(refusal({ contact: { ...contact, company: 'C'.repeat(121) } }), /company name under 120/);
         assert.equal(refusal({ contact: { ...contact, email: 'sarah@acme' } }), 'Please enter a valid email address.');
         assert.equal(refusal({ contact: { ...contact, email: 'sarah tan@acme.com' } }), 'Please enter a valid email address.');
+        assert.equal(refusal({ contact: { ...contact, email: 'sarah<x>@acme.com' } }), 'Please enter a valid email address.');
+        assert.equal(refusal({ contact: { ...contact, email: 'sarah@acme..com' } }), 'Please enter a valid email address.');
+        assert.ok(check({ contact: { ...contact, email: 'sarah.tan+gifts@acme-group.com.my' } }).ok);
         assert.match(refusal({ contact: { ...contact, phone: '12345' } }), /valid phone number/);
     });
 

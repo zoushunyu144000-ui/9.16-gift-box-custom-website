@@ -80,8 +80,12 @@ export function normalisePhone(raw: string): string | undefined {
     return /^1\d{8,9}$/.test(national) || /^[3-9]\d{7,8}$/.test(national) ? `+60${national}` : undefined;
 }
 
+// The HTML form rule for email addresses, with a dot required in the domain: the address goes into the
+// Reply-To of the shop's email and into mailto: links, so nothing outside it gets through.
+const EMAIL_PATTERN = /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$/;
+
 export function isEmail(value: string) {
-    return value.length <= LIMITS.emailMax && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    return value.length <= LIMITS.emailMax && EMAIL_PATTERN.test(value);
 }
 
 /** Today's date (YYYY-MM-DD) in Malaysia, where delivery dates are counted. */

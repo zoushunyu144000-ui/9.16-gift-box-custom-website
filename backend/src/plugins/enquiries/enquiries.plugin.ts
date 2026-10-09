@@ -60,6 +60,8 @@ export class EnquiriesPlugin implements OnApplicationBootstrap {
 
     static init(options: Partial<EnquiriesOptions> = {}) {
         const merged = { ...this.options, ...options };
+        // Submitted types are compared in lower case.
+        if (merged.types) merged.types = merged.types.map(type => type.toLowerCase());
         if (!/^[A-Z0-9]{1,8}$/.test(merged.codePrefix)) {
             throw new Error(`EnquiriesPlugin: codePrefix must be 1–8 capital letters or digits, e.g. "ENQ" (got "${merged.codePrefix}")`);
         }

@@ -64,9 +64,12 @@ export function checkWhatsappNumber(value: string | null | undefined): string | 
     if (number.length < 8 || number.length > 15) return 'This doesn’t look like a full phone number with its country code, e.g. 60123456789.';
 }
 
+// The HTML form rule for email addresses, with a dot required in the domain.
+const EMAIL_PATTERN = /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$/;
+
 export function checkEmail(value: string | null | undefined): string | undefined {
     if (isEmpty(value)) return;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return 'Please enter a valid email address, e.g. hello@example.com.';
+    if (!EMAIL_PATTERN.test(value.trim())) return 'Please enter a valid email address, e.g. hello@example.com.';
 }
 
 export function checkSlug(value: string | null | undefined): string | undefined {

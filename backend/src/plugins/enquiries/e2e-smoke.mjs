@@ -119,6 +119,11 @@ const refusals = [
     ['a quantity of 0', { type: 'semi-customised', contact, items: [{ productVariantId: boxA.id, quantity: 0 }] }, 'ENQUIRY_INPUT_ERROR'],
     ['a quantity of 10,000', { type: 'semi-customised', contact, items: [{ productVariantId: boxA.id, quantity: 10000 }] }, 'ENQUIRY_INPUT_ERROR'],
     ['a gift that doesn’t exist', { type: 'semi-customised', contact, items: [{ productVariantId: '999999', quantity: 5 }] }, 'ENQUIRY_ITEM_UNAVAILABLE_ERROR'],
+    [
+        'a request too large to quote online (over RM 21 million)',
+        { type: 'semi-customised', contact, items: variants.map(v => ({ productVariantId: v.id, quantity: 9999 })) },
+        'ENQUIRY_INPUT_ERROR',
+    ],
     ['a delivery date in the past', { type: 'fully-customised', contact, details: { deliveryDate: '2020-01-01' } }, 'ENQUIRY_INPUT_ERROR'],
     ['an unreadable type', { type: 'Corporate gifts!', contact }, 'ENQUIRY_INPUT_ERROR'],
 ];
@@ -222,7 +227,7 @@ expect(
 expect('the email lists the gifts and the indicative value', email?.body.includes(boxA.sku) && email.body.includes('Indicative value'));
 expect('no email for the honeypot enquiry', !emailFor(bot.code));
 
-// ── 8 · Rate limit: 5 accepted enquiries per address per hour (the honeypot counts) ─────────────────────
+// ── 8 · Rate limit: the default 5 accepted enquiries per address per hour (the honeypot counts) ─────────
 let limited;
 for (let i = 0; i < 6 && !limited; i++) {
     const r = await submit({ type: 'fully-customised', contact, details: { notes: `Rate limit check ${i + 1}` } });

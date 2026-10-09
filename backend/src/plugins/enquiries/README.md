@@ -59,7 +59,8 @@ way (012-345 6789, 03-1234 5678, 60…, +60…) or with another country's code (
 `+60123456789`; up to 50 gifts, each 1–9,999 (the same gift twice is added up); `details` is an object
 of text, numbers, yes/no, lists and one level of groups (40 fields, 2,000 characters a text), with
 `deliveryDate` a `YYYY-MM-DD` date not in the past (Malaysian time) and `quantity` a whole number.
-Prices and names of the chosen gifts are saved as they are at that moment.
+Prices and names of the chosen gifts are saved as they are at that moment; a selection worth more than
+RM 21 million (what a money column holds) is refused with a request to get in touch directly.
 
 ### Against spam
 
@@ -113,7 +114,7 @@ Other plugins can subscribe to `EnquirySubmittedEvent` (e.g. to post new enquiri
 | `dashboard/index.tsx` | List and detail pages |
 
 Tests: `npm test` (validation, codes, rate limiter, wording). `e2e-smoke.mjs` drives a running dev
-server and worker set up from `stores/moire` (33 checks: Shop API submissions and refusals, the
+server and worker set up from `stores/moire` (34 checks: Shop API submissions and refusals, the
 honeypot, Admin API list/filter/update, a role with ReadEnquiry only, the email file, the rate limit,
 and the storefront-content fields):
 

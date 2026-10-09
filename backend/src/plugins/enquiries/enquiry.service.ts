@@ -32,6 +32,8 @@ export interface UpdateEnquiryInput {
 }
 
 const INTERNAL_NOTES_MAX = 10000;
+/** Largest amount a money column holds with Vendure's default money strategy (sen, 32-bit): about RM 21 million. */
+const MONEY_COLUMN_MAX = 2147483647;
 
 /** Ids the default (auto-increment) id strategy can hold; anything else can't be a real gift. */
 const isPlausibleId = (id: ID) => (typeof id === 'number' ? Number.isSafeInteger(id) && id > 0 && id <= 2147483647 : id.length > 0 && id.length <= 64);
@@ -73,6 +75,14 @@ export class EnquiryService {
             );
         }
 
+        const itemsTotalWithTax = items.snapshots.reduce((sum, item) => sum + item.quantity * item.unitPriceWithTax, 0);
+        if (itemsTotalWithTax > MONEY_COLUMN_MAX) {
+            return new EnquiryError(
+                'ENQUIRY_INPUT_ERROR',
+                'This request is larger than we can take online. Please contact us on WhatsApp or by email and we’ll quote it directly.',
+            );
+        }
+
         if (this.limiter && !this.limiter.tryHit(address)) {
             const minutes = Math.max(1, Math.ceil(this.limiter.retryAfterSeconds(address) / 60));
             Logger.warn(`Refused an enquiry from ${address}: ${this.limiter.limit} already sent within the time window`, loggerCtx);
@@ -95,7 +105,7 @@ export class EnquiryService {
                 contactPhone: clean.contact.phone,
                 items: items.snapshots,
                 totalQuantity: items.snapshots.reduce((sum, item) => sum + item.quantity, 0),
-                itemsTotalWithTax: items.snapshots.reduce((sum, item) => sum + item.quantity * item.unitPriceWithTax, 0),
+                itemsTotalWithTax,
                 currencyCode: items.currencyCode,
                 details: clean.details,
                 internalNotes: null,
