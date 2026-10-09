@@ -15,6 +15,7 @@ import path from 'path';
 import { emailHandlers, emailTemplateVars } from './email/branding';
 import { AgeCheckPlugin } from './plugins/age-check/age-check.plugin';
 import { CatalogDisplayPlugin } from './plugins/catalog-display/catalog-display.plugin';
+import { easyParcelRateProvider, MalaysianCouriersPlugin } from './plugins/couriers-my/couriers-my.plugin';
 import { MalaysianDeliveryPlugin } from './plugins/delivery-my/delivery-my.plugin';
 import { EnquiriesPlugin } from './plugins/enquiries/enquiries.plugin';
 import { GiftMessagePlugin } from './plugins/gift-message/gift-message.plugin';
@@ -130,6 +131,8 @@ export const config: VendureConfig = {
             origin: { latitude: 3.1478, longitude: 101.713, address: 'Kuala Lumpur City Centre, 50450 Kuala Lumpur', postcode: '50450' },
             includePutrajaya: false,
             cutoffTime: '15:00',
+            // Courier prices from EasyParcel once its account is connected; until then the zone × weight table.
+            liveRateProviders: [easyParcelRateProvider],
         }),
         StorefrontContentPlugin.init(),
         // New-enquiry emails go to SHOP_NOTIFY_EMAIL. The storefront sends enquiries from its server, so
@@ -139,6 +142,32 @@ export const config: VendureConfig = {
         StaffPermissionsPlugin.init(),
         // CHIP and Billplz; callback base from VENDURE_PUBLIC_URL, return origins from STOREFRONT_URL + CORS_ORIGINS.
         MalaysianPaymentsPlugin.init({}),
+        MalaysianCouriersPlugin.init({
+            // Placeholder pickup point (KLCC area); the client supplies the real pickup address and contact.
+            origin: {
+                contactName: 'Moire Co.',
+                company: 'Moire Co.',
+                phone: '+60300000000',
+                addressLine1: 'Jalan Ampang',
+                city: 'Kuala Lumpur',
+                postcode: '50450',
+                state: 'MY-14',
+                lat: 3.1478,
+                lng: 101.713,
+            },
+            publicUrl: process.env.VENDURE_PUBLIC_URL,
+            lalamove: {
+                apiKey: process.env.LALAMOVE_API_KEY,
+                apiSecret: process.env.LALAMOVE_API_SECRET,
+                sandbox: process.env.LALAMOVE_SANDBOX !== 'false',
+            },
+            easyParcel: {
+                clientId: process.env.EASYPARCEL_CLIENT_ID,
+                clientSecret: process.env.EASYPARCEL_CLIENT_SECRET,
+                sandbox: process.env.EASYPARCEL_SANDBOX !== 'false',
+            },
+            googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY,
+        }),
         DashboardPlugin.init({
             route: 'dashboard',
             appDir: IS_DEV ? path.join(__dirname, '../dist/dashboard') : path.join(__dirname, 'dashboard'),

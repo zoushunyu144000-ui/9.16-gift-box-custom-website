@@ -200,7 +200,8 @@ async function main() {
  * kept as staff left them), and its placeholder prices and settings are adjusted in the dashboard.
  */
 async function setupPlugins(app: INestApplication, ctx: RequestContext, dir: string) {
-    const delivery = await setupDeliveryMethods(app, ctx);
+    // Same-day goes by Lalamove and outstation by EasyParcel (couriers-my); staff can pick another way when shipping.
+    const delivery = await setupDeliveryMethods(app, ctx, { sameDayFulfillmentHandler: 'lalamove', courierFulfillmentHandler: 'easyparcel' });
     console.log(
         `Delivery: created ${delivery.created.join(', ') || 'nothing'}; already there ${delivery.alreadyThere.join(', ') || 'nothing'}; switched off ${delivery.disabled.join(', ') || 'nothing'}.`,
     );

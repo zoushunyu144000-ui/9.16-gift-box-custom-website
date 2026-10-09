@@ -67,10 +67,9 @@ async function checkout(client) {
     const t = await client(`mutation { transitionOrderToState(state: "ArrangingPayment") {
         ... on Order { id state } ... on OrderStateTransitionError { transitionError } } }`);
     if (t.transitionOrderToState?.transitionError) return { refused: t.transitionOrderToState.transitionError };
-    const { eligiblePaymentMethods } = await client(`{ eligiblePaymentMethods { code } }`);
     const p = await client(`mutation($input: PaymentInput!) { addPaymentToOrder(input: $input) {
         ... on Order { ${ORDER_FIELDS} payments { id state } } ... on ErrorResult { errorCode message } } }`, {
-        input: { method: eligiblePaymentMethods[0].code, metadata: {} },
+        input: { method: AUTHORIZE_ONLY, metadata: {} },
     });
     return p.addPaymentToOrder;
 }
@@ -85,10 +84,30 @@ async function settle(order) {
 const balance = async () => (await shop(BALANCE)).activeCustomer?.customFields.loyaltyPoints;
 const orderState = async id => (await admin(ADMIN_ORDER, { id })).order.state;
 
+/**
+ * Test orders are paid with a test method that only authorizes, so the test decides when a payment
+ * is settled (points are earned on settlement), whatever the shop's own test payment does.
+ */
+const AUTHORIZE_ONLY = 'e2e-authorize-only';
+async function ensureAuthorizeOnlyPayment() {
+    const found = await admin(`{ paymentMethods(options: { filter: { code: { eq: "${AUTHORIZE_ONLY}" } } }) { items { id } } }`);
+    if (found.paymentMethods.items.length) return;
+    await admin(`mutation($input: CreatePaymentMethodInput!) { createPaymentMethod(input: $input) { id } }`, {
+        input: {
+            code: AUTHORIZE_ONLY,
+            enabled: true,
+            handler: { code: 'dummy-payment-handler', arguments: [{ name: 'automaticSettle', value: 'false' }] },
+            checker: { code: 'test-payments-allowed', arguments: [] },
+            translations: [{ languageCode: 'en', name: 'E2E authorize only', description: 'Loyalty smoke test' }],
+        },
+    });
+}
+
 async function main() {
     // ── Staff session and the loyalty promotion ───────────────────────────────
     const a = await admin(LOGIN, { u: process.env.SUPERADMIN_USERNAME, p: process.env.SUPERADMIN_PASSWORD });
     if (!a.login?.id) throw new Error(`Admin login failed: ${JSON.stringify(a)}`);
+    await ensureAuthorizeOnlyPayment();
     const promos = await admin(`{ promotions(options: { take: 100 }) { items { id name enabled actions { code } } } }`);
     const promo = promos.promotions.items.find(p => p.actions.some(x => x.code === 'loyalty_points_discount'));
     expect('the loyalty points promotion exists (setupLoyalty)', promo?.enabled, promo ? `#${promo.id} "${promo.name}"` : 'run setupLoyalty(app, ctx) first');

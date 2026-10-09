@@ -228,12 +228,18 @@ expect('the email lists the gifts and the indicative value', email?.body.include
 expect('no email for the honeypot enquiry', !emailFor(bot.code));
 
 // ── 8 · Rate limit: the default 5 accepted enquiries per address per hour (the honeypot counts) ─────────
-let limited;
-for (let i = 0; i < 6 && !limited; i++) {
-    const r = await submit({ type: 'fully-customised', contact, details: { notes: `Rate limit check ${i + 1}` } });
-    if (r.errorCode === 'ENQUIRY_RATE_LIMIT_ERROR') limited = { after: i, message: r.message };
+// A shop whose storefront sends enquiries from its own server turns this limit off (rateLimit: false).
+const rateLimitOff = /EnquiriesPlugin\.init\(\{[^}]*rateLimit:\s*false/.test(readFileSync(new URL('../../vendure-config.ts', import.meta.url), 'utf8'));
+if (rateLimitOff) {
+    console.log('SKIP  the per-address limit (rateLimit: false in vendure-config.ts)');
+} else {
+    let limited;
+    for (let i = 0; i < 6 && !limited; i++) {
+        const r = await submit({ type: 'fully-customised', contact, details: { notes: `Rate limit check ${i + 1}` } });
+        if (r.errorCode === 'ENQUIRY_RATE_LIMIT_ERROR') limited = { after: i, message: r.message };
+    }
+    expect('the 6th enquiry from one address within the hour is refused', limited?.after === 2, limited ? `after ${limited.after} more: ${limited.message}` : 'never refused');
 }
-expect('the 6th enquiry from one address within the hour is refused', limited?.after === 2, limited ? `after ${limited.after} more: ${limited.message}` : 'never refused');
 
 // ── 9 · Storefront content on the Shop API (the server's channel cache refreshes within 30 s) ──────────
 let customFields;
