@@ -16,9 +16,11 @@ export class CouriersMy1791514636151 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "fulfillment" ADD "customFieldsLabelurl" character varying(1024)`, undefined);
         await queryRunner.query(`ALTER TABLE "fulfillment" ADD "customFieldsShipmentstatus" character varying(255)`, undefined);
         await queryRunner.query(`ALTER TABLE "fulfillment" ADD "customFieldsLasteventat" TIMESTAMP(6)`, undefined);
+        await queryRunner.query(`ALTER TABLE "fulfillment" ADD "customFieldsLabelsize" character varying(4)`, undefined);
    }
 
    public async down(queryRunner: QueryRunner): Promise<any> {
+        await queryRunner.query(`ALTER TABLE "fulfillment" DROP COLUMN "customFieldsLabelsize"`, undefined);
         await queryRunner.query(`ALTER TABLE "fulfillment" DROP COLUMN "customFieldsLasteventat"`, undefined);
         await queryRunner.query(`ALTER TABLE "fulfillment" DROP COLUMN "customFieldsShipmentstatus"`, undefined);
         await queryRunner.query(`ALTER TABLE "fulfillment" DROP COLUMN "customFieldsLabelurl"`, undefined);
