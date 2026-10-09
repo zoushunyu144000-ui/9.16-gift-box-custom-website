@@ -10,6 +10,8 @@
     "dev": "vendure dev all",
     "build": "vendure build all",
     "build:server": "vendure build server",
+    "postbuild": "node scripts/copy-build-assets.mjs",
+    "postbuild:server": "node scripts/copy-build-assets.mjs",
     "build:worker": "vendure build worker",
     "build:dashboard": "vendure build dashboard",
     "start:server": "node ./dist/index.js",

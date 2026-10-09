@@ -356,7 +356,7 @@ export function CheckoutForm({
                 </select>
               </Field>
               {delivery && <DeliveryOptions delivery={delivery} onChoose={(id) => set("deliveryOptionId", id)} />}
-              <Field id="deliveryDate" label="Preferred delivery date" error={errors.deliveryDate} hint={`Earliest available: ${new Date(`${minDate}T00:00:00+08:00`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`}>
+              <Field id="deliveryDate" label="Preferred delivery date" error={errors.deliveryDate} hint={`Earliest available: ${new Date(`${minDate}T00:00:00+08:00`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kuala_Lumpur" })}`}>
                 <DateSelect id="deliveryDate" min={minDate} value={d.deliveryDate} onChange={(v) => set("deliveryDate", v)} invalid={!!errors.deliveryDate} />
               </Field>
               <Field id="deliveryNotes" label="Delivery notes (optional)" className="sm:col-span-2">

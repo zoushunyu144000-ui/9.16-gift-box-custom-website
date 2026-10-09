@@ -3,8 +3,10 @@
  *   store.json        currency, language, country, tax rate, placeholder delivery rate, staff roles
  *   products.csv      products in Vendure's import format (photos may be URLs or files in assetsDir)
  *   collections.json  collections, built from the products' facets
+ * then gives the shop the defaults of its plugins (delivery methods, …), which staff adjust in the dashboard.
  * Usage (from backend/): npm run setup:store -- stores/moire
- * Runs the migrations first. Refuses to run on a database that already has a shop, so it can't duplicate data.
+ * Runs the migrations first. Refuses to run on a database that already has a shop, so it can't duplicate data;
+ * `-- stores/moire --plugins-only` adds only the plugin defaults that are missing to an existing shop.
  */
 import {
     bootstrap,
@@ -22,6 +24,7 @@ import {
     PaymentMethodService,
     Permission,
     ProductService,
+    RequestContext,
     RequestContextService,
     runMigrations,
     SearchService,
@@ -29,6 +32,8 @@ import {
 import { importProductsFromCsv, populateCollections, populateInitialData } from '@vendure/core/cli';
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
+import type { INestApplicationContext } from '@nestjs/common';
+import { setupDeliveryMethods } from '../src/plugins/delivery-my';
 import { testPaymentsAllowed } from '../src/plugins/test-payments/test-payments-allowed';
 import { config } from '../src/vendure-config';
 
@@ -92,8 +97,9 @@ const ROLE_PRESETS = {
 };
 
 async function main() {
-    const dirArg = process.argv[2];
-    if (!dirArg) throw new Error('Usage: npm run setup:store -- stores/<store>');
+    const dirArg = process.argv.slice(2).find(a => !a.startsWith('--'));
+    const pluginsOnly = process.argv.includes('--plugins-only');
+    if (!dirArg) throw new Error('Usage: npm run setup:store -- stores/<store> [--plugins-only]');
     const dir = path.resolve(process.cwd(), dirArg);
     const store = JSON.parse(readFileSync(path.join(dir, 'store.json'), 'utf8')) as StoreDefinition;
     const productsCsv = path.join(dir, 'products.csv');
@@ -132,7 +138,15 @@ async function main() {
         const countries = await app.get(CountryService).findAll(ctx);
         const products = await app.get(ProductService).findAll(ctx, { take: 1 });
         if (countries.totalItems > 0 || products.totalItems > 0) {
-            console.log('This database already has a shop. Nothing was changed.');
+            if (!pluginsOnly) {
+                console.log('This database already has a shop. Nothing was changed. (--plugins-only adds missing plugin defaults.)');
+                return;
+            }
+            await setupPlugins(app, ctx);
+            return;
+        }
+        if (pluginsOnly) {
+            console.log('This database has no shop yet; run without --plugins-only first.');
             return;
         }
         await app.get(JobQueueService).start();
@@ -160,6 +174,7 @@ async function main() {
         console.log(`Imported ${result.imported} products.`);
         for (const error of result.errors ?? []) console.warn(`  ${error}`);
 
+        await setupPlugins(app, ctx);
         await populateCollections(app, initialData);
         await app.get(SearchService).reindex(await app.get(RequestContextService).create({ apiType: 'admin' }));
         await waitForJobs(app.get(ConfigService));
@@ -167,6 +182,17 @@ async function main() {
     } finally {
         await app.close();
     }
+}
+
+/**
+ * Each shop plugin's starting configuration: what it adds is safe to add twice (existing entries are
+ * kept as staff left them), and its placeholder prices and settings are adjusted in the dashboard.
+ */
+async function setupPlugins(app: INestApplicationContext, ctx: RequestContext) {
+    const delivery = await setupDeliveryMethods(app, ctx);
+    console.log(
+        `Delivery: created ${delivery.created.join(', ') || 'nothing'}; already there ${delivery.alreadyThere.join(', ') || 'nothing'}; switched off ${delivery.disabled.join(', ') || 'nothing'}.`,
+    );
 }
 
 /** Collections and the search index are built by background jobs; let them finish before closing. */

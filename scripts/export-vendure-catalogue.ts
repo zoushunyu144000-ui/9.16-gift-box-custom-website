@@ -17,8 +17,10 @@ const OUT = path.join(import.meta.dirname, "../backend/stores/moire");
 const COLUMNS = [
   "name", "slug", "description", "assets", "facets", "optionGroups", "optionValues", "sku", "price", "taxCategory", "stockOnHand", "trackInventory", "variantAssets", "variantFacets",
   "product:personalisationLabel", "product:personalisationHelper", "product:personalisationMaxLength",
-  "product:summary", "product:featured", "product:sortOrder", "product:availabilityNote", "variant:note",
+  "product:summary", "product:featured", "product:sortOrder", "product:availabilityNote", "variant:note", "variant:weightGrams",
 ] as const;
+/** Courier weight per gift until the client's real weights are entered in the dashboard (delivery-my). */
+const PLACEHOLDER_WEIGHT_GRAMS = 1000;
 /** The item names are bought as (PersonalisationPlugin.namesSku in the backend): one unit per name. */
 const NAMES_SKU = "personalised-name";
 type Row = Partial<Record<(typeof COLUMNS)[number], string | number>>;
@@ -70,7 +72,7 @@ for (const p of seedProducts) {
     "product:availabilityNote": p.status === "sold_out" ? (p.availabilityNote ?? "") : "",
   };
   if (!p.variants.length) {
-    rows.push({ ...base, sku: p.slug, price: p.price });
+    rows.push({ ...base, sku: p.slug, price: p.price, "variant:weightGrams": PLACEHOLDER_WEIGHT_GRAMS });
     continue;
   }
   const group = p.variants.some((v) => v.containsAlcohol) ? "Version" : "Option";
@@ -84,6 +86,7 @@ for (const p of seedProducts) {
       trackInventory: tracked ? "true" : "false",
       variantFacets: v.containsAlcohol && !p.containsAlcohol ? "alcohol:Contains alcohol" : "",
       "variant:note": v.note ?? "",
+      "variant:weightGrams": PLACEHOLDER_WEIGHT_GRAMS,
     };
     rows.push(i === 0 ? { ...base, ...variant, optionGroups: group } : variant);
   });
@@ -102,6 +105,8 @@ rows.push({
   "product:personalisationMaxLength": DEFAULT_PERSONALISATION.maxLength,
   "product:featured": "false",
   "product:sortOrder": 1000,
+  // Names add nothing to a parcel's weight.
+  "variant:weightGrams": 0,
 });
 
 const facetFilter = (name: string) => [{ code: "facet-value-filter", args: { facetValueNames: [name], containsAny: false } }];
