@@ -41,10 +41,7 @@ export const shopApiExtensions = gql`
         totalItems: Int!
     }
 
-    extend enum ErrorCode {
-        LOYALTY_POINTS_ERROR
-    }
-
+    # Vendure adds LOYALTY_POINTS_ERROR to the ErrorCode enum itself, from this type's name.
     type LoyaltyPointsError implements ErrorResult {
         errorCode: ErrorCode!
         message: String!
