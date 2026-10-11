@@ -3,14 +3,33 @@
 import { useEffect, useState } from "react";
 import type { CartLine, Quote } from "@/lib/types";
 
-/** Ask the server to price the bag. Re-runs whenever lines change. */
-export function useQuote(lines: CartLine[], ready: boolean) {
+/** What checkout adds to a quote: the address so far, the delivery option, a discount code and points. */
+export interface CheckoutContext {
+  postcode: string;
+  state: string;
+  optionId?: string;
+  /** With the commerce backend: price the customer's real order (discounts, points, delivery). */
+  backend?: boolean;
+  line1?: string;
+  line2?: string;
+  city?: string;
+  couponCode?: string;
+  loyaltyPoints?: number;
+  /** While the order is being placed: no new quotes, so none can change the order after it. */
+  paused?: boolean;
+}
+
+/**
+ * Ask the server to price the bag. Re-runs whenever lines change, and, at checkout, when the
+ * address, delivery option, discount code or points change.
+ */
+export function useQuote(lines: CartLine[], ready: boolean, checkout?: CheckoutContext) {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [error, setError] = useState(false);
-  const signature = JSON.stringify(lines.map((l) => [l.key, l.quantity]));
+  const signature = JSON.stringify([lines.map((l) => [l.key, l.quantity, l.personalisationCount]), checkout]);
 
   useEffect(() => {
-    if (!ready || lines.length === 0) return;
+    if (!ready || lines.length === 0 || checkout?.paused) return;
     const ctrl = new AbortController();
     const t = setTimeout(async () => {
       try {
@@ -18,15 +37,21 @@ export function useQuote(lines: CartLine[], ready: boolean) {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
-            lines: lines.map(({ key, productId, variantId, quantity, personalisation, personalisationOption, giftMessage }) => ({
+            lines: lines.map(({ key, productId, variantId, quantity, personalisation, personalisationCount, giftMessage }) => ({
               key,
               productId,
               variantId,
               quantity,
               personalisation,
-              personalisationOption,
+              personalisationCount,
               giftMessage,
             })),
+            postcode: checkout?.postcode || undefined,
+            state: checkout?.state || undefined,
+            deliveryOptionId: checkout?.optionId || undefined,
+            ...(checkout?.backend
+              ? { checkout: true, line1: checkout.line1, line2: checkout.line2, city: checkout.city, couponCode: checkout.couponCode || undefined, loyaltyPoints: checkout.loyaltyPoints }
+              : {}),
           }),
           signal: ctrl.signal,
         });
@@ -36,7 +61,7 @@ export function useQuote(lines: CartLine[], ready: boolean) {
       } catch (e) {
         if ((e as Error).name !== "AbortError") setError(true);
       }
-    }, 150);
+    }, checkout?.backend ? 400 : 150);
     return () => {
       clearTimeout(t);
       ctrl.abort();

@@ -1,7 +1,7 @@
 /**
  * SAMPLE CATALOGUE — FOR PREVIEW ONLY.
  *
- * Moire Co. has not yet supplied product names, contents, specifications or photography.
+ * Moire has not yet supplied product names, contents, specifications or photography.
  * Everything below is placeholder content written to exercise the real storefront:
  * prices follow the historical price points in REQUIREMENTS.md
  * (RM188 / 288 / 388 / 588, upgraded liquor versions RM988 / 1188 / 1288 / 2388),
@@ -30,17 +30,14 @@ function p(d: Draft): Product {
 }
 
 /**
- * Personalised name (meeting 2026-10-01). Sample configuration only: the client has not yet
- * confirmed which products offer it, whether it costs extra, or the material rules — so the fee is 0
- * (no charge shown) and both materials are offered. Adjust per product in Admin → Products.
+ * Personalised name (client, Oct 2026): offered on every product, capital letters only,
+ * RM 8 per name, no choice of material. Adjust per product in Admin → Products.
  */
 const personalisedName: Personalisation = {
   enabled: true,
   label: "Personalised name",
-  helper: "Letters, numbers and basic punctuation only.",
   maxLength: 20,
-  fee: 0,
-  options: ["Leather", "Acrylic"],
+  fee: 8,
 };
 
 const foodStorage = "Store in a cool, dry place away from direct sunlight. Once opened, keep in an airtight container.";
@@ -62,7 +59,7 @@ export const seedProducts: Product[] = [
     summary: "Festive cookies, pineapple tarts and a tin of tea.",
     description:
       "A compact Chinese New Year box for visiting family and friends. Three kinds of festive cookies and a tin of loose-leaf tea, packed in a keepsake box with a greeting card.",
-    contents: ["Festive peanut cookies, 250 g", "Pineapple tarts, 12 pieces", "Almond cookies, 200 g", "Loose-leaf oolong tea, 50 g tin", "Moire Co. greeting card"],
+    contents: ["Festive peanut cookies, 250 g", "Pineapple tarts, 12 pieces", "Almond cookies, 200 g", "Loose-leaf oolong tea, 50 g tin", "Moire greeting card"],
     specs: [
       { label: "Box size", value: "Approx. 30 × 22 × 9 cm" },
       { label: "Total weight", value: "Approx. 1.1 kg" },
@@ -90,7 +87,7 @@ export const seedProducts: Product[] = [
     summary: "Mandarin oranges in a woven basket with festive treats.",
     description:
       "Mandarin oranges are a traditional symbol of good fortune during Chinese New Year. This basket pairs hand-selected mandarins with festive snacks and a greeting card, ready to present at the door.",
-    contents: ["Mandarin oranges, 12 pieces", "Pineapple tarts, 12 pieces", "Assorted nuts, 300 g", "Woven serving basket", "Moire Co. greeting card"],
+    contents: ["Mandarin oranges, 12 pieces", "Pineapple tarts, 12 pieces", "Assorted nuts, 300 g", "Woven serving basket", "Moire greeting card"],
     specs: [
       { label: "Basket size", value: "Approx. 35 × 25 × 12 cm" },
       { label: "Fresh produce", value: "Mandarins are packed close to your delivery date" },
@@ -117,7 +114,7 @@ export const seedProducts: Product[] = [
     summary: "Pu'er tea, porcelain cups, pineapple tarts and mandarins.",
     description:
       "Built around tea for the reunion table: pressed pu'er tea, a pair of porcelain cups and festive sweets. Choose the gift box with red wine to add a bottle to the box.",
-    contents: ["Mini pu'er tea cakes, 10 pieces", "Porcelain teacups, set of 2", "Pineapple tarts, 12 pieces", "Mandarin oranges, 4 pieces", "Moire Co. greeting card"],
+    contents: ["Mini pu'er tea cakes, 10 pieces", "Porcelain teacups, set of 2", "Pineapple tarts, 12 pieces", "Mandarin oranges, 4 pieces", "Moire greeting card"],
     specs: [
       { label: "Box size", value: "Approx. 38 × 28 × 12 cm" },
       { label: "Wine version", value: "Adds 1 bottle of red wine, 750 ml" },
@@ -156,7 +153,7 @@ export const seedProducts: Product[] = [
       "Dried scallop XO-style sauce, 1 jar",
       "Loose-leaf oolong tea, 100 g tin",
       "Red envelope set",
-      "Moire Co. greeting card",
+      "Moire greeting card",
     ],
     specs: [
       { label: "Box size", value: "Approx. 45 × 32 × 14 cm" },
@@ -200,7 +197,7 @@ export const seedProducts: Product[] = [
       "Mandarin oranges, 8 pieces",
       "Pineapple tarts, 20 pieces",
       "Red envelope set",
-      "Moire Co. greeting card",
+      "Moire greeting card",
     ],
     specs: [
       { label: "Hamper size", value: "Approx. 55 × 40 × 18 cm" },
@@ -244,10 +241,10 @@ export const seedProducts: Product[] = [
     summary: "Three varieties of dates in wooden cups. Alcohol-free.",
     description:
       "A Hari Raya gift for open-house visits: three varieties of dates presented in turned wooden cups. This box contains no alcohol.",
-    contents: ["Medjool dates, 250 g", "Ajwa dates, 200 g", "Sukkari dates, 200 g", "Set of 3 wooden serving cups", "Moire Co. greeting card"],
+    contents: ["Medjool dates, 250 g", "Ajwa dates, 200 g", "Sukkari dates, 200 g", "Set of 3 wooden serving cups", "Moire greeting card"],
     specs: [
       { label: "Box size", value: "Approx. 32 × 24 × 10 cm" },
-      { label: "Halal", value: "Please confirm certification details with Moire Co." },
+      { label: "Halal", value: "Please confirm certification details with Moire." },
     ],
     allergens: "Packed in a facility that handles tree nuts.",
     storage: foodStorage,
@@ -269,10 +266,10 @@ export const seedProducts: Product[] = [
     summary: "Dates, festive cookies and tea for the Raya table. Alcohol-free.",
     description:
       "A fuller Hari Raya hamper to share at the open house: dates, festive cookies, dried fruit and tea. This hamper contains no alcohol.",
-    contents: ["Medjool dates, 400 g", "Festive butter cookies, 2 jars", "Dried apricots and raisins, 300 g", "Assorted tea, 20 sachets", "Moire Co. greeting card"],
+    contents: ["Medjool dates, 400 g", "Festive butter cookies, 2 jars", "Dried apricots and raisins, 300 g", "Assorted tea, 20 sachets", "Moire greeting card"],
     specs: [
       { label: "Hamper size", value: "Approx. 40 × 30 × 12 cm" },
-      { label: "Halal", value: "Please confirm certification details with Moire Co." },
+      { label: "Halal", value: "Please confirm certification details with Moire." },
     ],
     allergens: "Contains wheat, egg and milk. Packed in a facility that handles tree nuts.",
     storage: foodStorage,
@@ -296,7 +293,7 @@ export const seedProducts: Product[] = [
     sort: 210,
     summary: "Four baked mooncakes with a tin of tea.",
     description: "Four baked mooncakes in lotus and red bean paste, paired with a tin of tea. Available during the Mid-Autumn season.",
-    contents: ["Baked mooncakes, 4 pieces", "Jasmine tea, 50 g tin", "Moire Co. greeting card"],
+    contents: ["Baked mooncakes, 4 pieces", "Jasmine tea, 50 g tin", "Moire greeting card"],
     specs: [{ label: "Box size", value: "Approx. 26 × 26 × 8 cm" }],
     allergens: "Contains wheat, egg and milk. May contain peanuts.",
     storage: foodStorage,
@@ -319,7 +316,7 @@ export const seedProducts: Product[] = [
     sort: 220,
     summary: "Snow-skin and baked mooncakes with a ceramic cup.",
     description: "Snow-skin and baked mooncakes with a ceramic cup and two teas. Available during the Mid-Autumn season.",
-    contents: ["Snow-skin mooncakes, 4 pieces", "Baked mooncakes, 2 pieces", "Ceramic tea cup", "Two loose-leaf teas, 50 g each", "Moire Co. greeting card"],
+    contents: ["Snow-skin mooncakes, 4 pieces", "Baked mooncakes, 2 pieces", "Ceramic tea cup", "Two loose-leaf teas, 50 g each", "Moire greeting card"],
     specs: [{ label: "Box size", value: "Approx. 32 × 26 × 9 cm" }],
     allergens: "Contains wheat, egg and milk.",
     storage: "Keep snow-skin mooncakes refrigerated and consume within 5 days.",
@@ -344,7 +341,7 @@ export const seedProducts: Product[] = [
     sort: 310,
     summary: "Hand-wrapped rice dumplings in bamboo leaves.",
     description: "Hand-wrapped rice dumplings with savoury and sweet fillings, packed for the Dragon Boat Festival.",
-    contents: ["Savoury rice dumplings, 4 pieces", "Sweet red bean dumplings, 2 pieces", "Moire Co. greeting card"],
+    contents: ["Savoury rice dumplings, 4 pieces", "Sweet red bean dumplings, 2 pieces", "Moire greeting card"],
     specs: [{ label: "Delivery", value: "Delivered chilled" }],
     allergens: "Contains soy. May contain peanuts.",
     storage: "Keep refrigerated. Steam for 20 minutes before serving. Consume within 5 days.",
@@ -401,9 +398,9 @@ export const seedProducts: Product[] = [
     personalisation: {
       enabled: true,
       label: "Engraved name",
-      helper: "Engraved on both glasses. Letters, numbers and basic punctuation only.",
+      helper: "Engraved on both glasses.",
       maxLength: 20,
-      fee: 0,
+      fee: 8,
     },
     images: [
       unsplash("saWOgbangdE", "Crystal tumbler on a white surface with shadow"),
@@ -433,7 +430,7 @@ export const seedProducts: Product[] = [
       label: "Name on cover",
       helper: "Engraved on the front cover.",
       maxLength: 16,
-      fee: 0,
+      fee: 8,
     },
     images: [unsplash("i-ut6Z7qOnc", "Brown leather wrap journal on a white surface")],
   }),
@@ -460,7 +457,7 @@ export const seedProducts: Product[] = [
       label: "Engraving on lid",
       helper: "A name, date or short message.",
       maxLength: 24,
-      fee: 0,
+      fee: 8,
     },
     images: [
       unsplash("RdKjjpnR-iI", "Pale wooden box with engraved lid on linen"),
@@ -488,7 +485,7 @@ export const seedProducts: Product[] = [
       label: "Name on pen",
       helper: "Engraved along the pen barrel.",
       maxLength: 18,
-      fee: 0,
+      fee: 8,
     },
     images: [
       unsplash("KAnmK-kavKM", "Green linen notebook with a pen on a desk"),
@@ -741,7 +738,7 @@ export const seedSettings: SiteSettings = {
   festiveIntro: "Boxes and hampers for the first visits of the year — to parents and grandparents, to friends, and to the people you work with.",
   heroEyebrow: "Chinese New Year 2027",
   heroTitle: "More than a gift / A memory",
-  heroText: "Festive boxes, year-round gifts, wine gift boxes and corporate orders — from Moire Co. in Kuala Lumpur.",
+  heroText: "Festive boxes, year-round gifts, wine gift boxes and corporate orders — from Moire in Kuala Lumpur.",
   deliveryFee: 20,
   freeDeliveryThreshold: null,
   deliveryLeadDays: 2,

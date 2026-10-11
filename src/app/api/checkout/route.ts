@@ -5,9 +5,11 @@ import { publicOrder } from "@/lib/orders";
 import { getPaymentProvider } from "@/lib/payments";
 import { quoteLines } from "@/lib/pricing";
 import { newOrderId, orderAccessToken } from "@/lib/security";
-import { getStore } from "@/lib/store";
+import { getStore, isVendureConfigured } from "@/lib/store";
 import type { Order } from "@/lib/types";
 import { earliestDeliveryDate } from "@/lib/dates";
+import { placeVendureOrder } from "@/lib/vendure/checkout";
+import { publicOrigin } from "@/lib/vendure/payments";
 
 const phone = z
   .string()
@@ -35,6 +37,11 @@ const Body = z.object({
   }),
   deliveryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Please choose a delivery date"),
   deliveryNotes: z.string().trim().max(300).optional().or(z.literal("")),
+  /** With the commerce backend's delivery zones: the delivery option chosen at checkout. */
+  deliveryOptionId: z.string().max(40).optional(),
+  /** With the commerce backend: a discount code, and a member's points to use. */
+  couponCode: z.string().max(60).optional(),
+  loyaltyPoints: z.number().int().min(0).max(10_000_000).optional(),
   paymentMethod: z.enum(["fpx", "card", "ewallet"]),
   ageConfirmed: z.boolean(),
   termsAccepted: z.literal(true, { message: "Please accept the terms of sale" }),
@@ -45,8 +52,9 @@ const Body = z.object({
         productId: z.string().max(80),
         variantId: z.string().max(80).optional(),
         quantity: z.number(),
-        personalisation: z.string().max(200).optional(),
-        personalisationOption: z.string().max(60).optional(),
+        // Room for a bulk list of 99 names at the longest per-name limit (see personalisationLimit).
+        personalisation: z.string().max(6500).optional(),
+        personalisationCount: z.number().int().min(1).max(99).optional(),
         giftMessage: z.string().max(1000).optional(),
       }),
     )
@@ -73,6 +81,20 @@ export async function POST(req: Request) {
       { error: "Please choose a later delivery date.", fieldErrors: { deliveryDate: "This date is no longer available." } },
       { status: 422 },
     );
+  }
+
+  if (isVendureConfigured) {
+    try {
+      const result = await placeVendureOrder(body, publicOrigin(req));
+      if (!result.ok) {
+        const { error, fieldErrors, lineProblems, signIn } = result;
+        return NextResponse.json({ error, fieldErrors, lineProblems, signIn }, { status: result.status });
+      }
+      return NextResponse.json({ orderId: result.orderCode, accessToken: "", snapshot: "", redirectUrl: result.redirectUrl });
+    } catch (err) {
+      console.error("[checkout] backend order failed", err);
+      return NextResponse.json({ error: "We couldn't create your order. Please try again in a moment." }, { status: 502 });
+    }
   }
 
   const quote = await quoteLines(store, body.lines, settings);

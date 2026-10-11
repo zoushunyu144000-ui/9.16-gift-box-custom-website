@@ -4,11 +4,11 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { ArrowDown, ArrowUp, Plus, Trash2, Upload } from "lucide-react";
 import { deleteProductAction, saveProductAction, type ProductInputType } from "@/lib/admin/actions";
-import { CATEGORIES, slugify, sortFestivals } from "@/lib/catalog";
+import { CATEGORIES, DEFAULT_PERSONALISATION, formatRM, slugify, sortFestivals } from "@/lib/catalog";
 import type { Festival, Product } from "@/lib/types";
 import { ProductImage } from "../product-image";
 
-type Form = ProductInputType & { contentsText: string; specsText: string; priceText: string; stockText: string; persOptionsText: string };
+type Form = ProductInputType & { contentsText: string; specsText: string; priceText: string; stockText: string };
 
 function toForm(p: Product | null): Form {
   return {
@@ -34,7 +34,6 @@ function toForm(p: Product | null): Form {
     images: p?.images ?? [],
     variants: p?.variants ?? [],
     personalisation: p?.personalisation ?? null,
-    persOptionsText: (p?.personalisation?.options ?? []).join(", "),
     containsAlcohol: p?.containsAlcohol ?? false,
     featured: p?.featured ?? false,
     sort: p?.sort ?? 100,
@@ -114,15 +113,11 @@ export function ProductEditor({ product, festivals }: { product: Product | null;
     const stockRaw = f.stockText.trim();
     const stock = stockRaw === "" ? null : Number(stockRaw);
     if (stock !== null && (!Number.isInteger(stock) || stock < 0)) return setError("Stock must be a whole number, 0 or more (or empty to not track stock).");
-    const { stockText: _s, persOptionsText: _o, ...rest } = f;
+    const { stockText: _s, ...rest } = f;
     void _s;
-    void _o;
     const payload: ProductInputType = {
       ...rest,
       stock,
-      personalisation: f.personalisation
-        ? { ...f.personalisation, options: f.persOptionsText.split(",").map((s) => s.trim()).filter(Boolean) }
-        : null,
       price: Number.isFinite(price) ? price : 0,
       contents: f.contentsText.split("\n").map((s) => s.trim()).filter(Boolean),
       specs: f.specsText
@@ -339,21 +334,30 @@ export function ProductEditor({ product, festivals }: { product: Product | null;
               className="check"
               checked={!!pers?.enabled}
               onChange={(e) =>
-                set("personalisation", e.target.checked ? { enabled: true, label: pers?.label || "Personalised name", helper: pers?.helper ?? "", maxLength: pers?.maxLength || 20, fee: pers?.fee ?? 0, options: pers?.options ?? [] } : pers ? { ...pers, enabled: false } : null)
+                set(
+                  "personalisation",
+                  e.target.checked
+                    ? { enabled: true, label: pers?.label || DEFAULT_PERSONALISATION.label, helper: pers?.helper ?? "", maxLength: pers?.maxLength || DEFAULT_PERSONALISATION.maxLength, fee: pers?.fee ?? DEFAULT_PERSONALISATION.fee }
+                    : pers
+                      ? { ...pers, enabled: false }
+                      : null,
+                )
               }
             />
-            <span>Offer a personalised name<span className="block text-[12px] text-ink-2">Customers choose whether they want it</span></span>
+            <span>
+              Own settings for this product
+              <span className="block text-[12px] text-ink-2">
+                Every product offers a personalised name at {formatRM(DEFAULT_PERSONALISATION.fee)} per name. Tick to change the label, help text, length or fee here.
+              </span>
+            </span>
           </label>
           {pers?.enabled && (
             <div className="mt-4 space-y-4">
               <L label="Label"><input className="field" value={pers.label} onChange={(e) => set("personalisation", { ...pers, label: e.target.value })} /></L>
-              <L label="Help text"><input className="field" value={pers.helper ?? ""} onChange={(e) => set("personalisation", { ...pers, helper: e.target.value })} /></L>
-              <L label="Materials customers choose from" hint="Comma separated, e.g. Leather, Acrylic. Leave empty for no choice.">
-                <input className="field" value={f.persOptionsText} placeholder="Leather, Acrylic" onChange={(e) => set("persOptionsText", e.target.value)} />
-              </L>
+              <L label="Help text" hint="Optional, e.g. where the name goes"><input className="field" value={pers.helper ?? ""} onChange={(e) => set("personalisation", { ...pers, helper: e.target.value })} /></L>
               <div className="grid grid-cols-2 gap-3">
-                <L label="Max characters"><input className="field" type="number" min={1} max={60} value={pers.maxLength} onChange={(e) => set("personalisation", { ...pers, maxLength: parseInt(e.target.value || "1", 10) })} /></L>
-                <L label="Extra fee (RM)" hint="0 = no charge shown"><input className="field" inputMode="decimal" value={pers.fee} onChange={(e) => set("personalisation", { ...pers, fee: parseFloat(e.target.value.replace(/[^0-9.]/g, "")) || 0 })} /></L>
+                <L label="Max characters per name"><input className="field" type="number" min={1} max={60} value={pers.maxLength} onChange={(e) => set("personalisation", { ...pers, maxLength: parseInt(e.target.value || "1", 10) })} /></L>
+                <L label="Fee per name (RM)" hint="0 = no charge shown"><input className="field" inputMode="decimal" value={pers.fee} onChange={(e) => set("personalisation", { ...pers, fee: parseFloat(e.target.value.replace(/[^0-9.]/g, "")) || 0 })} /></L>
               </div>
             </div>
           )}

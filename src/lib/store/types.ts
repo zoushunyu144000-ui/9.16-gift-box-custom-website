@@ -1,8 +1,8 @@
 import type { Enquiry, Festival, Order, Product, SiteSettings } from "@/lib/types";
 
 export interface Store {
-  /** "supabase" in production; "demo" when no database is configured (preview only). */
-  readonly kind: "demo" | "supabase";
+  /** "vendure" with the commerce backend; "supabase" for the original admin; "demo" when nothing is configured (preview only). */
+  readonly kind: "demo" | "supabase" | "vendure";
 
   listProducts(): Promise<Product[]>;
   getProductBySlug(slug: string): Promise<Product | null>;

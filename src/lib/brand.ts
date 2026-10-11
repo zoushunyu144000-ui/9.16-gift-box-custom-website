@@ -4,6 +4,6 @@
  * new file's pixel size — every header, footer, menu, admin and fallback logo reads from here.
  */
 export const BRAND = {
-  name: "Moire Co.",
+  name: "Moire",
   logo: { src: "/brand/moire-logo.png", width: 800, height: 374, alt: "Moire" },
 } as const;

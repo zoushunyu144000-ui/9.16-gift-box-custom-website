@@ -26,8 +26,21 @@ export function isUnsplash(src: string) {
   return src.startsWith("https://images.unsplash.com/");
 }
 
-/** Build a sized URL. Unsplash supports on-the-fly resizing, cropping and WebP/AVIF. */
+/** Product photos served by the commerce backend's asset server, which resizes on request. */
+export function isBackendAsset(src: string) {
+  return /\/assets\/(source|preview)\//.test(src);
+}
+
+/** Build a sized URL. Unsplash and the backend's asset server resize, crop and convert on the fly. */
 export function sizedSrc(src: string, width: number, ratio?: number) {
+  if (isBackendAsset(src)) {
+    const params = new URLSearchParams({ w: String(width), format: "webp", q: "80" });
+    if (ratio) {
+      params.set("h", String(Math.round(width * ratio)));
+      params.set("mode", "crop");
+    }
+    return `${src}?${params.toString()}`;
+  }
   if (!isUnsplash(src)) return src;
   const params = new URLSearchParams({ w: String(width), q: "75", auto: "format" });
   if (ratio) {
@@ -39,6 +52,6 @@ export function sizedSrc(src: string, width: number, ratio?: number) {
 }
 
 export function srcSet(src: string, widths: number[], ratio?: number) {
-  if (!isUnsplash(src)) return undefined;
+  if (!isUnsplash(src) && !isBackendAsset(src)) return undefined;
   return widths.map((w) => `${sizedSrc(src, w, ratio)} ${w}w`).join(", ");
 }

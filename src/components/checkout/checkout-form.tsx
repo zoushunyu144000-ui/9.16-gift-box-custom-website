@@ -3,10 +3,10 @@
 import { DateSelect } from "../date-select";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { ChevronDown, Lock } from "lucide-react";
-import { formatRM, MALAYSIAN_STATES, PAYMENT_METHODS } from "@/lib/catalog";
-import type { PaymentMethod } from "@/lib/types";
+import { formatRM, MALAYSIAN_STATES, PAYMENT_METHODS, personalisationHeading } from "@/lib/catalog";
+import type { PaymentMethod, Quote } from "@/lib/types";
 import { useCart } from "../cart/cart-context";
 import { rememberOrder, useQuote } from "../cart/use-quote";
 import { ProductImage } from "../product-image";
@@ -30,6 +30,8 @@ interface Draft {
   state: string;
   deliveryDate: string;
   deliveryNotes: string;
+  /** With delivery priced per address: the chosen option (else the first offered). */
+  deliveryOptionId: string;
   paymentMethod: PaymentMethod;
 }
 
@@ -47,31 +49,83 @@ const EMPTY: Draft = {
   state: "",
   deliveryDate: "",
   deliveryNotes: "",
+  deliveryOptionId: "",
   paymentMethod: "fpx",
 };
 
-export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earliestDate: string; deliveryNote: string; testMode: boolean }) {
+export function CheckoutForm({
+  earliestDate,
+  deliveryNote,
+  testMode,
+  accounts = false,
+  member = null,
+  backend = false,
+}: {
+  earliestDate: string;
+  deliveryNote: string;
+  testMode: boolean;
+  /** The shop has member accounts: guests are offered to sign in. */
+  accounts?: boolean;
+  /** The signed-in member, whose order goes to their account. */
+  member?: { name: string; email: string; phone: string } | null;
+  /** Totals come from the commerce backend's order: discount codes, points, delivery. */
+  backend?: boolean;
+}) {
   const router = useRouter();
   const { lines, ready } = useCart();
-  const { quote, error: quoteError } = useQuote(lines, ready);
   const [d, setD] = useState<Draft>(EMPTY);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [pointsWanted, setPointsWanted] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const postcodeReady = /^\d{5}$/.test(d.postcode);
+  const addressReady = Boolean(d.line1.trim() && d.city.trim() && postcodeReady && d.state);
+  const { quote, error: quoteError } = useQuote(lines, ready, {
+    postcode: postcodeReady ? d.postcode : "",
+    state: d.state,
+    optionId: d.deliveryOptionId,
+    ...(backend ? { backend: true, couponCode, loyaltyPoints: pointsWanted, ...(addressReady ? { line1: d.line1, line2: d.line2, city: d.city } : {}) } : {}),
+    paused: submitting,
+  });
+  const delivery = quote?.delivery;
+  // With delivery priced per address, the backend says when this address can receive it.
+  const minDate = delivery?.promise?.earliestDate ?? earliestDate;
   const [age, setAge] = useState(false);
   const [terms, setTerms] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [needsSignIn, setNeedsSignIn] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
 
-  // Restore a draft so a refresh or failed payment doesn't lose the address.
+  // A refused code comes back with the quote: show why, and stop sending it.
+  const refusedCoupon = quote?.coupon?.error;
   useEffect(() => {
+    if (!refusedCoupon || !couponCode) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the server's answer about the code just arrived
+    setCouponError(refusedCoupon);
+    setCouponCode("");
+  }, [refusedCoupon, couponCode]);
+  // Points in use follow what this bag can take (the cap depends on the items).
+  const usablePoints = quote?.points?.usable;
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- keep the points used within what the new bag allows
+    if (pointsWanted > 0 && usablePoints !== undefined && usablePoints !== pointsWanted) setPointsWanted(usablePoints);
+  }, [usablePoints, pointsWanted]);
+
+  // Restore a draft so a refresh or failed payment doesn't lose the address. A member's own
+  // details fill in what the draft doesn't have, and their email is always the account's.
+  useEffect(() => {
+    let draft: Draft = EMPTY;
     try {
       const raw = sessionStorage.getItem(DRAFT_KEY);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore from sessionStorage after mount
-      if (raw) setD({ ...EMPTY, ...JSON.parse(raw) });
+      if (raw) draft = { ...EMPTY, ...JSON.parse(raw) };
     } catch {
       /* ignore */
     }
-  }, []);
+    if (member) draft = { ...draft, name: draft.name || member.name, phone: draft.phone || member.phone, email: member.email };
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore from sessionStorage after mount
+    if (draft !== EMPTY) setD(draft);
+  }, [member]);
   useEffect(() => {
     try {
       sessionStorage.setItem(DRAFT_KEY, JSON.stringify(d));
@@ -105,8 +159,10 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
     if (!/^\d{5}$/.test(d.postcode.trim())) e.postcode = "Postcode must be 5 digits";
     if (d.city.trim().length < 2) e.city = "Please enter the city";
     if (!d.state) e.state = "Please choose a state";
+    if (delivery?.status === "unavailable") e.postcode = "We can’t deliver to this postcode yet";
     if (!d.deliveryDate) e.deliveryDate = "Please choose a delivery date";
-    else if (d.deliveryDate < earliestDate) e.deliveryDate = "Please choose a later date";
+    else if (d.deliveryDate < minDate) e.deliveryDate = "Please choose a later date";
+    else if (delivery?.promise?.closedDates.includes(d.deliveryDate)) e.deliveryDate = "We don’t deliver on this day. Please choose another date.";
     if (quote?.containsAlcohol && !age) e.ageConfirmed = "Please confirm you are 21 or older";
     if (!terms) e.termsAccepted = "Please accept the terms of sale";
     return e;
@@ -115,6 +171,7 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
   async function submit(ev: React.FormEvent) {
     ev.preventDefault();
     setFormError(null);
+    setNeedsSignIn(false);
     const e = validate();
     setErrors(e);
     if (Object.keys(e).length) {
@@ -135,16 +192,19 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
           address: { line1: d.line1, line2: d.line2, postcode: d.postcode, city: d.city, state: d.state },
           deliveryDate: d.deliveryDate,
           deliveryNotes: d.deliveryNotes,
+          deliveryOptionId: delivery?.selectedId,
+          couponCode: couponCode || undefined,
+          loyaltyPoints: pointsWanted || undefined,
           paymentMethod: d.paymentMethod,
           ageConfirmed: age,
           termsAccepted: terms,
-          lines: lines.map(({ key, productId, variantId, quantity, personalisation, personalisationOption, giftMessage }) => ({
+          lines: lines.map(({ key, productId, variantId, quantity, personalisation, personalisationCount, giftMessage }) => ({
             key,
             productId,
             variantId,
             quantity,
             personalisation,
-            personalisationOption,
+            personalisationCount,
             giftMessage,
           })),
         }),
@@ -156,7 +216,12 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
           map[k.replace(/^(customer|address)\./, "").replace("recipient.name", "recipientName").replace("recipient.phone", "recipientPhone")] = v;
         }
         setErrors(map);
+        if (map.coupon) {
+          setCouponError(map.coupon);
+          setCouponCode("");
+        }
         setFormError(data.error ?? "Something went wrong. Please try again.");
+        setNeedsSignIn(Boolean(data.signIn));
         setSubmitting(false);
         return;
       }
@@ -193,9 +258,8 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
               <p className="leading-snug">{i.name}</p>
               {i.variantName && <p className="text-[12px] text-ink-2">{i.variantName}</p>}
               {i.personalisation && (
-                <p className="text-[12px] text-ink-2">
-                  {i.personalisationLabel}
-                  {i.personalisationOption ? ` (${i.personalisationOption})` : ""}: “{i.personalisation}”
+                <p className="whitespace-pre-line text-[12px] text-ink-2">
+                  {personalisationHeading(i.personalisationLabel, i.personalisationCount)}: “{i.personalisation}”
                 </p>
               )}
               {i.giftMessage && <p className="line-clamp-1 text-[12px] italic text-ink-2">Message: “{i.giftMessage}”</p>}
@@ -215,15 +279,40 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
           <dt className="text-ink-2">Subtotal</dt>
           <dd className="tabular-nums">{quote ? formatRM(quote.subtotal, { decimals: true }) : "—"}</dd>
         </div>
+        {quote?.discounts?.map((x, i) => (
+          <div key={`${x.description}-${i}`} className="flex justify-between gap-4 text-success">
+            <dt>{x.description}</dt>
+            <dd className="tabular-nums">−{formatRM(Math.abs(x.amount), { decimals: true })}</dd>
+          </div>
+        ))}
         <div className="flex justify-between">
           <dt className="text-ink-2">Delivery</dt>
-          <dd className="tabular-nums">{quote ? (quote.deliveryFee ? formatRM(quote.deliveryFee, { decimals: true }) : "Free") : "—"}</dd>
+          <dd className="tabular-nums">
+            {!quote ? "—" : delivery && delivery.status !== "ok" ? <span className="text-ink-3">Enter your postcode</span> : quote.deliveryFee ? formatRM(quote.deliveryFee, { decimals: true }) : "Free"}
+          </dd>
         </div>
         <div className="flex justify-between border-t border-line pt-3 text-[17px]">
           <dt>Total</dt>
           <dd className="tabular-nums">{quote ? formatRM(quote.total, { decimals: true }) : "—"}</dd>
         </div>
       </dl>
+      {backend && (
+        <CouponField
+          applied={quote?.coupon?.code ?? (couponCode || undefined)}
+          error={couponError ?? errors.coupon}
+          onApply={(code) => {
+            setCouponError(null);
+            setCouponCode(code);
+          }}
+          onRemove={() => {
+            setCouponError(null);
+            setCouponCode("");
+          }}
+        />
+      )}
+      {quote?.points && quote.points.balance > 0 && (
+        <PointsChoice points={quote.points} using={pointsWanted > 0} error={errors.points} onChange={(on) => setPointsWanted(on ? (quote.points?.usable ?? 0) : 0)} />
+      )}
       {quote?.hasProblems && (
         <p className="mt-4 text-[13px] text-danger">
           Some items are no longer available or need changes.{" "}
@@ -252,7 +341,22 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
         <form onSubmit={submit} noValidate className="lg:col-span-7">
           <h1 className="display text-[2.4rem] leading-none md:text-[3rem]">Checkout</h1>
           <p className="mt-3 text-[14px] text-ink-2">
-            Guest checkout — no account needed. <Link href="/cart" className="underline underline-offset-4">Back to bag</Link>
+            {member ? (
+              <>
+                Signed in as {member.email}. This order will be saved to your account.{" "}
+              </>
+            ) : accounts ? (
+              <>
+                Guest checkout — no account needed. Have an account?{" "}
+                <Link href="/account/sign-in?next=/checkout" className="underline underline-offset-4">
+                  Sign in
+                </Link>
+                .{" "}
+              </>
+            ) : (
+              <>Guest checkout — no account needed. </>
+            )}
+            <Link href="/cart" className="underline underline-offset-4">Back to bag</Link>
           </p>
 
           <Section n={1} title="Your details">
@@ -261,7 +365,7 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
                 <input id="name" className="field" autoComplete="name" value={d.name} onChange={(e) => set("name", e.target.value)} aria-invalid={!!errors.name} />
               </Field>
               <Field id="email" label="Email" error={errors.email} hint="For your order confirmation">
-                <input id="email" type="email" inputMode="email" className="field" autoComplete="email" value={d.email} onChange={(e) => set("email", e.target.value)} aria-invalid={!!errors.email} />
+                <input id="email" type="email" inputMode="email" className="field read-only:bg-cream/50 read-only:text-ink-2" autoComplete="email" value={d.email} readOnly={Boolean(member)} onChange={(e) => set("email", e.target.value)} aria-invalid={!!errors.email} />
               </Field>
               <Field id="phone" label="Mobile number" error={errors.phone}>
                 <input id="phone" type="tel" inputMode="tel" className="field" autoComplete="tel" placeholder="012 345 6789" value={d.phone} onChange={(e) => set("phone", e.target.value)} aria-invalid={!!errors.phone} />
@@ -308,8 +412,9 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
                   ))}
                 </select>
               </Field>
-              <Field id="deliveryDate" label="Preferred delivery date" error={errors.deliveryDate} hint={`Earliest available: ${new Date(`${earliestDate}T00:00:00+08:00`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`}>
-                <DateSelect id="deliveryDate" min={earliestDate} value={d.deliveryDate} onChange={(v) => set("deliveryDate", v)} invalid={!!errors.deliveryDate} />
+              {delivery && <DeliveryOptions delivery={delivery} onChoose={(id) => set("deliveryOptionId", id)} />}
+              <Field id="deliveryDate" label="Preferred delivery date" error={errors.deliveryDate} hint={`Earliest available: ${new Date(`${minDate}T00:00:00+08:00`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kuala_Lumpur" })}`}>
+                <DateSelect id="deliveryDate" min={minDate} value={d.deliveryDate} onChange={(v) => set("deliveryDate", v)} invalid={!!errors.deliveryDate} />
               </Field>
               <Field id="deliveryNotes" label="Delivery notes (optional)" className="sm:col-span-2">
                 <textarea id="deliveryNotes" className="field !min-h-[4.5rem]" maxLength={300} placeholder="Gate code, leave with guard, preferred time…" value={d.deliveryNotes} onChange={(e) => set("deliveryNotes", e.target.value)} />
@@ -369,10 +474,18 @@ export function CheckoutForm({ earliestDate, deliveryNote, testMode }: { earlies
           {(formError || quoteError) && (
             <p className="mt-6 border border-danger/30 bg-danger/5 px-4 py-3 text-[14px] text-danger" role="alert">
               {formError ?? "We couldn’t load current prices. Please refresh the page."}
+              {needsSignIn && (
+                <>
+                  {" "}
+                  <Link href="/account/sign-in?next=/checkout" className="font-medium underline underline-offset-4">
+                    Sign in
+                  </Link>
+                </>
+              )}
             </p>
           )}
 
-          <button type="submit" disabled={submitting || !quote || quote.hasProblems} className="btn btn-primary mt-8 w-full !min-h-14">
+          <button type="submit" disabled={submitting || !quote || quote.hasProblems || delivery?.status === "unavailable"} className="btn btn-primary mt-8 w-full !min-h-14">
             {submitting ? (
               <span className="flex items-center gap-3">
                 <span className="h-4 w-4 animate-spin rounded-full border border-ivory/40 border-t-ivory" /> Creating your order…
@@ -431,6 +544,109 @@ function Field({
       </label>
       {children}
       {error ? <p className="field-error">{error}</p> : hint ? <p className="mt-1.5 text-[12px] text-ink-3">{hint}</p> : null}
+    </div>
+  );
+}
+
+/** Delivery priced for the address: the options the backend offers for this postcode, and when. */
+function DeliveryOptions({ delivery, onChoose }: { delivery: NonNullable<Quote["delivery"]>; onChoose: (id: string) => void }) {
+  if (delivery.status === "postcode") {
+    return <p className="text-[13px] text-ink-2 sm:col-span-2">Enter the postcode to see delivery options and prices.</p>;
+  }
+  if (delivery.status === "unavailable") {
+    return (
+      <p className="field-error sm:col-span-2" role="alert">
+        We can’t deliver to this postcode yet. Please check it, or message us on WhatsApp.
+      </p>
+    );
+  }
+  return (
+    <fieldset className="sm:col-span-2">
+      <legend className="field-label">Delivery</legend>
+      <div className="divide-y divide-line border border-line-strong">
+        {delivery.options.map((o) => (
+          <label key={o.id} className={`flex items-start gap-3 px-4 py-4 transition-colors ${delivery.selectedId === o.id ? "bg-cream/70" : "hover:bg-cream/40"}`}>
+            <input type="radio" name="deliveryOption" className="check" checked={delivery.selectedId === o.id} onChange={() => onChoose(o.id)} />
+            <span className="flex-1">
+              <span className="block text-[15px]">{o.name}</span>
+              {o.description && <span className="block text-[13px] text-ink-2">{o.description}</span>}
+            </span>
+            <span className="text-[15px] tabular-nums">{o.price ? formatRM(o.price, { decimals: true }) : "Free"}</span>
+          </label>
+        ))}
+      </div>
+      {delivery.promise?.message && <p className="mt-2 text-[13px] text-ink-2">{delivery.promise.message}</p>}
+    </fieldset>
+  );
+}
+
+/** A discount code: typed and applied, or shown with a way to take it off. */
+function CouponField({ applied, error, onApply, onRemove }: { applied?: string; error?: string | null; onApply: (code: string) => void; onRemove: () => void }) {
+  const id = useId();
+  const [value, setValue] = useState("");
+  if (applied) {
+    return (
+      <p className="mt-4 flex items-center justify-between gap-3 border-t border-line pt-4 text-[13px]">
+        <span>
+          Code <strong className="font-medium tracking-wide">{applied}</strong> applied
+        </span>
+        <button type="button" onClick={onRemove} className="underline underline-offset-4">
+          Remove
+        </button>
+      </p>
+    );
+  }
+  const apply = () => value.trim() && onApply(value.trim());
+  return (
+    <div className="mt-4 border-t border-line pt-4">
+      <label htmlFor={id} className="field-label">
+        Discount code
+      </label>
+      <div className="flex gap-2">
+        <input
+          id={id}
+          className="field flex-1 uppercase placeholder:normal-case"
+          value={value}
+          maxLength={60}
+          autoComplete="off"
+          placeholder="Enter code"
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              apply();
+            }
+          }}
+          aria-invalid={!!error}
+        />
+        <button type="button" onClick={apply} className="btn btn-outline !px-5">
+          Apply
+        </button>
+      </div>
+      {error && <p className="field-error">{error}</p>}
+    </div>
+  );
+}
+
+/** A member's points: use them on this order when there are enough, else how many are needed. */
+function PointsChoice({ points, using, error, onChange }: { points: NonNullable<Quote["points"]>; using: boolean; error?: string; onChange: (on: boolean) => void }) {
+  const id = useId();
+  return (
+    <div className="mt-4 border-t border-line pt-4 text-[13px]">
+      {points.usable > 0 ? (
+        <label htmlFor={id} className="flex items-start gap-3">
+          <input id={id} type="checkbox" className="check" checked={using} onChange={(e) => onChange(e.target.checked)} />
+          <span>
+            Use {points.usable.toLocaleString("en-MY")} points (−{formatRM(points.usable * points.pointValue, { decimals: true })})
+            <span className="block text-ink-3">You have {points.balance.toLocaleString("en-MY")} points.</span>
+          </span>
+        </label>
+      ) : (
+        <p className="text-ink-2">
+          You have {points.balance.toLocaleString("en-MY")} points. You can use them from {points.minimum.toLocaleString("en-MY")} points.
+        </p>
+      )}
+      {(error || points.error) && <p className="field-error">{error || points.error}</p>}
     </div>
   );
 }

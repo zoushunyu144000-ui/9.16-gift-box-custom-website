@@ -12,7 +12,7 @@ async function findFestival(slug: string) {
 export async function generateMetadata({ params }: PageProps<"/festive/[festival]">): Promise<Metadata> {
   const { festival } = await findFestival((await params).festival);
   if (!festival) return { title: "Festive Collection" };
-  return { title: `${festival.name} gift boxes`, description: festival.description || `${festival.name} gift boxes from Moire Co.` };
+  return { title: `${festival.name} gift boxes`, description: festival.description || `${festival.name} gift boxes from Moire.` };
 }
 
 export default async function FestivalPage({ params, searchParams }: PageProps<"/festive/[festival]">) {

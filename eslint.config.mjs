@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The commerce backend is its own project with its own tooling.
+    "backend/**",
+    // Claude Code's working copies (git worktrees) for parallel tasks.
+    ".claude/**",
   ]),
 ]);
 

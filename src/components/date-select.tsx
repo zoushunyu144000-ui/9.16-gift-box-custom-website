@@ -74,7 +74,7 @@ export function DateSelect({
       </div>
       {tooEarly && min && (
         <p className="field-error" role="alert">
-          Please choose {new Date(`${min}T00:00:00+08:00`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })} or later
+          Please choose {new Date(`${min}T00:00:00+08:00`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kuala_Lumpur" })} or later
         </p>
       )}
     </div>

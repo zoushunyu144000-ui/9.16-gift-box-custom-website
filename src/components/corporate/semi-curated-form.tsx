@@ -119,7 +119,7 @@ export function SemiCuratedForm({ options, earliestDate, whatsappNumber }: { opt
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <a
-            href={whatsappLink(whatsappNumber, `Hello Moire Co., I've sent a semi-customised corporate request (${done}): ${summary}. Delivery ${formatDate(c.deliveryDate)}.`)}
+            href={whatsappLink(whatsappNumber, `Hello Moire, I've sent a semi-customised corporate request (${done}): ${summary}. Delivery ${formatDate(c.deliveryDate)}.`)}
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-primary"
@@ -170,9 +170,9 @@ export function SemiCuratedForm({ options, earliestDate, whatsappNumber }: { opt
                                 type="number"
                                 inputMode="numeric"
                                 min={1}
-                                max={10000}
+                                max={9999}
                                 value={qty[o.id]}
-                                onChange={(e) => setQty((q) => ({ ...q, [o.id]: Math.max(0, Math.min(10000, parseInt(e.target.value || "0", 10))) }))}
+                                onChange={(e) => setQty((q) => ({ ...q, [o.id]: Math.max(0, Math.min(9999, parseInt(e.target.value || "0", 10))) }))}
                                 className="field !min-h-9 w-20 !px-2 !py-1 text-center tabular-nums"
                                 aria-label={`Quantity of ${o.name}`}
                               />

@@ -1,39 +1,50 @@
-import { Star } from "./logo";
+import { Box, FileText, MessageCircleMore, PenTool, Receipt, Settings, type LucideIcon } from "lucide-react";
 
-export const BESPOKE_STEPS = [
-  { title: "Brief", text: "Style, quantity, date and delivery address" },
-  { title: "Proposal", text: "We prepare a proposal for your review" },
-  { title: "Confirmation", text: "You review and confirm the proposal" },
-  { title: "Production", text: "Your gifts are prepared and packed" },
-  { title: "Delivery", text: "Delivered to your chosen addresses" },
+export const BESPOKE_STEPS: { title: string; text: string; icon: LucideIcon }[] = [
+  { title: "Brief", text: "We understand your budget, quantity, style and gifting needs.", icon: MessageCircleMore },
+  { title: "Concept Proposal", text: "We develop the gifting direction around your brand and occasion.", icon: FileText },
+  { title: "Quotation", text: "We finalise the proposed products, quantities and details for your quotation.", icon: Receipt },
+  { title: "Design Proposal", text: "We present the full design, from packaging and layout to products and every detail.", icon: PenTool },
+  { title: "3D Mockup", text: "Your approved design is brought to life through a detailed 3D mockup.", icon: Box },
+  { title: "Production", text: "Once approved, we bring your gifts into full production.", icon: Settings },
 ];
 
 /**
- * The fully customised process as a timeline (client, Oct 2026): a thin gold line with a
- * diamond at each step and a star at the last, every other step set in a gold box.
- * Phones read it top to bottom; from md up it runs left to right.
+ * The fully customised process, after the client's mockup (Oct 2026): six steps in one row on
+ * desktop — a thin gold line runs through round outlined icons, the step number sits under each
+ * icon, then the title in serif capitals and a short line of text, with thin vertical dividers
+ * between steps. On phones and tablets the steps stack, the gold line running down through the icons.
  */
 export function ProcessLine({ className = "" }: { className?: string }) {
   return (
     <div className={className}>
-      <p className="label mb-6">How fully customised orders work</p>
-      <ol className="relative grid max-w-xl md:max-w-none md:grid-cols-5 md:gap-3">
-        <span className="absolute bottom-3 left-[7px] top-3 w-px bg-champagne md:hidden" aria-hidden="true" />
-        <span className="absolute left-0 right-0 top-[7px] hidden h-px bg-champagne md:block" aria-hidden="true" />
+      <h2 id="process-heading" className="display text-center text-[2rem] leading-tight md:text-[2.5rem]">
+        How it works
+      </h2>
+      <ol className="relative mt-10 grid lg:mt-14 lg:grid-cols-6">
+        {/* Gold line: vertical through the icons when stacked, horizontal from the first icon to the last on desktop. */}
+        <span className="absolute bottom-10 left-[27px] top-7 w-px bg-champagne/70 lg:hidden" aria-hidden="true" />
+        <span className="absolute left-[8.33%] right-[8.33%] top-8 hidden h-px bg-champagne/70 lg:block" aria-hidden="true" />
         {BESPOKE_STEPS.map((s, i) => {
-          const filled = i % 2 === 1;
-          const last = i === BESPOKE_STEPS.length - 1;
+          const Icon = s.icon;
+          const number = String(i + 1).padStart(2, "0");
           return (
-            <li key={s.title} className="relative py-1.5 pl-8 md:py-0 md:pl-0 md:pt-8">
-              <span
-                className="absolute left-0 top-1/2 flex h-[15px] w-[15px] -translate-y-1/2 items-center justify-center bg-ivory text-champagne md:left-3 md:top-0 md:translate-y-0"
-                aria-hidden="true"
-              >
-                {last ? <Star className="h-3 w-3" /> : <span className="h-[7px] w-[7px] rotate-45 border border-champagne" />}
-              </span>
-              <div className={`px-3 py-3 md:h-full md:px-4 md:py-4 ${filled ? "rounded-md bg-champagne text-ivory" : ""}`}>
-                <p className="display text-[1.35rem] leading-tight">{s.title}</p>
-                <p className={`mt-1 text-[14px] leading-relaxed ${filled ? "text-ivory/90" : "text-ink-2"}`}>{s.text}</p>
+            <li
+              key={s.title}
+              className="relative grid grid-cols-[56px_1fr] gap-x-5 pb-8 last:pb-0 lg:flex lg:flex-col lg:items-center lg:px-4 lg:pb-0 lg:text-center xl:px-5"
+              data-reveal=""
+              style={{ "--reveal-delay": `${i * 90}ms` } as React.CSSProperties}
+            >
+              {i > 0 && <span className="absolute bottom-0 left-0 top-[104px] hidden w-px bg-line lg:block" aria-hidden="true" />}
+              <div className="flex flex-col items-center">
+                <span className="relative grid h-14 w-14 place-items-center rounded-full border border-champagne bg-ivory text-bronze lg:h-16 lg:w-16" aria-hidden="true">
+                  <Icon className="h-6 w-6 lg:h-7 lg:w-7" strokeWidth={1.1} />
+                </span>
+                <span className="relative mt-2 bg-ivory px-1 text-[13px] font-medium tracking-[0.18em] text-bronze lg:mt-3">{number}</span>
+              </div>
+              <div className="pt-2 lg:mt-5 lg:pt-0">
+                <h3 className="display text-[1.15rem] uppercase leading-tight tracking-[0.06em] lg:text-[1.05rem] xl:text-[1.15rem]">{s.title}</h3>
+                <p className="mt-2 max-w-[40ch] text-[13.5px] leading-relaxed text-ink-2 lg:mx-auto lg:text-[13px]">{s.text}</p>
               </div>
             </li>
           );

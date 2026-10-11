@@ -25,6 +25,38 @@ Admin: `/admin` — preview password `moire-preview` (set `ADMIN_PASSWORD` to ch
 
 Without Supabase variables the site runs in **demo mode**: the sample catalogue loads from `src/data/seed.ts` and changes are written to `.data/store.json` (locally) or `/tmp` (serverless — temporary, may reset).
 
+## With the commerce backend (from 2026-10)
+
+The shop now runs on the commerce backend, which has its own repository: `zoushunyu144000-ui/zoushunyu144000-ui-commerce-backend`
+(Vendure: products, stock, orders, payments, delivery, members, discounts, staff roles; see its
+README). Set `VENDURE_SHOP_API_URL`
+and the storefront switches over; without it, everything below about Supabase and demo mode
+still applies.
+
+```bash
+# terminal 1: the backend (Postgres needed, see its README)
+git clone https://github.com/zoushunyu144000-ui/zoushunyu144000-ui-commerce-backend.git commerce-backend
+cd commerce-backend && npm ci && npm run dev   # http://localhost:3000, dashboard at /dashboard
+# terminal 2: the storefront
+VENDURE_SHOP_API_URL=http://localhost:3000/shop-api npx next dev -p 3001
+```
+
+What changes with the backend:
+
+- Catalogue, festivals, prices, stock and site texts come from the backend; staff edit them in its
+  dashboard, and `/admin` sends them there.
+- Checkout builds the order in the backend (names are their own RM 8-per-name line, gift messages,
+  21+ check), which prices it, checks stock and runs the rules. The customer then pays on the
+  gateway's page (CHIP / Billplz, configured in the dashboard) or, until one is set up, on the test page.
+- Delivery options, prices and dates come from the backend for the customer's postcode.
+- Customers can have accounts (`/account`): orders, points, details, password reset.
+- Corporate enquiries are stored in the backend for staff to follow up.
+- Order emails are sent by the backend (its `static/email/templates`).
+
+Code: `src/lib/vendure/` (Shop API client, catalogue mapping, checkout, orders, accounts, delivery,
+payments, enquiries) and `src/lib/store/vendure.ts`. Each backend feature is switched on only when the
+connected backend offers it (`src/lib/vendure/capabilities.ts`).
+
 ## Pages
 
 | Route | Purpose |
@@ -33,7 +65,7 @@ Without Supabase variables the site runs in **demo mode**: the sample catalogue 
 | `/festive` | Festive Collection level 1: one entry per festival (from Admin → Festivals) |
 | `/festive/[slug]` | Level 2: only that festival's gift boxes, sort. Old `/festive?occasion=…` links redirect here |
 | `/fixed-gifts`, `/wine-gift-boxes` | Category listings with sort (`/wine-spirits` redirects) |
-| `/products/[slug]` | Product page: Name → Price → options / personalised name (material + name) → Add to bag or disabled Sold Out → one Description (contents, specs, allergens, delivery) |
+| `/products/[slug]` | Product page: Name → Price → options / personalised name (number of names + names in capitals) → Add to bag or disabled Sold Out → one Description (contents, specs, allergens, delivery) |
 | `/cart` + bag drawer | Server-validated prices, edit quantity/message, unavailable-item handling |
 | `/checkout` | Guest checkout: contact, recipient, Malaysian address, delivery date, payment method (FPX / card / e-wallet), 21+ confirmation for alcohol, terms |
 | `/pay/[id]` | **Test-mode gateway** (simulates success / failure / cancel) — replaced by the real gateway |
@@ -42,14 +74,14 @@ Without Supabase variables the site runs in **demo mode**: the sample catalogue 
 | `/corporate/semi-curated` | Semi-customised: pick existing gifts + quantities + light customisation → saved request with reference → optional WhatsApp follow-up |
 | `/corporate/bespoke` | Fully customised “MADE FOR YOUR BRAND”: process + what to prepare → Enquire via WhatsApp (no web form) |
 | `/search` | Search (also live search overlay in header) |
-| `/delivery`, `/terms`, `/privacy` | Policy pages — **draft templates, need client confirmation** |
+| `/delivery`, `/terms`, `/privacy` | Policy pages — Delivery & returns and Terms of sale use the client's wording (Oct 2026); **privacy is still a draft template** |
 | `/admin` | Orders, products (name, description, price, **stock**, festival, images, options, personalisation, status), **festivals** (rename / hide / reorder / add), corporate enquiries, settings |
 
 ## Key design / business decisions
 
 - **Inventory (2026-10):** each product can track `stock`. Paid website orders deduct it automatically; sales on WhatsApp / Instagram / in person are adjusted in Admin → Products (list or editor). Stock 0 → shown as **Sold Out**, never hidden; the product page stays open with a disabled Sold Out button.
 - **Festivals are data (2026-10):** `festivals` table (id, name, slug, cover, description, active, sort); products link with `festivalId`.
-- **Personalised name (2026-10):** per product — `personalisation.enabled` / `.options` (e.g. Leather, Acrylic) / `.fee`. Fee 0 = no charge shown; pricing and which products offer it are pending client confirmation.
+- **Personalised name (2026-10):** every product offers it — capital letters only, **RM 8 per name**, no choice of material. The customer picks the number of names (charged once each, not per box) and lists bulk names in order (“1. JASON 2. EMILY”). A product can override label / help text / length / fee in Admin → Products (`personalisation.enabled`).
 - **Logo:** asset paths live in `src/lib/brand.ts`; replace files there to swap the logo everywhere.
 - **Wine wording:** the site sells gift boxes — “Wine Gift Boxes”, never “Wine” on its own (internal category id stays `wine-spirits`).
 
@@ -63,6 +95,10 @@ Without Supabase variables the site runs in **demo mode**: the sample catalogue 
 - Light palette only (client: no black website). Line & Light brand device: champagne line + four-point star from the logo, used sparingly.
 
 ## Going live — checklist
+
+With the commerce backend, follow its README (backend, gateway and courier accounts) and set
+`VENDURE_SHOP_API_URL`, `NEXT_PUBLIC_SITE_URL` (and `VENDURE_DASHBOARD_URL` if the dashboard has its
+own address) here. The list below is for the original Supabase setup.
 
 1. **Supabase** (client’s own account, free tier): create project → run `supabase/schema.sql` in the SQL editor (a database created from the v1 schema runs `supabase/migrations/20261001_festivals_inventory.sql` instead) → set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` → `npm run seed:supabase` to load the starter catalogue (then edit in /admin).
 2. **Payment gateway:** client chooses provider (e.g. Billplz, Stripe, iPay88, Curlec). Implement a provider in `src/lib/payments/index.ts` + a signed webhook route that calls `markOrderPaid` / `markOrderFailed` (`src/lib/orders.ts`). Set `PAYMENT_PROVIDER`.
@@ -80,7 +116,10 @@ src/app/admin/…         admin (login + panel)
 src/app/api/…           checkout, cart quote, orders, test payments, enquiries, search, uploads
 src/app/pay/[id]        test payment page
 src/components/…        UI (cart, checkout, product, corporate, admin)
-src/lib/store/          data layer: supabase.ts (production) + demo.ts (preview)
+src/lib/store/          data layer: vendure.ts (commerce backend), supabase.ts, demo.ts (preview)
+src/lib/vendure/        commerce backend: Shop API client, checkout, orders, accounts, delivery, payments
+src/app/(shop)/account  member accounts (commerce backend only)
+scripts/export-vendure-catalogue.ts  the sample catalogue as a store folder for the commerce backend
 src/lib/pricing.ts      server-side pricing & validation
 src/lib/payments/       payment provider interface (test provider included)
 src/data/seed.ts        SAMPLE catalogue + default settings

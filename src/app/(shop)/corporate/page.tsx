@@ -8,7 +8,7 @@ import type { ProductImage as Img } from "@/lib/types";
 
 export const metadata: Metadata = {
   title: "Corporate Orders",
-  description: "Corporate gifting from Moire Co.: semi-customised gifts from our collection, or fully customised gifts made for your brand.",
+  description: "Corporate gifting from Moire: semi-customised gifts from our collection, or fully customised gifts made for your brand.",
 };
 
 /**

@@ -8,8 +8,8 @@ import { earliestDeliveryDate } from "@/lib/dates";
 import { getStore } from "@/lib/store";
 
 export const metadata: Metadata = {
-  title: "Made for your brand — fully customised corporate gifts",
-  description: "Fully customised corporate gifts from Moire Co. Tell us your style, date and quantity and send it to us on WhatsApp, and we prepare a proposal.",
+  title: "Crafted for your brand — fully customised corporate gifts",
+  description: "Fully customised corporate gifts from Moire. From packaging to products, we tailor every detail to your needs — creating thoughtful gifts that leave a lasting impression on your clients and VIPs.",
 };
 
 export default async function BespokePage() {
@@ -21,9 +21,9 @@ export default async function BespokePage() {
       <header className="mt-8 grid gap-10 md:mt-12 lg:grid-cols-12 lg:gap-12">
         <div className="flex flex-col justify-center lg:col-span-6">
           <p className="eyebrow">Fully customised</p>
-          <h1 className="display mt-4 text-[2.6rem] leading-[1.0] tracking-[0.01em] md:text-[4.2rem]">MADE FOR YOUR BRAND</h1>
+          <h1 className="display mt-4 text-[2.6rem] leading-[1.0] tracking-[0.01em] md:text-[4.2rem]">CRAFTED FOR YOUR BRAND</h1>
           <p className="mt-6 max-w-[48ch] text-[15px] leading-relaxed text-ink-2">
-            A corporate gift designed around your brand, occasion and recipients. We prepare a proposal for you to review before anything is produced.
+            From packaging to products, we tailor every detail to your needs — creating thoughtful gifts that leave a lasting impression on your clients and VIPs.
           </p>
         </div>
         {/* Full-bleed on phones: the photograph runs edge to edge, no frame. */}
@@ -32,7 +32,7 @@ export default async function BespokePage() {
         </div>
       </header>
 
-      <section className="mt-16 border-t border-line pt-12 md:mt-24" aria-label="Process">
+      <section className="mt-16 border-t border-line pt-12 md:mt-24" aria-labelledby="process-heading">
         <ProcessLine />
       </section>
 

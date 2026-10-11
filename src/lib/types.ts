@@ -1,4 +1,4 @@
-// Core domain types for the Moire Co. storefront.
+// Core domain types for the Moire storefront.
 // Keep these in sync with supabase/schema.sql.
 
 export type CategorySlug = "festive" | "fixed-gifts" | "wine-spirits";
@@ -42,30 +42,32 @@ export interface ProductImage {
 
 export interface ProductVariant {
   id: string;
+  /** Backend (Vendure) SKU; names are linked to their gift by it. */
+  sku?: string;
   name: string;
   /** Full price in MYR for this variant (not a surcharge). */
   price: number;
   /** Optional one-line note shown under the option, e.g. what the upgrade adds. */
   note?: string;
+  /** Earlier price, shown crossed out when higher than `price` (a sale). */
+  compareAt?: number;
   containsAlcohol?: boolean;
 }
 
 /**
- * Optional personalisation (e.g. a name on a leather or acrylic tag).
- * Maps to the meeting brief as: enabled = personalisationEnabled,
- * options = personalisationOptions, fee = personalisationPrice.
+ * Personalised name. Every product offers one (DEFAULT_PERSONALISATION in catalog.ts);
+ * a product's own settings replace the default when enabled.
  */
 export interface Personalisation {
   enabled: boolean;
-  /** Label shown to the customer, e.g. "Engraved name". */
+  /** Label shown to the customer, e.g. "Personalised name". */
   label: string;
-  /** Short explanation of where the text appears. */
+  /** Short explanation of where the name appears, e.g. "Engraved on the lid." */
   helper?: string;
+  /** Characters allowed per name. */
   maxLength: number;
-  /** Additional charge per unit in MYR. 0 = no charge shown. */
+  /** Charge per name in MYR. 0 = no charge shown. */
   fee: number;
-  /** Materials / styles the customer picks from, e.g. ["Leather", "Acrylic"]. Empty = no choice offered. */
-  options?: string[];
 }
 
 export interface SpecRow {
@@ -90,6 +92,8 @@ export interface Product {
   availabilityNote?: string;
   /** Base price in MYR. When variants exist, the first variant should match this. */
   price: number;
+  /** Earlier price, shown crossed out when higher than `price` (a sale; products without variants). */
+  compareAt?: number;
   /** One-line summary for cards. */
   summary: string;
   /** Longer description for the product page. */
@@ -101,6 +105,10 @@ export interface Product {
   images: ProductImage[];
   variants: ProductVariant[];
   personalisation?: Personalisation | null;
+  /** Backend (Vendure) variant of a product without options: what goes in the order. */
+  defaultVariant?: { id: string; sku: string };
+  /** The backend says this product can't be personalised (every product can in demo mode). */
+  noPersonalisation?: boolean;
   containsAlcohol: boolean;
   /** Show in the homepage section for its category. */
   featured: boolean;
@@ -126,6 +134,8 @@ export interface SiteSettings {
   /** Minimum days between order and the earliest selectable delivery date. */
   deliveryLeadDays: number;
   deliveryNote: string;
+  /** Delivery is priced and dated per address at checkout (the commerce backend's delivery zones). */
+  deliveryByAddress?: boolean;
   /** International format without +, e.g. 60123456789 */
   whatsappNumber: string;
   contactEmail: string;
@@ -156,13 +166,16 @@ export interface OrderItem {
   variantName?: string;
   image?: string;
   unitPrice: number;
+  /** Charge per name (see personalisationCount). */
   personalisationFee: number;
   quantity: number;
+  /** unitPrice × quantity, plus personalisationFee × personalisationCount. */
   lineTotal: number;
+  /** Name(s) in capitals. Bulk orders list them in order: "1. JASON 2. EMILY". */
   personalisation?: string;
   personalisationLabel?: string;
-  /** Material chosen for the personalisation, e.g. "Leather". */
-  personalisationOption?: string;
+  /** How many names the customer paid for. */
+  personalisationCount?: number;
   giftMessage?: string;
   containsAlcohol: boolean;
 }
@@ -189,8 +202,11 @@ export interface Order {
   subtotal: number;
   deliveryFee: number;
   total: number;
+  /** Discounts taken off (codes, promotions, points), amounts negative; with the commerce backend. */
+  discounts?: { description: string; amount: number }[];
   payment: {
-    method: PaymentMethod;
+    /** "online" when a hosted gateway took the payment and didn't say which method was used. */
+    method: PaymentMethod | "online";
     provider: string;
     reference?: string;
     paidAt?: string;
@@ -244,14 +260,18 @@ export interface CartLine {
   variantId?: string;
   quantity: number;
   personalisation?: string;
-  personalisationOption?: string;
+  /** Number of names, charged per name. Only set with `personalisation`. */
+  personalisationCount?: number;
   giftMessage?: string;
   /** Display snapshot taken when added. Prices are always re-validated on the server at checkout. */
   snapshot: {
     name: string;
     image?: string;
     variantName?: string;
+    /** Price of one item, without names. */
     unitPrice: number;
+    /** Charge per name. */
+    personalisationFee?: number;
     personalisationLabel?: string;
     containsAlcohol: boolean;
   };
@@ -272,4 +292,33 @@ export interface Quote {
   total: number;
   containsAlcohol: boolean;
   hasProblems: boolean;
+  /**
+   * Delivery priced for the address (with the commerce backend): "postcode" until there is one
+   * (deliveryFee is then 0 and not yet known), "unavailable" when nothing delivers there.
+   */
+  delivery?: { status: "postcode" | "ok" | "unavailable"; options: DeliveryOption[]; selectedId?: string; promise?: DeliveryPromise };
+  /** At checkout with the commerce backend: the order's discounts (amounts negative, MYR). */
+  discounts?: { description: string; amount: number }[];
+  /** The discount code on the order, or why it was refused. */
+  coupon?: { code?: string; error?: string };
+  /** A signed-in member's points: balance, how many this order can use (0 = none yet), the minimum, MYR per point, how many are used. */
+  points?: { balance: number; usable: number; minimum: number; pointValue: number; applied: number; error?: string };
+}
+
+export interface DeliveryOption {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+}
+
+/** When an address can receive its delivery. Dates are YYYY-MM-DD in Malaysia time. */
+export interface DeliveryPromise {
+  zoneLabel: string;
+  earliestDate: string;
+  /** Days nothing is sent out (holidays), for the date picker. */
+  closedDates: string[];
+  sameDayAvailable: boolean;
+  /** Customer wording, e.g. "Order before 3pm for same-day delivery". */
+  message: string;
 }

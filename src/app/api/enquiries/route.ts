@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { allowRequest, clientIp } from "@/lib/rate-limit";
 import { newOrderId } from "@/lib/security";
-import { getStore } from "@/lib/store";
+import { getStore, isVendureConfigured } from "@/lib/store";
 import type { Enquiry } from "@/lib/types";
+import { submitVendureEnquiry } from "@/lib/vendure/enquiries";
 
 const contact = z.object({
   name: z.string().trim().min(2, "Please enter your name").max(80),
@@ -14,7 +16,7 @@ const contact = z.object({
 const Semi = z.object({
   type: z.literal("semi-curated"),
   contact: contact.extend({ email: z.string().trim().email("Please enter a valid email").max(120) }),
-  items: z.array(z.object({ productId: z.string().max(80), quantity: z.number().int().min(1).max(10000) })).min(1, "Please choose at least one gift").max(30),
+  items: z.array(z.object({ productId: z.string().max(80), quantity: z.number().int().min(1).max(9999) })).min(1, "Please choose at least one gift").max(30),
   customisation: z.object({
     companyNameOnCard: z.string().trim().max(80).optional(),
     cardMessage: z.string().trim().max(300).optional(),
@@ -41,6 +43,9 @@ const Bespoke = z.object({
 const Body = z.discriminatedUnion("type", [Semi, Bespoke]);
 
 export async function POST(req: Request) {
+  if (!allowRequest(`enquiry:${clientIp(req)}`, 8, 60 * 60_000)) {
+    return NextResponse.json({ error: "You’ve sent several requests in a short time. Please try again later, or message us on WhatsApp." }, { status: 429 });
+  }
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
     const fieldErrors: Record<string, string> = {};
@@ -48,6 +53,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Please check the highlighted fields.", fieldErrors }, { status: 422 });
   }
   const body = parsed.data;
+  if (isVendureConfigured) {
+    try {
+      const result = await submitVendureEnquiry(body);
+      return result.ok ? NextResponse.json({ id: result.code }) : NextResponse.json({ error: result.error }, { status: result.status });
+    } catch (err) {
+      console.error("[enquiries] backend submit failed", err);
+      return NextResponse.json({ error: "We couldn't send your request. Please try again or contact us on WhatsApp." }, { status: 502 });
+    }
+  }
   const store = await getStore();
   const now = new Date().toISOString();
   const base = {

@@ -22,7 +22,7 @@ export function searchProducts(products: Product[], query: string, festivals: Fe
           festivalName(festivals, p.festivalId) ?? "",
           // Wine gift boxes are still found when customers type "wine", "champagne", "whisky"…
           p.category === "wine-spirits" ? "wine spirits gift box set" : "",
-          p.personalisation?.enabled ? `engraved engraving personalised personalized name ${(p.personalisation.options ?? []).join(" ")}` : "",
+          p.personalisation?.enabled ? "engraved engraving personalised personalized name" : "",
           p.variants.map((v) => v.name).join(" "),
         ].join(" "),
       );

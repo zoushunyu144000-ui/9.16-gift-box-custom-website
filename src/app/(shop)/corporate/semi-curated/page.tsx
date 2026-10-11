@@ -7,7 +7,7 @@ import { getStore } from "@/lib/store";
 
 export const metadata: Metadata = {
   title: "Semi-customised corporate orders",
-  description: "Choose gifts from the Moire Co. collection, set quantities and add light customisation. We reply with a quotation.",
+  description: "Choose gifts from the Moire collection, set quantities and add light customisation. We reply with a quotation.",
 };
 
 export default async function SemiCuratedPage() {

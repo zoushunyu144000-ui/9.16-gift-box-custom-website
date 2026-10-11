@@ -5,8 +5,8 @@ export const metadata: Metadata = { title: "Privacy policy" };
 
 export default function PrivacyPage() {
   return (
-    <PolicyPage title="Privacy policy" updated="27 September 2026">
-      <p>This policy explains how Moire Co. handles personal data collected through this website, in line with the Personal Data Protection Act 2010 (Malaysia).</p>
+    <PolicyPage title="Privacy policy" updated="27 September 2026" draft>
+      <p>This policy explains how Moire handles personal data collected through this website, in line with the Personal Data Protection Act 2010 (Malaysia).</p>
       <h2>What we collect</h2>
       <ul>
         <li>Your name, email and phone number when you order or enquire.</li>

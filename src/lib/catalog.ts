@@ -38,6 +38,11 @@ export function festivalName(festivals: Festival[], id?: string | null) {
   return id ? festivals.find((f) => f.id === id)?.name : undefined;
 }
 
+/** Name of an order's payment method, including "online" (a hosted gateway that didn't say which). */
+export function paymentMethodName(method: PaymentMethod | "online") {
+  return method === "online" ? "Online payment" : PAYMENT_METHODS[method].name;
+}
+
 export const PAYMENT_METHODS: Record<PaymentMethod, { name: string; detail: string }> = {
   fpx: { name: "FPX online banking", detail: "Pay directly from your Malaysian bank account" },
   card: { name: "Credit / debit card", detail: "Visa and Mastercard" },
@@ -134,6 +139,17 @@ export function unitPrice(p: Product, variantId?: string) {
   return findVariant(p, variantId)?.price ?? p.price;
 }
 
+/** The earlier price to show crossed out (a sale), only when it is higher than the price. */
+export function compareAtPrice(p: Product, variantId?: string): number | undefined {
+  const v = findVariant(p, variantId);
+  const was = v ? v.compareAt : p.compareAt;
+  return was != null && was > (v ? v.price : p.price) ? was : undefined;
+}
+
+export function isOnSale(p: Product) {
+  return p.variants.length ? p.variants.some((v) => v.compareAt != null && v.compareAt > v.price) : compareAtPrice(p) !== undefined;
+}
+
 export function lineContainsAlcohol(p: Product, variantId?: string) {
   return p.containsAlcohol || Boolean(findVariant(p, variantId)?.containsAlcohol);
 }
@@ -152,14 +168,23 @@ export function whatsappLink(number: string, text: string) {
   return `https://wa.me/${n}?text=${encodeURIComponent(text)}`;
 }
 
-/** Personalised name offered on every product (client, Oct 2026), in leather or acrylic.
- * A product's own settings (label, length, fee, materials) win when enabled. */
-export const DEFAULT_PERSONALISATION: Personalisation = { enabled: true, label: "Personalised name", maxLength: 20, fee: 0, options: ["Leather", "Acrylic"] };
+/** Personalised name offered on every product (client, Oct 2026): capital letters only, RM 8 per name,
+ * no choice of material. A product's own settings (label, help text, length, fee) win when enabled. */
+export const DEFAULT_PERSONALISATION: Personalisation = { enabled: true, label: "Personalised name", maxLength: 20, fee: 8 };
 export function personalisationFor(p: Product): Personalisation {
-  if (!p.personalisation?.enabled) return DEFAULT_PERSONALISATION;
-  const options = p.personalisation.options?.filter(Boolean);
-  return { ...p.personalisation, options: options?.length ? options : DEFAULT_PERSONALISATION.options };
+  return p.personalisation?.enabled ? p.personalisation : DEFAULT_PERSONALISATION;
 }
 
-export const PERSONALISATION_PATTERN = /^[\p{L}\p{N} .,'&\-!?/()]*$/u;
+/** Capital letters, numbers, spaces and line breaks, plus the punctuation a list of names needs ("1. JASON 2. EMILY"). */
+export const PERSONALISATION_PATTERN = /^[A-Z0-9 .,'&\-\n]*$/;
+/** Most names one bag line can carry; each is charged. */
+export const MAX_NAMES = 99;
+/** Characters allowed for `names` names: one name's limit, or room for a numbered list ("12. " and a separator per name). */
+export function personalisationLimit(pers: Personalisation, names: number) {
+  return names > 1 ? names * (pers.maxLength + 5) : pers.maxLength;
+}
+/** "Personalised name × 3" — how a line's names are introduced in the bag, checkout and orders. */
+export function personalisationHeading(label: string | undefined, count: number | undefined) {
+  return `${label ?? DEFAULT_PERSONALISATION.label}${(count ?? 1) > 1 ? ` × ${count}` : ""}`;
+}
 export const GIFT_MESSAGE_MAX = 200;

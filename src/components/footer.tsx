@@ -1,16 +1,15 @@
 import Link from "next/link";
 import type { SiteSettings } from "@/lib/types";
 import { Logo } from "./logo";
-import { MoireField } from "./moire";
 
 export function Footer({ settings }: { settings: SiteSettings }) {
   const year = new Date().getFullYear();
   return (
-    <footer className="relative overflow-hidden border-t border-line bg-cream">
-      <MoireField className="pointer-events-none absolute -bottom-[420px] -right-[260px] h-[760px] w-[760px] text-champagne" opacity={0.28} />
-      {/* Kept short on every screen (client, Oct 2026): logo beside three short link columns, one line of fine print. */}
-      <div className="shell relative grid gap-6 py-8 md:grid-cols-12 md:items-start md:gap-8 md:py-10">
-        <Link href="/" aria-label="Moire Co. — home" className="md:col-span-3">
+    <footer className="border-t border-line bg-cream">
+      {/* Kept short and plain on every screen (client, Oct 2026): logo beside three short link columns,
+          one line of fine print, no ring pattern behind. */}
+      <div className="shell grid gap-6 py-8 md:grid-cols-12 md:items-start md:gap-8 md:py-10">
+        <Link href="/" aria-label="Moire — home" className="md:col-span-3">
           <Logo compact />
         </Link>
 
@@ -41,9 +40,9 @@ export function Footer({ settings }: { settings: SiteSettings }) {
           />
         </div>
       </div>
-      <div className="relative border-t border-line">
+      <div className="border-t border-line">
         <div className="shell flex flex-wrap items-center gap-x-4 gap-y-1 py-4 text-[11px] leading-relaxed text-ink-3 md:gap-x-6">
-          <p>© {year} Moire Co.</p>
+          <p>© {year} Moire</p>
           <p>FPX · Card · E-wallet</p>
           {settings.contactEmail && <a href={`mailto:${settings.contactEmail}`}>{settings.contactEmail}</a>}
           {settings.businessHours && <p>{settings.businessHours}</p>}

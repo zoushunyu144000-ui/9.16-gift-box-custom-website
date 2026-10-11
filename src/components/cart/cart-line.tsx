@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { formatRM, GIFT_MESSAGE_MAX } from "@/lib/catalog";
+import { formatRM, GIFT_MESSAGE_MAX, personalisationHeading } from "@/lib/catalog";
 import type { CartLine } from "@/lib/types";
 import { ProductImage } from "../product-image";
 import { QuantityStepper } from "../quantity-stepper";
-import { useCart } from "./cart-context";
+import { snapshotTotal, useCart } from "./cart-context";
 
 export function CartLineRow({
   line,
@@ -37,18 +37,15 @@ export function CartLineRow({
             </Link>
             {s.variantName && <p className="mt-0.5 text-[13px] text-ink-2">{s.variantName}</p>}
           </div>
-          <p className="flex-none text-[15px] tabular-nums">{formatRM(s.unitPrice * line.quantity, { decimals: true })}</p>
+          <p className="flex-none text-[15px] tabular-nums">{formatRM(snapshotTotal(line), { decimals: true })}</p>
         </div>
 
         {(line.personalisation || line.giftMessage) && !editing && (
           <dl className="mt-2 space-y-1 text-[13px] text-ink-2">
             {line.personalisation && (
               <div className="flex gap-1.5">
-                <dt className="flex-none">
-                  {s.personalisationLabel ?? "Personalisation"}
-                  {line.personalisationOption ? ` (${line.personalisationOption})` : ""}:
-                </dt>
-                <dd className="min-w-0 break-words text-ink">“{line.personalisation}”</dd>
+                <dt className="flex-none">{personalisationHeading(s.personalisationLabel, line.personalisationCount)}:</dt>
+                <dd className="min-w-0 whitespace-pre-line break-words text-ink">“{line.personalisation}”</dd>
               </div>
             )}
             {line.giftMessage && (

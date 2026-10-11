@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Lock } from "lucide-react";
-import { formatRM, PAYMENT_METHODS } from "@/lib/catalog";
+import { formatRM, paymentMethodName } from "@/lib/catalog";
 import { recallOrder, rememberOrder } from "../cart/use-quote";
 import { Logo } from "../logo";
 import { useOrder } from "./use-order";
@@ -78,7 +78,7 @@ export function TestGateway({ orderId, token }: { orderId: string; token: string
               <p className="text-[12px] uppercase tracking-[0.14em] text-ink-3">Amount due</p>
               <p className="mt-1 text-[2rem] tabular-nums">{formatRM(order.total, { decimals: true })}</p>
               <p className="mt-1 text-[13px] text-ink-2">
-                {PAYMENT_METHODS[order.payment.method].name} · {order.items.reduce((n, i) => n + i.quantity, 0)} item(s)
+                {paymentMethodName(order.payment.method)} · {order.items.reduce((n, i) => n + i.quantity, 0)} item(s)
               </p>
 
               {order.status === "paid" ? (
