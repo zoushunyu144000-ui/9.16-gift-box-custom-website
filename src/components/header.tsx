@@ -99,7 +99,7 @@ export function Header({ accounts = false }: { accounts?: boolean }) {
               <Search className="h-[19px] w-[19px]" strokeWidth={1.25} />
             </button>
             {accounts && (
-              <Link href="/account" className="grid h-11 w-11 place-items-center transition-colors hover:text-bronze" aria-label="My account">
+              <Link href="/account/sign-in" className="grid h-11 w-11 place-items-center transition-colors hover:text-bronze" aria-label="My account">
                 <User className="h-[19px] w-[19px]" strokeWidth={1.25} />
               </Link>
             )}
@@ -168,7 +168,7 @@ function MobileMenu({ open, onClose, isActive, accounts }: { open: boolean; onCl
             ))}
           </ul>
           {accounts && (
-            <Link href="/account" className="mt-8 flex items-center gap-3 text-[14px] uppercase tracking-[0.14em] text-ink-2">
+            <Link href="/account/sign-in" className="mt-8 flex items-center gap-3 text-[14px] uppercase tracking-[0.14em] text-ink-2">
               <User className="h-[18px] w-[18px]" strokeWidth={1.25} /> My account
             </Link>
           )}
