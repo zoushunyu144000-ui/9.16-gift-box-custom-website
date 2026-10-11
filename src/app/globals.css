@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* ───────────────────────── Moire Co. · Line & Light tokens ───────────────────────── */
+/* ───────────────────────── Moire · Line & Light tokens ───────────────────────── */
 @theme {
   /* Champagne Pearl palette (client, Oct 2026): pearl white base, champagne / warm beige
      section tints for clear contrast between bands, gold accent. */
@@ -362,7 +362,7 @@
   /* ── Art direction ─────────────────────────────────────────────
      One consistent grade for all photography, so images from different
      sources read as one body of work: warmer, softer, slightly muted.
-     Tune or remove (--grade: none) once Moire Co.'s own photography is in. */
+     Tune or remove (--grade: none) once Moire's own photography is in. */
   .grade {
     filter: var(--grade, saturate(0.76) contrast(0.94) brightness(1.025) sepia(0.08));
   }

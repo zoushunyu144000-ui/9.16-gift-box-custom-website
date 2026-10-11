@@ -19,7 +19,7 @@ export function BespokeQuickForm({ earliestDate, whatsappNumber }: { earliestDat
     setF((p) => ({ ...p, [k]: e.target.value }));
 
   const message = [
-    "Hello Moire Co., I'd like to enquire about a fully customised corporate gift.",
+    "Hello Moire, I'd like to enquire about a fully customised corporate gift.",
     "",
     `Preferred style: ${f.style}`,
     `Approximate date: ${f.date ? formatDate(f.date) : ""}`,

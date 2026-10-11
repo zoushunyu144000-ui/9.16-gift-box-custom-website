@@ -22,7 +22,7 @@ const TERMS: { title: string; text: string; icon: LucideIcon }[] = [
   },
   {
     title: "Incorrect information provided",
-    text: "Customers are responsible for providing accurate delivery and personalisation details. Moire Co. is not responsible for delays or failed deliveries caused by incorrect or incomplete information provided at checkout.",
+    text: "Customers are responsible for providing accurate delivery and personalisation details. Moire is not responsible for delays or failed deliveries caused by incorrect or incomplete information provided at checkout.",
     icon: CircleX,
   },
 ];

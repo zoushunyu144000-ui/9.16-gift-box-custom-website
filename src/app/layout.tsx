@@ -9,15 +9,15 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Moire Co. — Premium gift boxes, Kuala Lumpur",
-    template: "%s · Moire Co.",
+    default: "Moire — Premium gift boxes, Kuala Lumpur",
+    template: "%s · Moire",
   },
   description: "Festive gift boxes, everyday gifts, wine gift boxes and corporate gifting from Kuala Lumpur.",
   icons: { icon: "/icon.svg" },
   other: { google: "notranslate" },
   openGraph: {
     type: "website",
-    siteName: "Moire Co.",
+    siteName: "Moire",
     locale: "en_MY",
   },
 };

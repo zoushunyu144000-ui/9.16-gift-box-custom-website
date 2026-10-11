@@ -43,7 +43,7 @@ export default async function HomePage() {
             <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
               <div>
                 <p className="eyebrow">{settings.festiveTitle}</p>
-                <h2 id="festive-heading" className="display mt-3 text-[2.2rem] leading-tight tracking-[-0.01em] md:text-[2.8rem]">Festive Collection</h2>
+                <h2 id="festive-heading" className="display mt-3 text-[2.2rem] leading-tight tracking-[-0.01em] md:text-[2.8rem]">Premium Seasonal Gifting</h2>
                 <p className="mt-2 text-[14px] text-ink-2 md:text-[15px]">Joyful gifts for the season, ready to choose and send.</p>
               </div>
               <Link href={festivalHref(season!)} className="link-line flex-none sm:mb-1">
@@ -63,35 +63,36 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* 2–4 · Clear gateways to the full collection and service pages */}
+      {/* 2–4 · Clear gateways to the full collection and service pages, in the client's order
+          (Oct 2026): corporate, wine, fixed gifts. */}
       <CollectionGateway
-        id="fixed-heading"
-        eyebrow="Year-round gifting"
-        title="Fixed Gift Collection"
-        text="Timeless gifts for birthdays, thanks and milestones, with personalisation available on selected pieces."
-        href="/fixed-gifts"
-        cta="Explore fixed gifts"
-        image={fixedImage}
+        id="corporate-heading"
+        eyebrow="For business"
+        title="Corporate Gifting"
+        text="Semi-curated / Fully customised — Personalised gifts tailored to your brand and efficient bulk orders."
+        href="/corporate"
+        cta="Explore corporate gifting"
+        image={siteImages.homeCorporate}
         tone="cream"
       />
       <CollectionGateway
         id="wine-heading"
-        eyebrow="Gift boxes & gift sets"
-        title="Wine Gift Boxes"
-        text="Gift boxes and gift sets with wine, champagne or spirits, for celebrations, dinners and considered gestures."
+        eyebrow="Cheers to you"
+        title="Wine Gift Series"
+        text="A refined selection of ready-to-gift wine sets, thoughtfully paired for every occasion."
         href="/wine-gift-boxes"
         cta="Explore wine gift boxes"
         image={wineImage}
         tone="walnut"
       />
       <CollectionGateway
-        id="corporate-heading"
-        eyebrow="For business"
-        title="Corporate Orders"
-        text="Semi-customised and fully customised gifting for clients, partners and teams."
-        href="/corporate"
-        cta="Explore corporate gifting"
-        image={siteImages.homeCorporate}
+        id="fixed-heading"
+        eyebrow="Ready to gift"
+        title="Signature Fixed Gifts"
+        text="Beautifully curated and ready to gift."
+        href="/fixed-gifts"
+        cta="Explore fixed gifts"
+        image={fixedImage}
         tone="paper"
         flushFooter={festive.length > 0}
       />

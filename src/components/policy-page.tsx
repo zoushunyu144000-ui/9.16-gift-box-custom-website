@@ -1,6 +1,6 @@
 import { Breadcrumbs } from "./breadcrumbs";
 
-/** `draft` marks wording Moire Co. has not yet confirmed. */
+/** `draft` marks wording Moire has not yet confirmed. */
 export function PolicyPage({ title, updated, draft = false, children }: { title: string; updated: string; draft?: boolean; children: React.ReactNode }) {
   return (
     <div className="shell pt-6 md:pt-10">
@@ -10,7 +10,7 @@ export function PolicyPage({ title, updated, draft = false, children }: { title:
         <p className="mt-3 text-[13px] text-ink-3">Last updated {updated}</p>
         {draft && (
           <p className="mt-6 border border-dashed border-line-strong bg-cream/60 px-4 py-3 text-[13px] text-ink-2">
-            Draft for review — this text is a starting template and must be confirmed by Moire Co. before launch.
+            Draft for review — this text is a starting template and must be confirmed by Moire before launch.
           </p>
         )}
         <div className="prose-moire mt-10 text-[15px] leading-relaxed text-ink-2 [&_strong]:text-ink">{children}</div>

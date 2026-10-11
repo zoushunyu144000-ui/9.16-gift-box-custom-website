@@ -1,4 +1,4 @@
-// Core domain types for the Moire Co. storefront.
+// Core domain types for the Moire storefront.
 // Keep these in sync with supabase/schema.sql.
 
 export type CategorySlug = "festive" | "fixed-gifts" | "wine-spirits";

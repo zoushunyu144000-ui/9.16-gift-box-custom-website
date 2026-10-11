@@ -68,7 +68,7 @@ export function Header({ accounts = false }: { accounts?: boolean }) {
             </button>
           </div>
 
-          <Link href="/" className="justify-self-start" aria-label="Moire Co. — home">
+          <Link href="/" className="justify-self-start" aria-label="Moire — home">
             <Logo compact />
           </Link>
 

@@ -8,8 +8,8 @@ const styles = await readFile(new URL("../src/app/globals.css", import.meta.url)
 
 assert.match(source, /category === "festive"[^\n]+, 4\)/, "Homepage should show four representative Festive products");
 assert.doesNotMatch(source, /<WineList\b|<ProcessLine\b|function CorporatePath/, "Detailed inner-page presentations should not remain on the homepage");
-assert.doesNotMatch(source, /aria-label="About Moire Co\."/, "Standalone brand-pause section should be removed from the homepage flow");
-assert.match(source, />Festive Collection<\/h2>/, "Festive should use a conventional collection heading");
+assert.doesNotMatch(source, /aria-label="About Moire\.?"/, "Standalone brand-pause section should be removed from the homepage flow");
+assert.match(source, />Premium Seasonal Gifting<\/h2>/, "Festive section heading reads Premium Seasonal Gifting (client, Oct 2026)");
 assert.doesNotMatch(source, /splitYear|display-italic/, "The seasonal year should not be an oversized editorial device");
 assert.match(source, /tone="walnut"/, "Wine should provide the homepage's warm dark colour beat");
 assert.doesNotMatch(source, /imageSide=/, "All category gateways should use one consistent composition");
@@ -38,8 +38,15 @@ for (const route of ["/fixed-gifts", "/wine-gift-boxes", "/corporate"]) {
   assert.match(source, new RegExp(`href=[{]?["]${route.replace("/", "\\/")}`), `Homepage should keep a direct CTA to ${route}`);
 }
 
-const order = ["festive-heading", "fixed-heading", "wine-heading", "corporate-heading"].map((id) => source.indexOf(id));
+const order = ["festive-heading", "corporate-heading", "wine-heading", "fixed-heading"].map((id) => source.indexOf(id));
 assert.ok(order.every((position) => position >= 0), "All four homepage business sections should remain present");
 assert.deepEqual(order, [...order].sort((a, b) => a - b), "Homepage business sections should remain in the approved order");
+for (const copy of [
+  'eyebrow="For business"', 'title="Corporate Gifting"', 'text="Semi-curated / Fully customised — Personalised gifts tailored to your brand and efficient bulk orders."',
+  'eyebrow="Cheers to you"', 'title="Wine Gift Series"', 'text="A refined selection of ready-to-gift wine sets, thoughtfully paired for every occasion."',
+  'eyebrow="Ready to gift"', 'title="Signature Fixed Gifts"', 'text="Beautifully curated and ready to gift."',
+]) {
+  assert.ok(source.includes(copy), `Homepage gateway copy should match the client's mockup: ${copy}`);
+}
 
 console.log("Homepage simplification guard passed.");

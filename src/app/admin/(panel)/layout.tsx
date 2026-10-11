@@ -6,7 +6,7 @@ import { logoutAction } from "@/lib/admin/actions";
 import { requireAdmin } from "@/lib/admin/auth";
 import { getStore, isSupabaseConfigured } from "@/lib/store";
 
-export const metadata: Metadata = { title: { default: "Admin", template: "%s · Admin · Moire Co." }, robots: { index: false } };
+export const metadata: Metadata = { title: { default: "Admin", template: "%s · Admin · Moire" }, robots: { index: false } };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   await requireAdmin();

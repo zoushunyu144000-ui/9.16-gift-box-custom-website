@@ -1,52 +1,50 @@
-import { ClipboardCheck, FilePenLine, Gift, MessagesSquare, Truck, type LucideIcon } from "lucide-react";
-import { Star } from "./logo";
+import { Box, FileText, MessageCircleMore, PenTool, Receipt, Settings, type LucideIcon } from "lucide-react";
 
 export const BESPOKE_STEPS: { title: string; text: string; icon: LucideIcon }[] = [
-  { title: "Brief", text: "Style, quantity, date and delivery address", icon: FilePenLine },
-  { title: "Proposal", text: "We prepare a proposal for your review", icon: MessagesSquare },
-  { title: "Confirmation", text: "You review and confirm the proposal", icon: ClipboardCheck },
-  { title: "Production", text: "Your gifts are prepared and packed", icon: Gift },
-  { title: "Delivery", text: "Delivered to your chosen addresses", icon: Truck },
+  { title: "Brief", text: "We understand your budget, quantity, style and gifting needs.", icon: MessageCircleMore },
+  { title: "Concept Proposal", text: "We develop the gifting direction around your brand and occasion.", icon: FileText },
+  { title: "Quotation", text: "We finalise the proposed products, quantities and details for your quotation.", icon: Receipt },
+  { title: "Design Proposal", text: "We present the full design, from packaging and layout to products and every detail.", icon: PenTool },
+  { title: "3D Mockup", text: "Your approved design is brought to life through a detailed 3D mockup.", icon: Box },
+  { title: "Production", text: "Once approved, we bring your gifts into full production.", icon: Settings },
 ];
 
 /**
- * The fully customised process, after the client's reference (Oct 2026): a thin gold line with a
- * diamond at each step and a star at the last; each step shows its number, a line icon, the title
- * and one line of text, and steps 1, 3 and 5 sit on a soft champagne card. Read top to bottom on
- * every screen; from md up the heading sits beside the steps, like the form section below it.
+ * The fully customised process, after the client's mockup (Oct 2026): six steps in one row on
+ * desktop — a thin gold line runs through round outlined icons, the step number sits under each
+ * icon, then the title in serif capitals and a short line of text, with thin vertical dividers
+ * between steps. On phones and tablets the steps stack, the gold line running down through the icons.
  */
 export function ProcessLine({ className = "" }: { className?: string }) {
   return (
-    <div className={`grid gap-8 md:grid-cols-12 md:gap-8 ${className}`}>
-      <h2 id="process-heading" className="display text-[2rem] leading-tight md:col-span-5 md:text-[2.5rem]">
-        How fully customised orders work
+    <div className={className}>
+      <h2 id="process-heading" className="display text-center text-[2rem] leading-tight md:text-[2.5rem]">
+        How it works
       </h2>
-      <ol className="relative md:col-span-6 md:col-start-7">
-        <span className="absolute bottom-10 left-[7px] top-10 w-px bg-champagne/70" aria-hidden="true" />
+      <ol className="relative mt-10 grid lg:mt-14 lg:grid-cols-6">
+        {/* Gold line: vertical through the icons when stacked, horizontal from the first icon to the last on desktop. */}
+        <span className="absolute bottom-10 left-[27px] top-7 w-px bg-champagne/70 lg:hidden" aria-hidden="true" />
+        <span className="absolute left-[8.33%] right-[8.33%] top-8 hidden h-px bg-champagne/70 lg:block" aria-hidden="true" />
         {BESPOKE_STEPS.map((s, i) => {
-          const last = i === BESPOKE_STEPS.length - 1;
           const Icon = s.icon;
+          const number = String(i + 1).padStart(2, "0");
           return (
             <li
               key={s.title}
-              className="relative pl-7 [&+&]:mt-2 md:pl-9"
+              className="relative grid grid-cols-[56px_1fr] gap-x-5 pb-8 last:pb-0 lg:flex lg:flex-col lg:items-center lg:px-4 lg:pb-0 lg:text-center xl:px-5"
               data-reveal=""
               style={{ "--reveal-delay": `${i * 90}ms` } as React.CSSProperties}
             >
-              <span className="absolute left-0 top-1/2 grid h-[15px] w-[15px] -translate-y-1/2 place-items-center bg-ivory text-champagne" aria-hidden="true">
-                {last ? <Star className="h-3.5 w-3.5" /> : <span className="h-[7px] w-[7px] rotate-45 border border-champagne" />}
-              </span>
-              <div className={`flex items-center gap-3.5 rounded-lg px-4 py-5 sm:gap-5 md:px-6 md:py-6 ${i % 2 === 0 ? "bg-paper" : ""}`}>
-                <p className="w-10 flex-none text-center md:w-12">
-                  <span className="block text-[9px] font-medium uppercase tracking-[0.24em] text-ink-3">Step</span>
-                  <span className="display mt-1 block text-[1.75rem] leading-none text-bronze md:text-[2.1rem]">{String(i + 1).padStart(2, "0")}</span>
-                </p>
-                <span className="h-11 w-px flex-none bg-champagne/50 md:h-14" aria-hidden="true" />
-                <Icon className="h-7 w-7 flex-none text-bronze md:h-9 md:w-9" strokeWidth={1.1} aria-hidden="true" />
-                <div className="min-w-0">
-                  <h3 className="display text-[1.3rem] leading-tight md:text-[1.65rem]">{s.title}</h3>
-                  <p className="mt-1 text-[13.5px] leading-snug text-ink-2 md:text-[15px]">{s.text}</p>
-                </div>
+              {i > 0 && <span className="absolute bottom-0 left-0 top-[104px] hidden w-px bg-line lg:block" aria-hidden="true" />}
+              <div className="flex flex-col items-center">
+                <span className="relative grid h-14 w-14 place-items-center rounded-full border border-champagne bg-ivory text-bronze lg:h-16 lg:w-16" aria-hidden="true">
+                  <Icon className="h-6 w-6 lg:h-7 lg:w-7" strokeWidth={1.1} />
+                </span>
+                <span className="relative mt-2 bg-ivory px-1 text-[13px] font-medium tracking-[0.18em] text-bronze lg:mt-3">{number}</span>
+              </div>
+              <div className="pt-2 lg:mt-5 lg:pt-0">
+                <h3 className="display text-[1.15rem] uppercase leading-tight tracking-[0.06em] lg:text-[1.05rem] xl:text-[1.15rem]">{s.title}</h3>
+                <p className="mt-2 max-w-[40ch] text-[13.5px] leading-relaxed text-ink-2 lg:mx-auto lg:text-[13px]">{s.text}</p>
               </div>
             </li>
           );

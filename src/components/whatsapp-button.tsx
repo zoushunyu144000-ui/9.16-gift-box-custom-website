@@ -16,10 +16,10 @@ export function WhatsAppButton({ number }: { number: string }) {
 
   return (
     <a
-      href={whatsappLink(number, "Hello Moire Co., I have a question about a gift.")}
+      href={whatsappLink(number, "Hello Moire, I have a question about a gift.")}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Chat with Moire Co. on WhatsApp"
+      aria-label="Chat with Moire on WhatsApp"
       title="WhatsApp"
       className="wa-float fixed right-4 z-30 grid h-[52px] w-[52px] place-items-center rounded-full bg-[#25d366] text-white shadow-[0_6px_18px_-6px_rgb(31_28_24/0.45)] transition-[transform,bottom,box-shadow] duration-300 ease-out-soft hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-8px_rgb(31_28_24/0.5)] active:scale-95 md:right-6 md:h-14 md:w-14"
     >
