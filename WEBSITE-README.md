@@ -49,7 +49,9 @@ What changes with the backend:
   21+ check), which prices it, checks stock and runs the rules. The customer then pays on the
   gateway's page (CHIP / Billplz, configured in the dashboard) or, until one is set up, on the test page.
 - Delivery options, prices and dates come from the backend for the customer's postcode.
-- Customers can have accounts (`/account`): orders, points, details, password reset.
+- Customers can have accounts (`/account`): orders, points, details, password reset. "Continue with
+  Google" on sign-in and registration when `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is set (same OAuth client ID as
+  the backend's `GOOGLE_CLIENT_ID`; see `.env.example`).
 - Corporate enquiries are stored in the backend for staff to follow up.
 - Order emails are sent by the backend (its `static/email/templates`).
 
