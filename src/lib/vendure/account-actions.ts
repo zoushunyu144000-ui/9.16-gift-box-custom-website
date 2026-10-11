@@ -79,6 +79,39 @@ export async function signIn(_prev: AccountFormState, form: FormData): Promise<A
   redirect(safeNext(form.get("next")));
 }
 
+const GOOGLE_FAILED = "We couldn’t sign you in with Google. Please try again, or use your email and password.";
+
+/**
+ * "Continue with Google": the ID token from Google's button goes to the backend, which verifies it
+ * and finds, links or creates the account. The session is kept exactly as with a password sign-in
+ * (same cookie, the guest's bag carried over), then the customer goes on to `next`.
+ */
+export async function signInWithGoogle(credential: string, next?: string): Promise<AccountFormState> {
+  if (!isVendureConfigured) return UNAVAILABLE;
+  if (typeof credential !== "string" || !credential || credential.length > 4096) return { error: GOOGLE_FAILED };
+  let session: string | null;
+  try {
+    const res = await shopApi<{ authenticate: unknown }>(
+      `mutation($t: String!) { authenticate(input: { google: { token: $t } }, rememberMe: true) { ${RESULT} ... on InvalidCredentialsError { authenticationError } } }`,
+      { t: credential },
+      { token: await getSessionToken() },
+    );
+    const r = res.data.authenticate;
+    if (isErrorResult(r)) {
+      const reason = (r as { authenticationError?: string }).authenticationError ?? "";
+      console.warn("[account] Google sign in refused", r.errorCode, reason);
+      if (/not verified/i.test(reason)) return { error: "Your Google account’s email address isn’t verified yet. Please verify it with Google, or sign in with your email and password." };
+      return { error: GOOGLE_FAILED };
+    }
+    session = res.token;
+  } catch (err) {
+    console.error("[account] Google sign in failed", err);
+    return { error: GOOGLE_FAILED };
+  }
+  await setSessionToken(session);
+  redirect(safeNext(next ?? null));
+}
+
 export async function register(_prev: AccountFormState, form: FormData): Promise<AccountFormState> {
   if (!isVendureConfigured) return UNAVAILABLE;
   const values = keep(form, "firstName", "lastName", "email", "phone");
