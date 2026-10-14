@@ -114,6 +114,10 @@ export interface Product {
   featured: boolean;
   /** Lower first. */
   sort: number;
+  /** Chosen in the back office for the homepage festive section. */
+  showcase?: boolean;
+  /** Lower first within the festive section. */
+  showcaseOrder?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -121,6 +125,12 @@ export interface Product {
 export interface SiteSettings {
   /** Which festival (Festival.id) leads the homepage Festive section. */
   activeFestivalId: string;
+  /** The homepage Festive section can be switched off in the back office. Undefined = on. */
+  festiveEnabled?: boolean;
+  /** Photographs for the homepage slideshow. Empty or undefined = the built-in photographs. */
+  homeSlides?: { src: string; alt: string }[];
+  /** The three blocks under the Festive section. Undefined = the built-in blocks. */
+  homeBlocks?: import("./home-layout").HomeBlocksSetting | null;
   festiveTitle: string;
   festiveIntro: string;
   /** Hero copy */

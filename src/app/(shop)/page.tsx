@@ -6,6 +6,7 @@ import { ProductImage } from "@/components/product-image";
 import { ProductRail, RailItem } from "@/components/product-rail";
 import { siteImages } from "@/data/seed";
 import { festivalHref, sortFestivals, sortProducts } from "@/lib/catalog";
+import { BLOCK_KEYS, resolveBlock, type BlockKey } from "@/lib/home-layout";
 import { getStore } from "@/lib/store";
 import type { Product, ProductImage as ProductImageData } from "@/lib/types";
 
@@ -15,21 +16,43 @@ function pick(list: Product[], n: number) {
   return [...featured, ...rest].slice(0, n);
 }
 
+/** The most gift boxes the festive row shows when the shop has chosen them itself. */
+const SHOWCASE_MAX = 12;
+
+/** The built-in photograph of each block under the festive section; the shop can replace it in the back office. */
+const BLOCK_IMAGE: Record<BlockKey, ProductImageData> = {
+  corporate: siteImages.homeCorporate,
+  wine: siteImages.homeWine,
+  fixed: siteImages.homeFixed,
+};
+const BLOCK_TONE: Record<BlockKey, "cream" | "walnut" | "paper"> = { corporate: "cream", wine: "walnut", fixed: "paper" };
+
 export default async function HomePage() {
   const store = await getStore();
   const [products, settings, festivals] = await Promise.all([store.listProducts(), store.getSettings(), store.listFestivals()]);
   const visible = sortProducts(products.filter((p) => p.status !== "hidden"));
 
-  // Current season's gift boxes as a horizontal row. Sold-out boxes stay in the row (after the
-  // available ones, via sortProducts) and are marked Sold Out on the card.
+  // The festive row: the gift boxes the shop chose for it (back office → Homepage), in the order it set, and
+  // only while the section is switched on. Until the shop has chosen any, the current season's boxes (four).
+  // Sold-out boxes stay in the row and are marked Sold Out on the card.
   const season = festivals.find((f) => f.id === settings.activeFestivalId && f.active);
-  const festive = season ? pick(visible.filter((p) => p.category === "festive" && p.festivalId === season.id), 4) : [];
-  // Hero photographs cross-fade like a short film.
-  const heroSlides = [siteImages.homeHero, siteImages.homeFixed, siteImages.festiveCampaign, siteImages.homeCorporate];
+  const festiveOn = settings.festiveEnabled !== false;
+  const chosen = visible
+    .filter((p) => p.showcase)
+    .sort((a, b) => (a.showcaseOrder ?? 100) - (b.showcaseOrder ?? 100) || a.name.localeCompare(b.name))
+    .slice(0, SHOWCASE_MAX);
+  const festive = !festiveOn ? [] : chosen.length > 0 ? chosen : season ? pick(visible.filter((p) => p.category === "festive" && p.festivalId === season.id), 4) : [];
+  const festiveLink = season ? festivalHref(season) : "/festive";
+  // Hero photographs cross-fade like a short film. The shop can upload its own (back office → Homepage).
+  const builtInSlides = [siteImages.homeHero, siteImages.homeFixed, siteImages.festiveCampaign, siteImages.homeCorporate];
+  const heroSlides: ProductImageData[] = settings.homeSlides?.length
+    ? settings.homeSlides.map((s, i) => ({ src: s.src, alt: s.alt || `Moire gifts, photograph ${i + 1}`, width: 1672, height: 941 }))
+    : builtInSlides;
   const shown = sortFestivals(festivals);
   const festivalNames = shown.length > 1 ? `${shown.slice(0, -1).map((f) => f.name).join(", ")} and ${shown.at(-1)!.name}` : shown[0]?.name ?? "every festival";
-  const fixedImage = siteImages.homeFixed;
-  const wineImage = siteImages.homeWine;
+  const blocks = (settings.homeBlocks?.order ?? BLOCK_KEYS)
+    .map((key) => ({ key, ...resolveBlock(key, settings.homeBlocks?.blocks[key], BLOCK_IMAGE[key]) }))
+    .filter((block) => block.enabled);
 
   return (
     <>
@@ -46,7 +69,7 @@ export default async function HomePage() {
                 <h2 id="festive-heading" className="display mt-3 text-[2.2rem] leading-tight tracking-[-0.01em] md:text-[2.8rem]">Premium Seasonal Gifting</h2>
                 <p className="mt-2 text-[14px] text-ink-2 md:text-[15px]">Joyful gifts for the season, ready to choose and send.</p>
               </div>
-              <Link href={festivalHref(season!)} className="link-line flex-none sm:mb-1">
+              <Link href={festiveLink} className="link-line flex-none sm:mb-1">
                 View all <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.25} />
               </Link>
             </div>
@@ -65,37 +88,20 @@ export default async function HomePage() {
 
       {/* 2–4 · Clear gateways to the full collection and service pages, in the client's order
           (Oct 2026): corporate, wine, fixed gifts. */}
-      <CollectionGateway
-        id="corporate-heading"
-        eyebrow="For business"
-        title="Corporate Gifting"
-        text="Semi-curated / Fully customised — Personalised gifts tailored to your brand and efficient bulk orders."
-        href="/corporate"
-        cta="Explore corporate gifting"
-        image={siteImages.homeCorporate}
-        tone="cream"
-      />
-      <CollectionGateway
-        id="wine-heading"
-        eyebrow="Cheers to you"
-        title="Wine Gift Series"
-        text="A refined selection of ready-to-gift wine sets, thoughtfully paired for every occasion."
-        href="/wine-gift-boxes"
-        cta="Explore wine gift boxes"
-        image={wineImage}
-        tone="walnut"
-      />
-      <CollectionGateway
-        id="fixed-heading"
-        eyebrow="Ready to gift"
-        title="Signature Fixed Gifts"
-        text="Beautifully curated and ready to gift."
-        href="/fixed-gifts"
-        cta="Explore fixed gifts"
-        image={fixedImage}
-        tone="paper"
-        flushFooter={festive.length > 0}
-      />
+      {blocks.map((block, index) => (
+        <CollectionGateway
+          key={block.key}
+          id={`${block.key}-heading`}
+          eyebrow={block.eyebrow}
+          title={block.title}
+          text={block.text}
+          href={block.href}
+          cta={block.cta}
+          image={block.image}
+          tone={BLOCK_TONE[block.key]}
+          flushFooter={festive.length > 0 && index === blocks.length - 1}
+        />
+      ))}
 
       {/* No festival in season: the festive collection becomes a closing entry instead of a product row. */}
       {festive.length === 0 && (

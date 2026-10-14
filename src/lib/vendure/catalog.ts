@@ -1,7 +1,8 @@
-import "server-only";
+﻿import "server-only";
 import { seedSettings } from "@/data/seed";
 import { CATEGORIES, DEFAULT_PERSONALISATION } from "@/lib/catalog";
 import type { CategorySlug, Festival, Product, ProductImage, SiteSettings } from "@/lib/types";
+import { parseHomeBlocks, parseHomeSlides } from "@/lib/home-layout";
 import { getCapabilities } from "./capabilities";
 import { shopApi } from "./client";
 
@@ -29,6 +30,8 @@ type VProduct = {
     summary?: string | null;
     featured?: boolean | null;
     sortOrder?: number | null;
+    showcase?: boolean | null;
+    showcaseOrder?: number | null;
     availabilityNote?: string | null;
   };
   variants: {
@@ -55,7 +58,7 @@ const PRODUCTS = /* GraphQL */ `
         collections { slug parent { slug } }
         customFields {
           personalisationEnabled personalisationLabel personalisationHelper personalisationMaxLength
-          summary featured sortOrder availabilityNote
+          summary featured sortOrder showcase showcaseOrder availabilityNote
         }
         variants {
           id sku name priceWithTax stockLevel
@@ -81,6 +84,7 @@ const CHANNEL_CONTENT = /* GraphQL */ `
     activeChannel {
       customFields {
         heroEyebrow heroTitle heroText featuredCollectionSlug featuredTitle featuredIntro
+        festiveSectionEnabled homeSlides homeBlocks
         whatsappNumber contactEmail businessHours showPreviewNotice
       }
     }
@@ -163,6 +167,8 @@ function toProduct(p: VProduct, namesFee: number): Product | null {
     containsAlcohol: alcohol,
     featured: Boolean(cf.featured),
     sort: cf.sortOrder ?? 100,
+    showcase: Boolean(cf.showcase),
+    showcaseOrder: cf.showcaseOrder ?? 100,
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
   };
@@ -174,10 +180,25 @@ export interface Catalog {
   names: { variantId: string; fee: number } | null;
 }
 
+/**
+ * Runs a query that asks for fields a slightly older backend may not have yet (the homepage management
+ * fields). If the backend refuses them as unknown, runs the query again without them, so a deploy order or a
+ * rollback never takes the shop pages down.
+ */
+async function withNewFields<T>(query: string, variables: Record<string, unknown>, newFields: string[]) {
+  try {
+    return await shopApi<T>(query, variables);
+  } catch (error) {
+    if (!(error instanceof Error) || !/Cannot query field/.test(error.message)) throw error;
+    const stripped = newFields.reduce((q, field) => q.replace(new RegExp(`\\s${field}\\b`, "g"), ""), query);
+    return shopApi<T>(stripped, variables);
+  }
+}
+
 async function fetchCatalog(): Promise<Catalog> {
   const items: VProduct[] = [];
   for (let skip = 0; ; skip += 100) {
-    const { data } = await shopApi<{ products: { totalItems: number; items: VProduct[] } }>(PRODUCTS, { skip });
+    const { data } = await withNewFields<{ products: { totalItems: number; items: VProduct[] } }>(PRODUCTS, { skip }, ["showcase", "showcaseOrder"]);
     items.push(...data.products.items);
     if (items.length >= data.products.totalItems || !data.products.items.length) break;
   }
@@ -221,11 +242,19 @@ async function fetchSettings(catalog: Catalog): Promise<SiteSettings> {
     deliveryLeadDays: byAddress ? 0 : seedSettings.deliveryLeadDays,
   };
   try {
-    const { data } = await shopApi<{ activeChannel: { customFields: Record<string, string | boolean | null> } }>(CHANNEL_CONTENT);
+    const { data } = await withNewFields<{ activeChannel: { customFields: Record<string, string | boolean | null> } }>(CHANNEL_CONTENT, {}, [
+      "festiveSectionEnabled",
+      "homeSlides",
+      "homeBlocks",
+    ]);
     const c = data.activeChannel.customFields;
     const text = (v: unknown, fallback: string) => (typeof v === "string" && v.trim() ? v : fallback);
+    const slides = parseHomeSlides(c.homeSlides);
     return {
       ...base,
+      festiveEnabled: c.festiveSectionEnabled !== false,
+      homeSlides: slides.length ? slides : undefined,
+      homeBlocks: parseHomeBlocks(c.homeBlocks),
       activeFestivalId: typeof c.featuredCollectionSlug === "string" ? c.featuredCollectionSlug : base.activeFestivalId,
       festiveTitle: text(c.featuredTitle, base.festiveTitle),
       festiveIntro: text(c.featuredIntro, base.festiveIntro),
@@ -260,3 +289,4 @@ function cached<T>(key: string, load: () => Promise<T>): Promise<T> {
 export const getCatalog = () => cached("catalog", fetchCatalog);
 export const getFestivals = () => cached("festivals", fetchFestivals);
 export const getSettings = () => cached("settings", async () => fetchSettings(await getCatalog()));
+
