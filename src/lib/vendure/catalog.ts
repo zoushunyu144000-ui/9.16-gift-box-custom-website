@@ -84,7 +84,7 @@ const CHANNEL_CONTENT = /* GraphQL */ `
     activeChannel {
       customFields {
         heroEyebrow heroTitle heroText featuredCollectionSlug featuredTitle featuredIntro
-        festiveSectionEnabled homeSlides homeBlocks
+        festiveSectionEnabled festiveStartDate festiveEndDate homeSlides homeBlocks
         whatsappNumber contactEmail businessHours showPreviewNotice
       }
     }
@@ -244,6 +244,8 @@ async function fetchSettings(catalog: Catalog): Promise<SiteSettings> {
   try {
     const { data } = await withNewFields<{ activeChannel: { customFields: Record<string, string | boolean | null> } }>(CHANNEL_CONTENT, {}, [
       "festiveSectionEnabled",
+      "festiveStartDate",
+      "festiveEndDate",
       "homeSlides",
       "homeBlocks",
     ]);
@@ -253,6 +255,8 @@ async function fetchSettings(catalog: Catalog): Promise<SiteSettings> {
     return {
       ...base,
       festiveEnabled: c.festiveSectionEnabled !== false,
+      festiveStart: typeof c.festiveStartDate === "string" && c.festiveStartDate.trim() ? c.festiveStartDate.trim() : null,
+      festiveEnd: typeof c.festiveEndDate === "string" && c.festiveEndDate.trim() ? c.festiveEndDate.trim() : null,
       homeSlides: slides.length ? slides : undefined,
       homeBlocks: parseHomeBlocks(c.homeBlocks),
       activeFestivalId: typeof c.featuredCollectionSlug === "string" ? c.featuredCollectionSlug : base.activeFestivalId,

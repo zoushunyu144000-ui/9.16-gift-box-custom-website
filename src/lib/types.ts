@@ -127,6 +127,9 @@ export interface SiteSettings {
   activeFestivalId: string;
   /** The homepage Festive section can be switched off in the back office. Undefined = on. */
   festiveEnabled?: boolean;
+  /** The first and last day (YYYY-MM-DD, Malaysia time) the Festive section shows. Empty = no limit. */
+  festiveStart?: string | null;
+  festiveEnd?: string | null;
   /** Photographs for the homepage slideshow. Empty or undefined = the built-in photographs. */
   homeSlides?: { src: string; alt: string }[];
   /** The three blocks under the Festive section. Undefined = the built-in blocks. */

@@ -27,7 +27,7 @@ assert.match(source, /heroSlides: ProductImageData\[\] = settings\.homeSlides\?\
 assert.match(source, /fixed: siteImages\.homeFixed/, "Fixed Gifts gateway should use its unbranded homepage photograph");
 assert.match(source, /corporate: siteImages\.homeCorporate/, "Corporate gateway should use its unbranded homepage photograph");
 assert.match(source, /wine: siteImages\.homeWine/, "Wine gateway should use its dedicated unbranded homepage photograph");
-assert.match(source, /settings\.festiveEnabled !== false/, "The festive section should follow the back office on/off switch");
+assert.match(source, /settings\.festiveEnabled !== false && festiveWindowOpen\(settings\.festiveStart, settings\.festiveEnd\)/, "The festive section should follow the back office on/off switch and its start and end days");
 assert.match(source, /\.filter\(\(p\) => p\.showcase\)/, "The festive row should show the products the shop chose for it");
 assert.match(source, /showcaseOrder/, "The festive row should keep the order the shop set");
 assert.match(hero, /home-cta/, "Hero should use the quieter homepage-specific CTA treatment");

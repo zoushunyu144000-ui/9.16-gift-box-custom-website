@@ -6,7 +6,7 @@ import { ProductImage } from "@/components/product-image";
 import { ProductRail, RailItem } from "@/components/product-rail";
 import { siteImages } from "@/data/seed";
 import { festivalHref, sortFestivals, sortProducts } from "@/lib/catalog";
-import { BLOCK_KEYS, resolveBlock, type BlockKey } from "@/lib/home-layout";
+import { BLOCK_KEYS, festiveWindowOpen, resolveBlock, type BlockKey } from "@/lib/home-layout";
 import { getStore } from "@/lib/store";
 import type { Product, ProductImage as ProductImageData } from "@/lib/types";
 
@@ -36,7 +36,7 @@ export default async function HomePage() {
   // only while the section is switched on. Until the shop has chosen any, the current season's boxes (four).
   // Sold-out boxes stay in the row and are marked Sold Out on the card.
   const season = festivals.find((f) => f.id === settings.activeFestivalId && f.active);
-  const festiveOn = settings.festiveEnabled !== false;
+  const festiveOn = settings.festiveEnabled !== false && festiveWindowOpen(settings.festiveStart, settings.festiveEnd);
   const chosen = visible
     .filter((p) => p.showcase)
     .sort((a, b) => (a.showcaseOrder ?? 100) - (b.showcaseOrder ?? 100) || a.name.localeCompare(b.name))

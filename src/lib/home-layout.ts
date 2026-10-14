@@ -50,6 +50,23 @@ export const BLOCK_COPY: Record<BlockKey, { eyebrow: string; title: string; text
   },
 };
 
+/** Today's date in Malaysia as YYYY-MM-DD. */
+export function malaysiaToday(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kuala_Lumpur", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+}
+
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Whether the festive section is inside the period the shop set (back office → Homepage): from the first day to the
+ * last day, both included. An empty or malformed date means no limit on that side.
+ */
+export function festiveWindowOpen(start: string | null | undefined, end: string | null | undefined, today: string = malaysiaToday()): boolean {
+  const from = start && DAY.test(start.trim()) ? start.trim() : null;
+  const to = end && DAY.test(end.trim()) ? end.trim() : null;
+  return (!from || today >= from) && (!to || today <= to);
+}
+
 /** A photograph address: a full http(s) URL or a path on this site. Nothing else is shown. */
 export function isImageAddress(value: unknown): value is string {
   return typeof value === "string" && value.length <= 500 && (/^https?:\/\/[^\s]+$/i.test(value) || /^\/(?!\/)[^\s]*$/.test(value));
