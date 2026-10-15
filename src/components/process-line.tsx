@@ -18,8 +18,8 @@ export const BESPOKE_STEPS: { title: string; text: string; icon: LucideIcon }[] 
 export function ProcessLine({ className = "" }: { className?: string }) {
   return (
     <div className={className}>
-      <h2 id="process-heading" className="display text-center text-[2rem] leading-tight md:text-[2.5rem]">
-        How it works
+      <h2 id="process-heading" className="eyebrow">
+        How fully customised orders work
       </h2>
       <ol className="relative mt-10 grid lg:mt-14 lg:grid-cols-6">
         {/* Gold line: vertical through the icons when stacked, horizontal from the first icon to the last on desktop. */}
