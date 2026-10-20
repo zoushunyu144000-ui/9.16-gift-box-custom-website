@@ -213,7 +213,7 @@
   }
 
   .hero-scrim {
-    background: linear-gradient(180deg, rgb(251 248 243 / 0.55) 0%, rgb(251 248 243 / 0.15) 38%, transparent 60%, rgb(31 28 24 / 0.12) 100%);
+    background: linear-gradient(180deg, rgb(251 248 243 / 0.42) 0%, rgb(251 248 243 / 0.14) 36%, transparent 52%, rgb(31 28 24 / 0.12) 100%);
   }
 
   /* Hero slideshow: each slide slowly pushes in while it is shown, so the still photographs
@@ -362,8 +362,9 @@
   /* ── Art direction ─────────────────────────────────────────────
      One consistent grade for all photography, so images from different
      sources read as one body of work: warmer, softer, slightly muted.
-     Tune or remove (--grade: none) once Moire's own photography is in. */
-  .grade {
+     Only the Unsplash placeholders are graded: Moire's own photographs (uploaded in the
+     back office) are shown as shot, since the grade read as a haze over them. */
+  .grade[src^="https://images.unsplash.com/"] {
     filter: var(--grade, saturate(0.76) contrast(0.94) brightness(1.025) sepia(0.08));
   }
   .grade-muted {
