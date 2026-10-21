@@ -360,15 +360,9 @@
   .hairline { border-color: var(--color-line); }
 
   /* ── Art direction ─────────────────────────────────────────────
-     One consistent grade for all photography, so images from different
-     sources read as one body of work: warmer, softer, slightly muted.
-     Only the Unsplash placeholders are graded: Moire's own photographs (uploaded in the
-     back office) are shown as shot, since the grade read as a haze over them. */
-  .grade[src^="https://images.unsplash.com/"] {
-    filter: var(--grade, saturate(0.76) contrast(0.94) brightness(1.025) sepia(0.08));
-  }
+     Photographs are shown as shot, with no colour filter. Sold-out products are greyed out. */
   .grade-muted {
-    filter: saturate(0.3) contrast(0.9) brightness(1.06) sepia(0.1);
+    filter: saturate(0.3) contrast(0.9) brightness(1.06);
     opacity: 0.85;
   }
   /* Passe-partout: product photographs sit inside a paper mount, like prints. */

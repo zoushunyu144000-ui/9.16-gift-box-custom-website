@@ -43,7 +43,7 @@ export function ProductCard({
         ratio={ratio}
         sizes={sizes}
         priority={priority}
-        imgClassName={`${soldOut ? "grade-muted" : "grade"} transition-transform duration-[1.4s] ease-out-soft [@media(hover:hover)]:group-hover:scale-[1.035]`}
+        imgClassName={`${soldOut ? "grade-muted" : ""} transition-transform duration-[1.4s] ease-out-soft [@media(hover:hover)]:group-hover:scale-[1.035]`}
       />
       {second && !soldOut && (
         <ProductImage
@@ -52,7 +52,7 @@ export function ProductCard({
           ratio={ratio}
           sizes={sizes}
           className="pointer-events-none !absolute inset-0 opacity-0 transition-opacity duration-700 [@media(hover:hover)]:group-hover:opacity-100"
-          imgClassName="grade scale-[1.04] transition-transform duration-[1.4s] ease-out-soft [@media(hover:hover)]:group-hover:scale-100"
+          imgClassName="scale-[1.04] transition-transform duration-[1.4s] ease-out-soft [@media(hover:hover)]:group-hover:scale-100"
         />
       )}
       {soldOut && (

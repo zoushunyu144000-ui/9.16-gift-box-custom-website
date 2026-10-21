@@ -38,7 +38,7 @@ export function Hero({ title, slides, href }: { title: string; slides: Img[]; hr
               className="!absolute inset-0 h-full w-full"
               sizes="100vw"
               priority={i === 0}
-              imgClassName="grade object-[62%_center] md:object-center"
+              imgClassName="object-[62%_center] md:object-center"
             />
           </div>
         ))}

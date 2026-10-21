@@ -24,7 +24,7 @@ export function WineList({ products }: { products: Product[] }) {
           <div className="relative aspect-[4/5] overflow-hidden">
             {products.map((p, i) => (
               <div key={p.id} className={`absolute inset-0 transition-opacity duration-700 ${i === active ? "opacity-100" : "opacity-0"}`} aria-hidden={i !== active}>
-                <ProductImage src={p.images[0]?.src} alt={p.images[0]?.alt ?? p.name} ratio={1.25} sizes="36vw" className="!absolute inset-0" imgClassName="grade" />
+                <ProductImage src={p.images[0]?.src} alt={p.images[0]?.alt ?? p.name} ratio={1.25} sizes="36vw" className="!absolute inset-0" />
               </div>
             ))}
           </div>
@@ -44,7 +44,7 @@ export function WineList({ products }: { products: Product[] }) {
               className="group grid grid-cols-[64px_1fr_auto] items-center gap-4 py-5 md:gap-6 lg:grid-cols-[2.5rem_1fr_auto_1.25rem] lg:py-7"
             >
               <span className="w-16 lg:hidden">
-                <ProductImage src={p.images[0]?.src} alt="" ratio={1.25} sizes="64px" imgClassName="grade" />
+                <ProductImage src={p.images[0]?.src} alt="" ratio={1.25} sizes="64px" />
               </span>
               <span className="hidden text-[12px] tabular-nums text-ink-3 lg:block">{String(i + 1).padStart(2, "0")}</span>
               <span className="min-w-0">

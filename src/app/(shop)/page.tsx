@@ -169,7 +169,7 @@ function CollectionGateway({
       <div className="shell py-4 md:py-5">
         <div className="grid overflow-hidden lg:min-h-[340px] lg:grid-cols-12">
           <div className="order-1 lg:order-2 lg:col-span-7">
-            <ProductImage src={image.src} alt={image.alt} ratio={0.44} sizes="(min-width: 1024px) 58vw, 100vw" className="lg:h-full" imgClassName="grade" />
+            <ProductImage src={image.src} alt={image.alt} ratio={0.44} sizes="(min-width: 1024px) 58vw, 100vw" className="lg:h-full" />
           </div>
           <div className="order-2 flex items-center py-6 sm:py-8 lg:order-1 lg:col-span-5 lg:py-10 lg:pr-12">
             <div>

@@ -56,7 +56,7 @@ function Entry({ title, text, href, image, priority = false }: { title: string; 
           ratio={0.9}
           priority={priority}
           sizes="(min-width: 768px) 46vw, 100vw"
-          imgClassName="grade transition-transform duration-[1.4s] ease-out-soft [@media(hover:hover)]:group-hover:scale-[1.035]"
+          imgClassName="transition-transform duration-[1.4s] ease-out-soft [@media(hover:hover)]:group-hover:scale-[1.035]"
         />
       </div>
       <h2 className="display mt-6 text-[2.2rem] leading-[1.05] md:text-[3rem]">{title}</h2>
