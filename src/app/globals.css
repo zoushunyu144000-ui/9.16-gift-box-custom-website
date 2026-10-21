@@ -212,10 +212,6 @@
     letter-spacing: 0.025em;
   }
 
-  .hero-scrim {
-    background: linear-gradient(180deg, rgb(251 248 243 / 0.42) 0%, rgb(251 248 243 / 0.14) 36%, transparent 52%, rgb(31 28 24 / 0.12) 100%);
-  }
-
   /* Hero slideshow: each slide slowly pushes in while it is shown, so the still photographs
      read like a short film. Reduced-motion visitors get still images. */
   .hero-slide img {
