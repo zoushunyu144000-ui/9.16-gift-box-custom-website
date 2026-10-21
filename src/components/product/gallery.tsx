@@ -9,13 +9,15 @@ import { ProductImage } from "../product-image";
 /**
  * Product gallery.
  * Mobile: swipeable, full-width, with a counter. Desktop: thumbnails + main image, click to zoom.
- * Handles 1–10+ images.
+ * Handles 1–10+ images. The main image is never cropped: the frame takes the proportions most of
+ * the photographs share, and every photograph is shown whole inside it.
  */
 export function Gallery({ images, name, soldOut, mobileRatio = 1.25 }: { images: Img[]; name: string; soldOut?: boolean; mobileRatio?: number }) {
   const [active, setActive] = useState(0);
   const [zoom, setZoom] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
   const list = images.length ? images : [{ src: "", alt: name }];
+  const frameRatio = commonRatio(list) ?? mobileRatio;
 
   // Sync mobile swipe position -> active index
   useEffect(() => {
@@ -57,7 +59,7 @@ export function Gallery({ images, name, soldOut, mobileRatio = 1.25 }: { images:
         <div ref={scroller} className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto" aria-label={`${name} images`}>
           {list.map((img, i) => (
             <div key={img.src + i} className="w-full flex-none snap-center">
-              <ProductImage src={img.src} alt={img.alt} ratio={mobileRatio} sizes="100vw" priority={i === 0} imgClassName={soldOut ? "grade-muted" : "grade"} />
+              <ProductImage src={img.src} alt={img.alt} ratio={frameRatio} contain sizes="100vw" priority={i === 0} imgClassName={soldOut ? "grade-muted" : undefined} />
             </div>
           ))}
         </div>
@@ -89,7 +91,7 @@ export function Gallery({ images, name, soldOut, mobileRatio = 1.25 }: { images:
                   aria-label={`Show image ${i + 1}`}
                   aria-current={i === active}
                 >
-                  <ProductImage src={img.src} alt="" ratio={1.25} sizes="80px" imgClassName="grade" />
+                  <ProductImage src={img.src} alt="" ratio={1.25} sizes="80px" />
                 </button>
               </li>
             ))}
@@ -101,10 +103,12 @@ export function Gallery({ images, name, soldOut, mobileRatio = 1.25 }: { images:
               key={list[active].src}
               src={list[active].src}
               alt={list[active].alt}
-              ratio={1.25}
+              ratio={frameRatio}
+              contain
+              className="max-h-[calc(100vh-9rem)]"
               sizes="(min-width: 1280px) 48vw, 55vw"
               priority
-              imgClassName={soldOut ? "grade-muted" : "grade"}
+              imgClassName={soldOut ? "grade-muted" : undefined}
             />
           </button>
           {soldOut && <span className="pointer-events-none absolute left-4 top-4 bg-ivory/95 px-2.5 py-1.5 text-[11px] font-medium uppercase leading-none tracking-[0.18em] text-ink">Sold Out</span>}
@@ -126,7 +130,7 @@ export function Gallery({ images, name, soldOut, mobileRatio = 1.25 }: { images:
         <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto lg:hidden">
           {list.map((img, i) => (
             <button key={img.src + i} type="button" onClick={() => go(i)} className={`w-14 flex-none border ${i === active ? "border-ink" : "border-transparent"}`} aria-label={`Show image ${i + 1}`}>
-              <ProductImage src={img.src} alt="" ratio={1.25} sizes="60px" imgClassName="grade" />
+              <ProductImage src={img.src} alt="" ratio={1.25} sizes="60px" />
             </button>
           ))}
         </div>
@@ -157,4 +161,17 @@ export function Gallery({ images, name, soldOut, mobileRatio = 1.25 }: { images:
       )}
     </div>
   );
+}
+
+/** Height / width shared by most of the photographs (to two decimals), kept to a sensible range. */
+function commonRatio(images: Img[]): number | undefined {
+  const counts = new Map<number, number>();
+  for (const { width, height } of images) {
+    if (!width || !height) continue;
+    const r = Math.round((height / width) * 100) / 100;
+    counts.set(r, (counts.get(r) ?? 0) + 1);
+  }
+  let best: number | undefined;
+  for (const [r, n] of counts) if (best === undefined || n > counts.get(best)!) best = r;
+  return best === undefined ? undefined : Math.min(Math.max(best, 0.5), 1.6);
 }

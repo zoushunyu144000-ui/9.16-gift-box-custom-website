@@ -125,7 +125,7 @@ export function FestivalView({
           {campaign && (
             // Desktop only: on phones the products follow the title straight away.
             <div className="hidden lg:col-span-5 lg:col-start-8 lg:block">
-              <ProductImage src={campaign.src} alt={campaign.alt} ratio={0.75} sizes="(min-width: 1024px) 40vw, 100vw" priority imgClassName="grade" />
+              <ProductImage src={campaign.src} alt={campaign.alt} ratio={0.75} sizes="(min-width: 1024px) 40vw, 100vw" priority />
             </div>
           )}
         </div>

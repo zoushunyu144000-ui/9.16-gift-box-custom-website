@@ -19,6 +19,7 @@ export function ProductImage({
   priority = false,
   className = "",
   imgClassName = "",
+  contain = false,
 }: {
   src?: string;
   alt: string;
@@ -27,7 +28,10 @@ export function ProductImage({
   priority?: boolean;
   className?: string;
   imgClassName?: string;
+  /** Show the whole photograph inside the frame instead of cropping it to fill. */
+  contain?: boolean;
 }) {
+  const crop = contain ? undefined : ratio;
   const [failed, setFailed] = useState(false);
 
   return (
@@ -39,15 +43,15 @@ export function ProductImage({
       ) : (
         /* eslint-disable-next-line @next/next/no-img-element -- placeholder CDN handles resizing; uploads are pre-optimised */
         <img
-          src={sizedSrc(src, 960, ratio)}
-          srcSet={srcSet(src, WIDTHS, ratio)}
+          src={sizedSrc(src, 960, crop)}
+          srcSet={srcSet(src, WIDTHS, crop)}
           sizes={sizes}
           alt={alt}
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : undefined}
           decoding="async"
           onError={() => setFailed(true)}
-          className={`absolute inset-0 h-full w-full object-cover ${imgClassName}`}
+          className={`absolute inset-0 h-full w-full ${contain ? "object-contain" : "object-cover"} ${imgClassName}`}
         />
       )}
     </div>

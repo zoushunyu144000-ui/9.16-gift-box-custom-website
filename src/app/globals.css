@@ -213,7 +213,7 @@
   }
 
   .hero-scrim {
-    background: linear-gradient(180deg, rgb(251 248 243 / 0.55) 0%, rgb(251 248 243 / 0.15) 38%, transparent 60%, rgb(31 28 24 / 0.12) 100%);
+    background: linear-gradient(180deg, rgb(251 248 243 / 0.42) 0%, rgb(251 248 243 / 0.14) 36%, transparent 52%, rgb(31 28 24 / 0.12) 100%);
   }
 
   /* Hero slideshow: each slide slowly pushes in while it is shown, so the still photographs
@@ -360,14 +360,9 @@
   .hairline { border-color: var(--color-line); }
 
   /* ── Art direction ─────────────────────────────────────────────
-     One consistent grade for all photography, so images from different
-     sources read as one body of work: warmer, softer, slightly muted.
-     Tune or remove (--grade: none) once Moire's own photography is in. */
-  .grade {
-    filter: var(--grade, saturate(0.76) contrast(0.94) brightness(1.025) sepia(0.08));
-  }
+     Photographs are shown as shot, with no colour filter. Sold-out products are greyed out. */
   .grade-muted {
-    filter: saturate(0.3) contrast(0.9) brightness(1.06) sepia(0.1);
+    filter: saturate(0.3) contrast(0.9) brightness(1.06);
     opacity: 0.85;
   }
   /* Passe-partout: product photographs sit inside a paper mount, like prints. */
