@@ -42,7 +42,6 @@ export function Hero({ title, slides, href }: { title: string; slides: Img[]; hr
             />
           </div>
         ))}
-        <div className="hero-scrim pointer-events-none absolute inset-0" aria-hidden="true" />
 
         <div className="absolute inset-x-0 top-[16%] px-6 text-center md:top-[18%]">
           {/* Serif capitals, light and widely spaced, with a thin gold rule between the lines. */}
