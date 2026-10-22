@@ -56,7 +56,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero title={settings.heroTitle} slides={heroSlides} href={season && festive.length > 0 ? festivalHref(season) : "/festive"} />
+      <Hero eyebrow={settings.heroEyebrow} title={settings.heroTitle} text={settings.heroText} slides={heroSlides} href={season && festive.length > 0 ? festivalHref(season) : "/festive"} />
 
       {/* 1 · Festive — only while a festival is in season (Admin → Settings). Other festivals
           live on the Festive Collection page. */}

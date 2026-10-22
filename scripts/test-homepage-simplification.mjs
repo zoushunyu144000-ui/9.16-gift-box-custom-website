@@ -18,7 +18,9 @@ assert.match(source, /<ProductCard[\s\S]{0,300}\bcompact\b/, "Festive cards shou
 
 assert.doesNotMatch(hero, /<MoireField\b|<Emph\b/, "Hero should not depend on decorative editorial treatments");
 assert.doesNotMatch(hero, /href="\/corporate"/, "Hero should have one clear primary action");
-assert.equal((hero.match(/<Link\b/g) ?? []).length, 1, "Hero should expose one Shop Now CTA");
+assert.equal((hero.match(/<Link\b/g) ?? []).length, 2, "Hero should expose one action per layout: Explore the collection on phones, Shop Now on larger screens");
+assert.equal((hero.match(/<Link href=\{href\}/g) ?? []).length, 2, "Both hero actions should lead to the same place");
+assert.match(hero, /Explore the collection/, "Phones keep the earlier stacked hero with Explore the collection (client, Oct 2026)");
 assert.match(hero, /SHOP NOW/, "Hero CTA reads Shop Now (client, Oct 2026)");
 assert.doesNotMatch(hero, /border border-line/, "Hero should read as one integrated brand scene, not a bordered UI card");
 assert.doesNotMatch(hero, /animate-fade-up/, "Critical hero copy should be visible immediately without delayed entrance animation");

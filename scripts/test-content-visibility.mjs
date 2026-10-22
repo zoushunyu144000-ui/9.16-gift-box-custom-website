@@ -14,6 +14,7 @@ assert.match(reveal, /new MutationObserver/, "query-only navigation must registe
 const imageTag = productImage.match(/<img[\s\S]*?\/>/)?.[0];
 assert.ok(imageTag, "ProductImage should render an image element");
 assert.doesNotMatch(imageTag, /opacity-0/, "a pending image must not be hidden by opacity");
-assert.match(imageTag, /onError=\{\(\) => setFailed\(true\)\}/, "failed images must still use the fallback");
+assert.match(imageTag, /onError=\{\(\) => fail\(attempt\)\}/, "failed images must still use the fallback");
+assert.match(productImage, /attempt === 0 \? sizedSrc\(/, "a resized copy that fails falls back to the original file before the monogram");
 
 console.log("Content visibility checks passed.");

@@ -113,6 +113,13 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
         <Price price={price} compareAt={compareAtPrice(product, variantId)} />
         {hasVariants && product.variants.length > 1 && <span className="ml-2 text-[13px] text-ink-3">{variant?.name}</span>}
       </p>
+      {/* The one product description sits under the price (client, Oct 2026); what's in the box is
+          written into it, so there is no separate contents list. */}
+      {product.description && (
+        <p id="description-heading" className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-ink-2">
+          {product.description}
+        </p>
+      )}
 
       {soldOut && (
         <div className="mt-8 border-t border-line pt-6">
