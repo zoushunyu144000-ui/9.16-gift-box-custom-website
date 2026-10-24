@@ -15,7 +15,8 @@ function toForm(p: Product | null): Form {
     id: p?.id,
     name: p?.name ?? "",
     slug: p?.slug ?? "",
-    category: p?.category ?? "fixed-gifts",
+    // Corporate Seasonal Gifting exists only with the commerce backend.
+    category: p && p.category !== "corporate-seasonal" ? p.category : "fixed-gifts",
     festivalId: p?.festivalId ?? null,
     status: p?.status ?? "hidden",
     stock: p?.stock ?? null,
@@ -302,7 +303,7 @@ export function ProductEditor({ product, festivals }: { product: Product | null;
           <div className="space-y-4">
             <L label="Category">
               <select className="field" value={f.category} onChange={(e) => set("category", e.target.value as Form["category"])}>
-                {Object.entries(CATEGORIES).map(([k, c]) => (
+                {Object.entries(CATEGORIES).filter(([k]) => k !== "corporate-seasonal").map(([k, c]) => (
                   <option key={k} value={k}>{c.name}</option>
                 ))}
               </select>

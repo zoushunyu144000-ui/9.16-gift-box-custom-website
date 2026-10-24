@@ -68,20 +68,13 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
           <Gallery images={product.images} name={product.name} soldOut={soldOut} mobileRatio={product.category === "wine-spirits" ? 1.25 : 1.05} />
         </div>
 
-        {/* Name → Description → Price → Options / Personalisation → Add to bag (or Sold Out) → details */}
+        {/* Name → Price → Description → Options / Personalisation → Add to bag (or Sold Out) */}
         <div className="min-w-0 lg:col-span-5">
           <div className="lg:hidden">
             <Breadcrumbs items={[{ label: cat.name, href: cat.href }, { label: product.name }]} />
           </div>
           <p className="eyebrow mt-5 lg:mt-0">{festival ? festival.name : cat.name}</p>
           <h1 className="display mt-3 text-[2.25rem] leading-[1.05] md:text-[2.9rem]">{product.name}</h1>
-          {/* The one product description sits right under the name (client, Oct 2026); what's in
-              the box is written into it, so there is no separate contents list. */}
-          {product.description && (
-            <p id="description-heading" className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-ink-2">
-              {product.description}
-            </p>
-          )}
           <div className="mt-4">
             <PurchasePanel product={product} personalisationLive={settings.personalisationLive !== false} />
           </div>

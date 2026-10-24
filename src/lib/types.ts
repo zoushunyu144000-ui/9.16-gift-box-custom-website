@@ -1,7 +1,7 @@
 // Core domain types for the Moire storefront.
 // Keep these in sync with supabase/schema.sql.
 
-export type CategorySlug = "festive" | "fixed-gifts" | "wine-spirits";
+export type CategorySlug = "festive" | "fixed-gifts" | "wine-spirits" | "corporate-seasonal";
 
 /**
  * A festival inside the Festive Collection (Chinese New Year, Hari Raya, …).
@@ -68,6 +68,17 @@ export interface Personalisation {
   maxLength: number;
   /** Charge per name in MYR. 0 = no charge shown. */
   fee: number;
+  /** One line shown with the option, e.g. "MOQ 100 SET | Free Brand Name Customisation". */
+  note?: string;
+}
+
+/** A leather colour the customer can choose for a gift box (backend leather-colour plugin). */
+export interface LeatherColourChoice {
+  /** Stored on the order line. */
+  code: string;
+  name: string;
+  /** CSS colour of the swatch. */
+  swatch: string;
 }
 
 export interface SpecRow {
@@ -109,6 +120,12 @@ export interface Product {
   defaultVariant?: { id: string; sku: string };
   /** The backend says this product can't be personalised (every product can in demo mode). */
   noPersonalisation?: boolean;
+  /** Heading above the options, e.g. "Liquor selection". */
+  optionsLabel?: string;
+  /** Fewest sets an order can have (all options together); checked by the backend at checkout. */
+  minQuantity?: number;
+  /** The box comes in these leather colours; the customer chooses one. */
+  leatherColours?: LeatherColourChoice[];
   containsAlcohol: boolean;
   /** Show in the homepage section for its category. */
   featured: boolean;
@@ -140,6 +157,10 @@ export interface SiteSettings {
   heroEyebrow: string;
   heroTitle: string;
   heroText: string;
+  /** Phones: the photograph above the words, and their own headline and line. Empty = the built-in ones. */
+  heroMobileImage?: string;
+  heroMobileTitle?: string;
+  heroMobileText?: string;
   /** Flat delivery fee in MYR. */
   deliveryFee: number;
   /** Orders at or above this subtotal get free delivery. null = never. */
@@ -190,6 +211,9 @@ export interface OrderItem {
   /** How many names the customer paid for. */
   personalisationCount?: number;
   giftMessage?: string;
+  /** Code and name of the box's leather colour, when the customer chose one. */
+  leatherColour?: string;
+  leatherColourName?: string;
   containsAlcohol: boolean;
 }
 
@@ -276,6 +300,8 @@ export interface CartLine {
   /** Number of names, charged per name. Only set with `personalisation`. */
   personalisationCount?: number;
   giftMessage?: string;
+  /** Code of the box's leather colour, on gifts that offer a choice. */
+  leatherColour?: string;
   /** Display snapshot taken when added. Prices are always re-validated on the server at checkout. */
   snapshot: {
     name: string;
@@ -286,6 +312,8 @@ export interface CartLine {
     /** Charge per name. */
     personalisationFee?: number;
     personalisationLabel?: string;
+    /** Name of the chosen leather colour. */
+    leatherColourName?: string;
     containsAlcohol: boolean;
   };
 }

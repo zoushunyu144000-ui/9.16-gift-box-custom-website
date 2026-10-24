@@ -6,11 +6,27 @@ import type { ProductImage as Img } from "@/lib/types";
 import { ProductImage } from "./product-image";
 
 /**
- * Homepage opening: one full-height photograph (portrait on phones) that cross-fades
- * through a few gifting scenes with a slow push-in, a short headline and Shop Now.
- * The headline comes from Admin → Settings; " / " starts a new line.
+ * Homepage opening.
+ * Phones (client, Oct 2026): one landscape photograph, then the season, a headline, a line of text and
+ * Explore the collection — each with its own back-office setting, the photograph defaulting to the
+ * site's ivory gift box.
+ * Tablets and desktops: the slideshow of full-height photographs with a slow push-in, the headline and
+ * Shop Now laid over it.
+ * " / " in a headline starts a new line; "*" is ignored.
  */
-export function Hero({ title, slides, href }: { title: string; slides: Img[]; href: string }) {
+export function Hero({
+  eyebrow,
+  title,
+  slides,
+  href,
+  mobile,
+}: {
+  eyebrow: string;
+  title: string;
+  slides: Img[];
+  href: string;
+  mobile: { image: Img; title: string; text: string };
+}) {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
@@ -20,35 +36,49 @@ export function Hero({ title, slides, href }: { title: string; slides: Img[]; hr
     return () => clearInterval(t);
   }, [slides.length]);
 
-  const lines = title.replaceAll("*", "").split(/\s*\/\s*/);
+  const linesOf = (text: string) => text.replaceAll("*", "").split(/\s*\/\s*/);
 
   return (
-    <section className="relative overflow-hidden bg-mount" aria-label="Introduction">
-      <div className="relative h-[calc(100svh-4rem)] max-h-[760px] min-h-[520px] lg:h-[calc(100svh-76px)] lg:max-h-[820px]">
+    <section className="relative overflow-hidden bg-ivory md:bg-mount" aria-label="Introduction">
+      {/* Phones: the photograph, then the words under it. */}
+      <div className="md:hidden">
+        <ProductImage src={mobile.image.src} alt={mobile.image.alt} ratio={0.625} sizes="100vw" priority imgClassName="object-center" />
+        <div className="shell py-9">
+          <p className="text-[11px] font-medium uppercase tracking-[0.17em] text-bronze">{eyebrow}</p>
+          <h1 className="display mt-4 text-[2.3rem] leading-[1.08]">
+            {linesOf(mobile.title).map((l, i) => (
+              <span key={i} className="block">
+                {l}
+              </span>
+            ))}
+          </h1>
+          <p className="mt-4 max-w-[36ch] text-[15px] leading-[1.65] text-ink-2">{mobile.text}</p>
+          <div className="mt-7">
+            <Link href={href} className="home-cta bg-bronze text-ivory hover:bg-champagne hover:text-ink">
+              Explore the collection
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Tablets and desktops: serif capitals, light and widely spaced, with a thin gold rule between the lines. */}
+      <div className="relative hidden md:block md:h-[calc(100svh-4rem)] md:max-h-[760px] md:min-h-[520px] lg:h-[calc(100svh-76px)] lg:max-h-[820px]">
         {slides.map((s, i) => (
           <div
             key={s.src}
-            className={`hero-slide absolute inset-0 transition-opacity duration-[1400ms] ease-in-out ${i === index ? "opacity-100" : "opacity-0"}`}
+            className={`hero-slide absolute inset-0 overflow-hidden transition-opacity duration-[1400ms] ease-in-out ${i === index ? "opacity-100" : "opacity-0"}`}
             data-active={i === index ? "" : undefined}
             aria-hidden={i !== index}
           >
-            <ProductImage
-              src={s.src}
-              alt={s.alt}
-              className="!absolute inset-0 h-full w-full"
-              sizes="100vw"
-              priority={i === 0}
-              imgClassName="object-[62%_center] md:object-center"
-            />
+            <ProductImage src={s.src} alt={s.alt} className="!absolute inset-0 h-full w-full" sizes="100vw" priority={i === 0} imgClassName="object-center" />
           </div>
         ))}
 
-        <div className="absolute inset-x-0 top-[16%] px-6 text-center md:top-[18%]">
-          {/* Serif capitals, light and widely spaced, with a thin gold rule between the lines. */}
-          <h1 className="display text-[1.65rem] font-medium uppercase leading-[1.25] indent-[0.16em] tracking-[0.16em] text-ink sm:text-[2.15rem] lg:text-[2.8rem] lg:indent-[0.18em] lg:tracking-[0.18em]">
-            {lines.map((l, i) => (
+        <div className="absolute inset-x-0 top-[18%] px-6 text-center">
+          <h1 className="display text-[2.15rem] font-medium uppercase leading-[1.25] indent-[0.16em] tracking-[0.16em] text-ink lg:text-[2.8rem] lg:indent-[0.18em] lg:tracking-[0.18em]">
+            {linesOf(title).map((l, i) => (
               <span key={i} className="block">
-                {i > 0 && <span className="mx-auto my-3 block h-px w-10 bg-champagne md:my-4 md:w-14" aria-hidden="true" />}
+                {i > 0 && <span className="mx-auto my-4 block h-px w-14 bg-champagne" aria-hidden="true" />}
                 {l}
               </span>
             ))}

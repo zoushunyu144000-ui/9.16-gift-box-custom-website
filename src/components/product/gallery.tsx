@@ -59,7 +59,7 @@ export function Gallery({ images, name, soldOut, mobileRatio = 1.25 }: { images:
         <div ref={scroller} className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto" aria-label={`${name} images`}>
           {list.map((img, i) => (
             <div key={img.src + i} className="w-full flex-none snap-center">
-              <ProductImage src={img.src} alt={img.alt} ratio={frameRatio} contain sizes="100vw" priority={i === 0} imgClassName={soldOut ? "grade-muted" : undefined} />
+              <ProductImage src={img.src} alt={img.alt} ratio={frameRatio} contain sizes="100vw" priority={i === 0} imgClassName={`object-top ${soldOut ? "grade-muted" : ""}`} />
             </div>
           ))}
         </div>
@@ -108,7 +108,7 @@ export function Gallery({ images, name, soldOut, mobileRatio = 1.25 }: { images:
               className="max-h-[calc(100vh-9rem)]"
               sizes="(min-width: 1280px) 48vw, 55vw"
               priority
-              imgClassName={soldOut ? "grade-muted" : undefined}
+              imgClassName={`object-top ${soldOut ? "grade-muted" : ""}`}
             />
           </button>
           {soldOut && <span className="pointer-events-none absolute left-4 top-4 bg-ivory/95 px-2.5 py-1.5 text-[11px] font-medium uppercase leading-none tracking-[0.18em] text-ink">Sold Out</span>}
@@ -143,7 +143,15 @@ export function Gallery({ images, name, soldOut, mobileRatio = 1.25 }: { images:
             <X className="h-5 w-5" strokeWidth={1.25} />
           </button>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={sizedSrc(list[active].src, 2000)} alt={list[active].alt} className="max-h-[92vh] max-w-[92vw] object-contain" />
+          <img
+            src={sizedSrc(list[active].src, 2000)}
+            alt={list[active].alt}
+            onError={(e) => {
+              // The original file, when the image server can't make a resized copy.
+              if (e.currentTarget.src !== list[active].src) e.currentTarget.src = list[active].src;
+            }}
+            className="max-h-[92vh] max-w-[92vw] object-contain"
+          />
           {list.length > 1 && (
             <>
               <button type="button" onClick={() => setActive((active - 1 + list.length) % list.length)} className="absolute left-4 top-1/2 grid h-12 w-12 -translate-y-1/2 place-items-center border border-line-strong bg-ivory" aria-label="Previous image">

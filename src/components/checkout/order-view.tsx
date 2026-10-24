@@ -143,7 +143,8 @@ export function OrderView({ orderId, token, backend = false }: { orderId: string
               <div className="min-w-0 flex-1">
                 <p className="display text-[1.15rem]">{i.name}</p>
                 <p className="text-[13px] text-ink-2">
-                  {i.variantName ? `${i.variantName} · ` : ""}Qty {i.quantity}
+                  {i.variantName ? `${i.variantName} · ` : ""}
+                  {i.leatherColourName ? `${i.leatherColourName} leather · ` : ""}Qty {i.quantity}
                 </p>
                 {i.personalisation && (
                   <p className="mt-1 whitespace-pre-line text-[13px] text-ink-2">

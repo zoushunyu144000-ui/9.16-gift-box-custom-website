@@ -26,8 +26,9 @@ export function Footer({ settings }: { settings: SiteSettings }) {
             title="Corporate"
             links={[
               ["Overview", "/corporate"],
-              ["Semi-customised", "/fixed-gifts"],
-              ["Fully customised", "/corporate/bespoke"],
+              ["Semi-curated", "/fixed-gifts"],
+              ["Fully customise", "/corporate/bespoke"],
+              ["Corporate Seasonal Gifting", "/corporate/seasonal"],
             ]}
           />
           <FooterCol
@@ -44,6 +45,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
         <div className="shell flex flex-wrap items-center gap-x-4 gap-y-1 py-4 text-[11px] leading-relaxed text-ink-3 md:gap-x-6">
           <p>© {year} Moire</p>
           <p>FPX · Card · E-wallet</p>
+          {settings.whatsappNumber && <a href={`https://wa.me/${settings.whatsappNumber}`}>{localPhone(settings.whatsappNumber)}</a>}
           {settings.contactEmail && <a href={`mailto:${settings.contactEmail}`}>{settings.contactEmail}</a>}
           {settings.businessHours && <p>{settings.businessHours}</p>}
           {settings.showPreviewNotice && <p className="md:ml-auto">Preview build: sample products, test-mode checkout.</p>}
@@ -51,6 +53,12 @@ export function Footer({ settings }: { settings: SiteSettings }) {
       </div>
     </footer>
   );
+}
+
+/** 60176198788 → 017-6198788, the way Malaysian numbers are written locally. */
+function localPhone(international: string) {
+  const local = international.startsWith("60") ? `0${international.slice(2)}` : international;
+  return local.length > 3 ? `${local.slice(0, 3)}-${local.slice(3)}` : local;
 }
 
 function FooterCol({ title, links }: { title: string; links: [string, string][] }) {

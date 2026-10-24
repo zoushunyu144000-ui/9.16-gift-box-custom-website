@@ -37,7 +37,7 @@ export function useQuote(lines: CartLine[], ready: boolean, checkout?: CheckoutC
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
-            lines: lines.map(({ key, productId, variantId, quantity, personalisation, personalisationCount, giftMessage }) => ({
+            lines: lines.map(({ key, productId, variantId, quantity, personalisation, personalisationCount, giftMessage, leatherColour }) => ({
               key,
               productId,
               variantId,
@@ -45,6 +45,7 @@ export function useQuote(lines: CartLine[], ready: boolean, checkout?: CheckoutC
               personalisation,
               personalisationCount,
               giftMessage,
+              leatherColour,
             })),
             postcode: checkout?.postcode || undefined,
             state: checkout?.state || undefined,

@@ -16,7 +16,7 @@ import {
   unitPrice,
 } from "@/lib/catalog";
 import type { Product } from "@/lib/types";
-import { useCart } from "../cart/cart-context";
+import { MAX_QTY, useCart } from "../cart/cart-context";
 import { Price } from "../price";
 import { QuantityStepper } from "../quantity-stepper";
 
@@ -29,10 +29,14 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
   // Every product offers a personalised name, charged per name (client, Oct 2026). Admin → Settings
   // can pause the service, which shows it as "Coming soon".
   const pers = personalisationFor(product);
-  const maxQty = tracksStock(product) ? Math.max(1, Math.min(99, product.stock as number)) : 99;
+  const maxQty = tracksStock(product) ? Math.max(1, Math.min(MAX_QTY, product.stock as number)) : MAX_QTY;
+  // A gift with a minimum order starts there; the backend checks it again at checkout (all options together).
+  const minQty = Math.min(product.minQuantity ?? 1, maxQty);
+  const colours = product.leatherColours ?? [];
 
   const [variantId, setVariantId] = useState<string | undefined>(hasVariants ? product.variants[0].id : undefined);
-  const [qty, setQty] = useState(1);
+  const [qty, setQty] = useState(minQty);
+  const [colour, setColour] = useState<string | undefined>(colours[0]?.code);
   const [wantsPers, setWantsPers] = useState(false);
   // Typed text is shown in capitals by CSS and stored in capitals (names are taken in capitals only).
   const [persText, setPersText] = useState("");
@@ -79,6 +83,7 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
     setError(null);
     if (soldOut) return;
     if (hasVariants && !variant) return setError("Please choose an option.");
+    if (colours.length && !colours.some((c) => c.code === colour)) return setError("Please choose a leather colour.");
     if (wantsPers) {
       if (!persName) return setError("Please enter the name to personalise, or choose “No personalisation”.");
       if (persInvalid) return setError(PATTERN_ERROR);
@@ -92,6 +97,7 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
       personalisation: wantsPers ? persName : undefined,
       personalisationCount: wantsPers ? names : undefined,
       giftMessage: wantsMsg ? message.trim() || undefined : undefined,
+      leatherColour: colours.length ? colour : undefined,
       snapshot: {
         name: product.name,
         image: product.images[0]?.src,
@@ -99,6 +105,7 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
         unitPrice: price,
         personalisationFee: wantsPers ? pers.fee : undefined,
         personalisationLabel: pers.label,
+        leatherColourName: colours.find((c) => c.code === colour)?.name,
         containsAlcohol: alcohol,
       },
     });
@@ -113,6 +120,13 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
         <Price price={price} compareAt={compareAtPrice(product, variantId)} />
         {hasVariants && product.variants.length > 1 && <span className="ml-2 text-[13px] text-ink-3">{variant?.name}</span>}
       </p>
+      {/* The one product description sits under the price (client, Oct 2026); what's in the box is
+          written into it, so there is no separate contents list. */}
+      {product.description && (
+        <p id="description-heading" className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-ink-2">
+          {product.description}
+        </p>
+      )}
 
       {soldOut && (
         <div className="mt-8 border-t border-line pt-6">
@@ -136,7 +150,7 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
         >
           {hasVariants && (
             <fieldset>
-              <legend className="label mb-3">{product.variants.some((v) => v.containsAlcohol) ? "Choose your version" : "Choose an option"}</legend>
+              <legend className="label mb-3">{product.optionsLabel ?? (product.variants.some((v) => v.containsAlcohol) ? "Choose your version" : "Choose an option")}</legend>
               <div className="space-y-2">
                 {product.variants.map((v) => {
                   const checked = v.id === variantId;
@@ -160,6 +174,34 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
             </fieldset>
           )}
 
+          {colours.length > 0 && (
+            <fieldset className="border-t border-line pt-6">
+              <legend className="label mb-4">Leather colour collection</legend>
+              <div className="flex flex-wrap gap-6" role="radiogroup" aria-label="Leather colour">
+                {colours.map((c) => {
+                  const selected = c.code === colour;
+                  return (
+                    <button
+                      key={c.code}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => setColour(c.code)}
+                      className="group flex w-16 flex-col items-center gap-2 text-center"
+                    >
+                      <span
+                        className={`block h-12 w-12 rounded-full border transition-shadow ${selected ? "border-ink shadow-[0_0_0_2px_var(--color-ivory),0_0_0_3px_var(--color-ink)]" : "border-line-strong group-hover:border-ink/50"}`}
+                        style={{ background: c.swatch }}
+                        aria-hidden="true"
+                      />
+                      <span className={`text-[12px] leading-tight ${selected ? "text-ink" : "text-ink-2"}`}>{c.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+          )}
+
           {!product.noPersonalisation && (
             <fieldset className="border-t border-line pt-6">
               <legend className="sr-only">{pers.label}</legend>
@@ -177,6 +219,7 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
                   Add a name
                 </OptionButton>
               </div>
+              {personalisationLive && pers.note && <p className="mt-2 text-[12px] tracking-wide text-bronze">{pers.note}</p>}
               {!personalisationLive && <p className="mt-2.5 text-[12px] text-ink-3">Personalised names will be available soon.</p>}
               {personalisationLive && wantsPers && (
                 <div className="mt-5 space-y-5">
@@ -259,7 +302,7 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
           </div>
 
           <div className="flex gap-3 border-t border-line pt-6">
-            <QuantityStepper value={qty} onChange={setQty} max={maxQty} label="Quantity" />
+            <QuantityStepper value={qty} onChange={setQty} min={minQty} max={maxQty} label="Quantity" />
             <button ref={buttonRef} type="submit" className="btn btn-primary min-w-0 flex-1 !px-4 !whitespace-normal text-center leading-tight">
               {added ? (
                 <>
@@ -275,6 +318,7 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
               {error}
             </p>
           )}
+          {minQty > 1 && <p className="!mt-3 text-[12px] text-ink-3">Minimum order {minQty} sets (all options together).</p>}
           {alcohol && <p className="!mt-3 text-[12px] text-ink-3">Contains alcohol. For customers aged 21 and above; you’ll confirm your age at checkout.</p>}
         </form>
       )}

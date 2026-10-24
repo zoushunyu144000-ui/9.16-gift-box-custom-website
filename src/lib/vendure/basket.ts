@@ -21,6 +21,8 @@ export interface BagLine {
   personalisation?: string;
   personalisationCount?: number;
   giftMessage?: string;
+  /** Code of the box's leather colour, on gifts that offer a choice. */
+  leatherColour?: string;
 }
 
 /** The customer's backend session (a guest's or a member's); `save` keeps it in their cookie. */
@@ -54,13 +56,21 @@ const ORDER_RESULT = `... on Order { code state } ... on ErrorResult { errorCode
 /** addItemToOrder can also refuse through an interceptor (e.g. names) or for stock. */
 const ADD_ITEM_RESULT = `${ORDER_RESULT} ... on OrderInterceptorError { interceptorError } ... on InsufficientStockError { quantityAvailable }`;
 
+/** A gift line's own fields: its card message and, where the backend takes one, its leather colour. */
+function giftFields(line: BagLine, caps: { lineFields: Set<string> }) {
+  const fields: Record<string, string> = {};
+  if (line.giftMessage) fields.giftMessage = line.giftMessage;
+  if (line.leatherColour && caps.lineFields.has("leatherColour")) fields.leatherColour = line.leatherColour;
+  return Object.keys(fields).length ? fields : null;
+}
+
 /**
  * Makes the session's order hold exactly the bag: back to adding items if it was waiting for payment,
  * the old lines out, each gift in (with its gift message), then its names as their own line.
  * Returns what couldn't be added, by bag line.
  */
 export async function fillOrder(call: SessionCall, lines: BagLine[]): Promise<Record<string, string>> {
-  const catalog = await getCatalog();
+  const [catalog, caps] = await Promise.all([getCatalog(), getCapabilities()]);
   const { activeOrder } = await call<{ activeOrder: { state: string } | null }>(`{ activeOrder { state } }`);
   if (activeOrder?.state === "ArrangingPayment") await call(`mutation { transitionOrderToState(state: "AddingItems") { ... on Order { code } } }`);
   if (activeOrder) await call(`mutation { removeAllOrderLines { ... on Order { code } } }`);
@@ -75,7 +85,7 @@ export async function fillOrder(call: SessionCall, lines: BagLine[]): Promise<Re
     }
     const added = await call<{ addItemToOrder: unknown }>(
       `mutation($id: ID!, $qty: Int!, $cf: OrderLineCustomFieldsInput) { addItemToOrder(productVariantId: $id, quantity: $qty, customFields: $cf) { ${ADD_ITEM_RESULT} } }`,
-      { id: variant.id, qty: line.quantity, cf: line.giftMessage ? { giftMessage: line.giftMessage } : null },
+      { id: variant.id, qty: line.quantity, cf: giftFields(line, caps) },
     );
     if (isErrorResult(added.addItemToOrder)) {
       problems[line.key] = errorMessage(added.addItemToOrder);
@@ -173,7 +183,7 @@ export async function setDelivery(call: SessionCall, address: DeliveryAddress, o
 type CurrentOrder = {
   state: string;
   couponCodes: string[];
-  lines: { quantity: number; productVariant: { id: string }; customFields: { giftMessage?: string | null; names?: string | null; namesFor?: string | null } }[];
+  lines: { quantity: number; productVariant: { id: string }; customFields: { giftMessage?: string | null; names?: string | null; namesFor?: string | null; leatherColour?: string | null } }[];
   shippingAddress: { streetLine1: string | null; streetLine2: string | null; city: string | null; postalCode: string | null; province: string | null } | null;
   shippingLines: { shippingMethod: { id: string } }[];
   customFields?: { loyaltyPointsApplied?: number | null };
@@ -190,9 +200,10 @@ export async function orderMatches(
 ): Promise<boolean> {
   const caps = await getCapabilities();
   const pointsField = caps.orderFields.has("loyaltyPointsApplied") ? "customFields { loyaltyPointsApplied }" : "";
+  const colourField = caps.lineFields.has("leatherColour") ? "leatherColour" : "";
   const { activeOrder: o } = await call<{ activeOrder: CurrentOrder | null }>(`{ activeOrder {
     state couponCodes
-    lines { quantity productVariant { id } customFields { giftMessage names namesFor } }
+    lines { quantity productVariant { id } customFields { giftMessage names namesFor ${colourField} } }
     shippingAddress { streetLine1 streetLine2 city postalCode province }
     shippingLines { shippingMethod { id } }
     ${pointsField}
@@ -200,20 +211,21 @@ export async function orderMatches(
   if (!o) return false;
 
   const catalog = await getCatalog();
-  const key = (variantId: string, giftMessage?: string | null, names?: string | null, namesFor?: string | null) => JSON.stringify([variantId, giftMessage || "", names || "", namesFor || ""]);
+  const key = (variantId: string, giftMessage?: string | null, names?: string | null, namesFor?: string | null, colour?: string | null) =>
+    JSON.stringify([variantId, giftMessage || "", names || "", namesFor || "", (colourField && colour) || ""]);
   const expected = new Map<string, number>();
   const add = (k: string, qty: number) => expected.set(k, (expected.get(k) ?? 0) + qty);
   for (const line of wanted.lines) {
     const product = catalog.products.find((p) => p.id === line.productId);
     const variant = product?.variants.length ? product.variants.find((v) => v.id === line.variantId) : product?.defaultVariant;
     if (!variant?.id || !variant.sku) return false;
-    add(key(variant.id, line.giftMessage), line.quantity);
+    add(key(variant.id, line.giftMessage, null, null, line.leatherColour), line.quantity);
     const names = line.personalisation?.trim().toUpperCase();
     if (names && catalog.names) add(key(catalog.names.variantId, null, names, variant.sku), line.personalisationCount ?? 1);
   }
   const actual = new Map<string, number>();
   for (const l of o.lines) {
-    const k = key(l.productVariant.id, l.customFields.giftMessage, l.customFields.names, l.customFields.namesFor);
+    const k = key(l.productVariant.id, l.customFields.giftMessage, l.customFields.names, l.customFields.namesFor, l.customFields.leatherColour);
     actual.set(k, (actual.get(k) ?? 0) + l.quantity);
   }
   if (actual.size !== expected.size || [...expected].some(([k, qty]) => actual.get(k) !== qty)) return false;

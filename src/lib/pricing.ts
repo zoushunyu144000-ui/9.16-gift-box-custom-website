@@ -14,9 +14,9 @@ import {
 import type { Store } from "./store/types";
 import type { CartLine, OrderItem, Quote, QuotedLine, SiteSettings } from "./types";
 
-export const MAX_QTY = 99;
+export const MAX_QTY = 999;
 
-type LineInput = Pick<CartLine, "key" | "productId" | "variantId" | "quantity" | "personalisation" | "personalisationCount" | "giftMessage">;
+type LineInput = Pick<CartLine, "key" | "productId" | "variantId" | "quantity" | "personalisation" | "personalisationCount" | "giftMessage" | "leatherColour">;
 
 /** Re-price every line from the catalogue. Never trust prices sent by the browser. */
 export async function quoteLines(store: Store, lines: LineInput[], settings?: SiteSettings): Promise<Quote> {
@@ -34,7 +34,7 @@ export async function quoteLines(store: Store, lines: LineInput[], settings?: Si
     if (p.status !== "active") return { key: line.key, ok: false, problem: `${p.name} is currently unavailable.` };
 
     const qty = Math.floor(Number(line.quantity));
-    if (!Number.isFinite(qty) || qty < 1 || qty > MAX_QTY) return { key: line.key, ok: false, problem: "Please choose a quantity between 1 and 99." };
+    if (!Number.isFinite(qty) || qty < 1 || qty > MAX_QTY) return { key: line.key, ok: false, problem: `Please choose a quantity between 1 and ${MAX_QTY}.` };
     if (tracksStock(p) && (requested.get(p.id) ?? qty) > (p.stock as number))
       return { key: line.key, ok: false, problem: `Only ${p.stock} of ${p.name} left — please reduce the quantity.` };
 
@@ -62,6 +62,12 @@ export async function quoteLines(store: Store, lines: LineInput[], settings?: Si
       personalisationFee = pers.fee || 0;
     }
 
+    // A box that comes in leather colours needs one of them; any other takes none.
+    const colours = p.leatherColours ?? [];
+    const colour = colours.find((c) => c.code === line.leatherColour);
+    if (colours.length && !colour) return { key: line.key, ok: false, problem: `Please choose a leather colour for ${p.name}.` };
+    if (!colours.length && line.leatherColour) return { key: line.key, ok: false, problem: `${p.name} doesn’t come in a choice of leather colour.` };
+
     const message = line.giftMessage?.trim() || undefined;
     if (message && message.length > GIFT_MESSAGE_MAX)
       return { key: line.key, ok: false, problem: `Gift messages are limited to ${GIFT_MESSAGE_MAX} characters.` };
@@ -82,6 +88,8 @@ export async function quoteLines(store: Store, lines: LineInput[], settings?: Si
       personalisationLabel: text ? personalisationFor(p).label : undefined,
       personalisationCount: names,
       giftMessage: message,
+      leatherColour: colour?.code,
+      leatherColourName: colour?.name,
       containsAlcohol: lineContainsAlcohol(p, line.variantId),
     };
     return { key: line.key, ok: true, item };
