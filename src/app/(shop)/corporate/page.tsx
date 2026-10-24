@@ -62,9 +62,9 @@ function Entry({ number, title, text, href, image, priority = false }: { number:
           imgClassName="transition-transform duration-[1.4s] ease-out-soft [@media(hover:hover)]:group-hover:scale-[1.035]"
         />
       </div>
-      <h2 className="display mt-6 flex items-baseline gap-3 text-[1.6rem] uppercase leading-[1.1] tracking-[0.02em] md:text-[1.45rem] lg:text-[1.7rem]">
-        <span className="text-[13px] tracking-[0.12em] text-bronze">{number}</span>
-        <span className="h-4 w-px flex-none self-center bg-line-strong" aria-hidden="true" />
+      <h2 className="display mt-6 flex items-start gap-3 text-[1.6rem] uppercase leading-[1.1] tracking-[0.02em] md:text-[1.45rem] lg:text-[1.7rem]">
+        <span className="flex-none pt-[0.55em] text-[13px] leading-none tracking-[0.12em] text-bronze">{number}</span>
+        <span className="mt-[0.3em] h-[0.8em] w-px flex-none bg-line-strong" aria-hidden="true" />
         <span>{title}</span>
       </h2>
       <p className="mt-2 text-[15px] text-ink-2">{text}</p>
