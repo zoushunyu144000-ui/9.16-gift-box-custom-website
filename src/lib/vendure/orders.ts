@@ -2,7 +2,7 @@ import "server-only";
 import { PAYMENT_METHODS } from "@/lib/catalog";
 import type { Order, OrderItem, OrderStatus, PaymentMethod } from "@/lib/types";
 import { getCapabilities, type Capabilities } from "./capabilities";
-import { NAMES_SKU } from "./catalog";
+import { getCatalog, NAMES_SKU } from "./catalog";
 import { errorMessage, isErrorResult, shopApi, VendureError } from "./client";
 import { getSessionToken, setSessionToken } from "./session";
 
@@ -13,7 +13,7 @@ type VLine = {
   linePriceWithTax: number;
   featuredAsset: { source: string } | null;
   productVariant: { id: string; sku: string; name: string; product: { id: string; slug: string; name: string; featuredAsset: { source: string } | null } };
-  customFields: { names?: string | null; namesFor?: string | null; giftMessage?: string | null };
+  customFields: { names?: string | null; namesFor?: string | null; giftMessage?: string | null; leatherColour?: string | null };
 };
 type VOrder = {
   code: string;
@@ -36,6 +36,7 @@ type VOrder = {
 /** Order fields for the storefront, including the custom fields this backend has. */
 function orderFields(caps: Capabilities) {
   const extra = ["preferredDeliveryDate", "deliveryNotes"].filter((f) => caps.orderFields.has(f)).join(" ");
+  const lineExtra = caps.lineFields.has("leatherColour") ? "leatherColour" : "";
   return /* GraphQL */ `
     code state createdAt updatedAt orderPlacedAt subTotalWithTax shippingWithTax totalWithTax
     customer { firstName lastName emailAddress phoneNumber }
@@ -43,7 +44,7 @@ function orderFields(caps: Capabilities) {
     lines {
       id quantity unitPriceWithTax linePriceWithTax featuredAsset { source }
       productVariant { id sku name product { id slug name featuredAsset { source } } }
-      customFields { names namesFor giftMessage }
+      customFields { names namesFor giftMessage ${lineExtra} }
     }
     payments { method state transactionId createdAt errorMessage metadata }
     discounts { description amountWithTax }
@@ -65,7 +66,7 @@ export function orderStatus(o: { state: string; payments: { state: string }[] | 
 }
 
 /** The backend keeps names as their own line; the storefront shows them with the gift they belong to. */
-function items(lines: VLine[]): OrderItem[] {
+function items(lines: VLine[], colourNames: Map<string, string>): OrderItem[] {
   const names = lines.filter((l) => l.productVariant.sku === NAMES_SKU);
   const gifts = lines.filter((l) => l.productVariant.sku !== NAMES_SKU);
   return gifts.map((l) => {
@@ -87,12 +88,15 @@ function items(lines: VLine[]): OrderItem[] {
       personalisationLabel: n ? "Personalised name" : undefined,
       personalisationCount: n?.quantity,
       giftMessage: l.customFields.giftMessage ?? undefined,
+      leatherColour: l.customFields.leatherColour ?? undefined,
+      leatherColourName: l.customFields.leatherColour ? (colourNames.get(l.customFields.leatherColour) ?? l.customFields.leatherColour) : undefined,
       containsAlcohol: false,
     };
   });
 }
 
-export function toStorefrontOrder(o: VOrder): Order {
+/** `colourNames`: leather colour code → name, for the order's lines. */
+export function toStorefrontOrder(o: VOrder, colourNames = new Map<string, string>()): Order {
   const a = o.shippingAddress;
   const customerName = [o.customer?.firstName, o.customer?.lastName].filter(Boolean).join(" ");
   const paid = o.payments?.find((p) => p.state === "Settled" || p.state === "Authorized");
@@ -108,7 +112,7 @@ export function toStorefrontOrder(o: VOrder): Order {
     address: { line1: a?.streetLine1 ?? "", line2: a?.streetLine2 || undefined, postcode: a?.postalCode ?? "", city: a?.city ?? "", state: a?.province ?? "" },
     deliveryDate: o.customFields.preferredDeliveryDate || undefined,
     deliveryNotes: o.customFields.deliveryNotes || undefined,
-    items: items(o.lines),
+    items: items(o.lines, colourNames),
     // Items and delivery at their full prices, then the discounts (codes, promotions, points) taken off.
     subtotal: o.lines.reduce((sum, l) => sum + l.linePriceWithTax, 0) / 100,
     deliveryFee: o.shippingLines.reduce((sum, l) => sum + l.priceWithTax, 0) / 100,
@@ -133,17 +137,18 @@ export function toStorefrontOrder(o: VOrder): Order {
 export async function getOrderForCustomer(code: string): Promise<Order | null> {
   const token = await getSessionToken();
   const caps = await getCapabilities();
+  const colourNames = new Map((await getCatalog()).leatherColours.map((c) => [c.code, c.name]));
   // Back from a hosted payment page: let the backend confirm with the gateway first, in case its webhook hasn't arrived.
   if (token && caps.queries.has("hostedPaymentStatus")) {
     await shopApi(`query($code: String!) { hostedPaymentStatus(orderCode: $code) { paid } }`, { code }, { token }).catch(() => undefined);
   }
   if (token) {
     const { data } = await shopApi<{ activeOrder: VOrder | null }>(`{ activeOrder { ${orderFields(caps)} } }`, {}, { token });
-    if (data.activeOrder?.code === code) return toStorefrontOrder(data.activeOrder);
+    if (data.activeOrder?.code === code) return toStorefrontOrder(data.activeOrder, colourNames);
   }
   try {
     const { data } = await shopApi<{ orderByCode: VOrder | null }>(`query($code: String!) { orderByCode(code: $code) { ${orderFields(caps)} } }`, { code }, { token });
-    return data.orderByCode ? toStorefrontOrder(data.orderByCode) : null;
+    return data.orderByCode ? toStorefrontOrder(data.orderByCode, colourNames) : null;
   } catch (err) {
     // Vendure answers FORBIDDEN both for orders this session may not see and for unknown codes.
     if (err instanceof VendureError && err.code === "FORBIDDEN") return null;

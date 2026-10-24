@@ -5,7 +5,7 @@ import { MAX_NAMES } from "@/lib/catalog";
 import type { CartLine } from "@/lib/types";
 
 const STORAGE_KEY = "moire.cart.v1";
-const MAX_QTY = 99;
+export const MAX_QTY = 999;
 
 type Listener = () => void;
 const listeners = new Set<Listener>();
@@ -49,8 +49,8 @@ function subscribe(listener: Listener) {
   };
 }
 
-export function lineKey(l: Pick<CartLine, "productId" | "variantId" | "personalisation" | "giftMessage">) {
-  return [l.productId, l.variantId ?? "", (l.personalisation ?? "").trim(), (l.giftMessage ?? "").trim()].join("|");
+export function lineKey(l: Pick<CartLine, "productId" | "variantId" | "personalisation" | "giftMessage" | "leatherColour">) {
+  return [l.productId, l.variantId ?? "", (l.personalisation ?? "").trim(), (l.giftMessage ?? "").trim(), l.leatherColour ?? ""].join("|");
 }
 
 /** The bag's own price for a line until the server re-prices it: the items, plus each name. */

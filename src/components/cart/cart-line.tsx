@@ -36,6 +36,7 @@ export function CartLineRow({
               {s.name}
             </Link>
             {s.variantName && <p className="mt-0.5 text-[13px] text-ink-2">{s.variantName}</p>}
+            {s.leatherColourName && <p className="mt-0.5 text-[13px] text-ink-2">Leather colour: {s.leatherColourName}</p>}
           </div>
           <p className="flex-none text-[15px] tabular-nums">{formatRM(snapshotTotal(line), { decimals: true })}</p>
         </div>

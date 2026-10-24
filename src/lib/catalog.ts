@@ -21,6 +21,13 @@ export const CATEGORIES: Record<CategorySlug, { name: string; href: string; shor
     href: "/wine-gift-boxes",
     intro: "Gift boxes and gift sets with wine, champagne or spirits, presented ready to give. For customers aged 21 and above.",
   },
+  // The third way to order on Corporate Orders (client, Oct 2026): a short list of sets.
+  "corporate-seasonal": {
+    name: "Corporate Seasonal Gifting",
+    short: "Corporate Seasonal",
+    href: "/corporate/seasonal",
+    intro: "Thoughtful gifts from teams, celebrations and bulk orders.",
+  },
 };
 
 // ───────── Festivals ─────────
@@ -178,7 +185,7 @@ export function personalisationFor(p: Product): Personalisation {
 /** Capital letters, numbers, spaces and line breaks, plus the punctuation a list of names needs ("1. JASON 2. EMILY"). */
 export const PERSONALISATION_PATTERN = /^[A-Z0-9 .,'&\-\n]*$/;
 /** Most names one bag line can carry; each is charged. */
-export const MAX_NAMES = 99;
+export const MAX_NAMES = 999;
 /** Characters allowed for `names` names: one name's limit, or room for a numbered list ("12. " and a separator per name). */
 export function personalisationLimit(pers: Personalisation, names: number) {
   return names > 1 ? names * (pers.maxLength + 5) : pers.maxLength;

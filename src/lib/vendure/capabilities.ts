@@ -7,6 +7,8 @@ import { shopApi } from "./client";
  */
 export interface Capabilities {
   orderFields: Set<string>;
+  /** Order line custom fields, e.g. leatherColour. */
+  lineFields: Set<string>;
   customerFields: Set<string>;
   fulfillmentFields: Set<string>;
   mutations: Set<string>;
@@ -16,6 +18,7 @@ export interface Capabilities {
 const QUERY = /* GraphQL */ `
   query StorefrontCapabilities {
     order: __type(name: "OrderCustomFields") { fields { name } }
+    line: __type(name: "OrderLineCustomFields") { fields { name } }
     customer: __type(name: "CustomerCustomFields") { fields { name } }
     fulfillment: __type(name: "FulfillmentCustomFields") { fields { name } }
     mutation: __type(name: "Mutation") { fields { name } }
@@ -29,8 +32,9 @@ let cache: { at: number; value: Promise<Capabilities> } | null = null;
 export function getCapabilities(): Promise<Capabilities> {
   if (cache && Date.now() - cache.at < 5 * 60_000) return cache.value;
   const names = (t: Fields) => new Set((t?.fields ?? []).map((f) => f.name));
-  const value = shopApi<{ order: Fields; customer: Fields; fulfillment: Fields; mutation: Fields; query: Fields }>(QUERY).then(({ data }) => ({
+  const value = shopApi<{ order: Fields; line: Fields; customer: Fields; fulfillment: Fields; mutation: Fields; query: Fields }>(QUERY).then(({ data }) => ({
     orderFields: names(data.order),
+    lineFields: names(data.line),
     customerFields: names(data.customer),
     fulfillmentFields: names(data.fulfillment),
     mutations: names(data.mutation),

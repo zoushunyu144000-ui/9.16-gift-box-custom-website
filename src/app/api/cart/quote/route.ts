@@ -14,10 +14,11 @@ const Body = z.object({
         productId: z.string().max(80),
         variantId: z.string().max(80).optional(),
         quantity: z.number(),
-        // Room for a bulk list of 99 names at the longest per-name limit (see personalisationLimit).
-        personalisation: z.string().max(6500).optional(),
-        personalisationCount: z.number().int().min(1).max(99).optional(),
+        // Room for a bulk list of 999 names at the longest per-name limit (see personalisationLimit).
+        personalisation: z.string().max(65_000).optional(),
+        personalisationCount: z.number().int().min(1).max(999).optional(),
         giftMessage: z.string().max(1000).optional(),
+        leatherColour: z.string().max(40).optional(),
       }),
     )
     .max(50),

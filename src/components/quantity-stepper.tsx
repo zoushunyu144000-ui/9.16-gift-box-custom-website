@@ -6,7 +6,7 @@ export function QuantityStepper({
   value,
   onChange,
   min = 1,
-  max = 99,
+  max = 999,
   size = "md",
   label = "Quantity",
 }: {

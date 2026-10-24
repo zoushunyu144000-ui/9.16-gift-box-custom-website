@@ -1,8 +1,8 @@
 ﻿import "server-only";
 import { seedSettings } from "@/data/seed";
 import { CATEGORIES, DEFAULT_PERSONALISATION } from "@/lib/catalog";
-import type { CategorySlug, Festival, Product, ProductImage, SiteSettings } from "@/lib/types";
-import { parseHomeBlocks, parseHomeSlides } from "@/lib/home-layout";
+import type { CategorySlug, Festival, LeatherColourChoice, Product, ProductImage, SiteSettings } from "@/lib/types";
+import { isImageAddress, parseHomeBlocks, parseHomeSlides } from "@/lib/home-layout";
 import { getCapabilities } from "./capabilities";
 import { shopApi } from "./client";
 
@@ -22,11 +22,16 @@ type VProduct = {
   assets: NonNullable<Asset>[];
   facetValues: { name: string; facet: { code: string } }[];
   collections: { slug: string; parent: { slug: string } | null }[];
+  optionGroups: { name: string }[];
   customFields: {
     personalisationEnabled?: boolean | null;
     personalisationLabel?: string | null;
     personalisationHelper?: string | null;
     personalisationMaxLength?: number | null;
+    personalisationFee?: number | null;
+    personalisationNote?: string | null;
+    minOrderQuantity?: number | null;
+    leatherColourEnabled?: boolean | null;
     summary?: string | null;
     featured?: boolean | null;
     sortOrder?: number | null;
@@ -56,8 +61,10 @@ const PRODUCTS = /* GraphQL */ `
         assets { source width height }
         facetValues { name facet { code } }
         collections { slug parent { slug } }
+        optionGroups { name }
         customFields {
           personalisationEnabled personalisationLabel personalisationHelper personalisationMaxLength
+          personalisationFee personalisationNote minOrderQuantity leatherColourEnabled
           summary featured sortOrder showcase showcaseOrder availabilityNote
         }
         variants {
@@ -83,7 +90,7 @@ const CHANNEL_CONTENT = /* GraphQL */ `
   query StorefrontContent {
     activeChannel {
       customFields {
-        heroEyebrow heroTitle heroText featuredCollectionSlug featuredTitle featuredIntro
+        heroEyebrow heroTitle heroText heroMobileImage heroMobileTitle heroMobileText featuredCollectionSlug featuredTitle featuredIntro
         festiveSectionEnabled festiveStartDate festiveEndDate homeSlides homeBlocks
         whatsappNumber contactEmail businessHours showPreviewNotice
       }
@@ -116,7 +123,7 @@ function image(a: NonNullable<Asset>, alt: string): ProductImage {
 
 const hasFacet = (values: { facet: { code: string } }[], code: string) => values.some((v) => v.facet.code === code);
 
-function toProduct(p: VProduct, namesFee: number): Product | null {
+function toProduct(p: VProduct, namesFee: number, colours: LeatherColourChoice[]): Product | null {
   const categoryName = p.facetValues.find((v) => v.facet.code === "category")?.name;
   const category = categoryName ? CATEGORY_BY_NAME.get(categoryName) : undefined;
   if (!category || !p.variants.length) return null;
@@ -161,9 +168,13 @@ function toProduct(p: VProduct, namesFee: number): Product | null {
       label: cf.personalisationLabel || DEFAULT_PERSONALISATION.label,
       helper: cf.personalisationHelper || undefined,
       maxLength: cf.personalisationMaxLength || DEFAULT_PERSONALISATION.maxLength,
-      fee: namesFee,
+      fee: cf.personalisationFee != null ? cf.personalisationFee / 100 : namesFee,
+      note: cf.personalisationNote || undefined,
     },
     noPersonalisation: cf.personalisationEnabled === false,
+    optionsLabel: withOptions ? p.optionGroups[0]?.name || undefined : undefined,
+    minQuantity: cf.minOrderQuantity && cf.minOrderQuantity > 1 ? cf.minOrderQuantity : undefined,
+    leatherColours: cf.leatherColourEnabled && colours.length ? colours : undefined,
     containsAlcohol: alcohol,
     featured: Boolean(cf.featured),
     sort: cf.sortOrder ?? 100,
@@ -178,6 +189,8 @@ export interface Catalog {
   products: Product[];
   /** The "Personalised name" item, when the shop sells names. */
   names: { variantId: string; fee: number } | null;
+  /** The leather colours gifts can come in (empty when the backend has none). */
+  leatherColours: LeatherColourChoice[];
 }
 
 /**
@@ -198,16 +211,32 @@ async function withNewFields<T>(query: string, variables: Record<string, unknown
 async function fetchCatalog(): Promise<Catalog> {
   const items: VProduct[] = [];
   for (let skip = 0; ; skip += 100) {
-    const { data } = await withNewFields<{ products: { totalItems: number; items: VProduct[] } }>(PRODUCTS, { skip }, ["showcase", "showcaseOrder"]);
+    const { data } = await withNewFields<{ products: { totalItems: number; items: VProduct[] } }>(PRODUCTS, { skip }, [
+      "showcase",
+      "showcaseOrder",
+      "personalisationFee",
+      "personalisationNote",
+      "minOrderQuantity",
+      "leatherColourEnabled",
+    ]);
     items.push(...data.products.items);
     if (items.length >= data.products.totalItems || !data.products.items.length) break;
   }
   const namesVariant = items.flatMap((p) => p.variants).find((v) => v.sku === NAMES_SKU);
   const names = namesVariant ? { variantId: namesVariant.id, fee: namesVariant.priceWithTax / 100 } : null;
+  const leatherColours = await fetchLeatherColours();
   const products = items
-    .map((p) => toProduct(p, names?.fee ?? DEFAULT_PERSONALISATION.fee))
+    .map((p) => toProduct(p, names?.fee ?? DEFAULT_PERSONALISATION.fee, leatherColours))
     .filter((p): p is Product => Boolean(p));
-  return { products, names };
+  return { products, names, leatherColours };
+}
+
+/** The backend's leather colours, when it has the leather-colour plugin. */
+async function fetchLeatherColours(): Promise<LeatherColourChoice[]> {
+  const caps = await getCapabilities().catch(() => null);
+  if (!caps?.queries.has("leatherColours")) return [];
+  const { data } = await shopApi<{ leatherColours: LeatherColourChoice[] }>(`{ leatherColours { code name swatch } }`);
+  return data.leatherColours;
 }
 
 async function fetchFestivals(): Promise<Festival[]> {
@@ -248,6 +277,9 @@ async function fetchSettings(catalog: Catalog): Promise<SiteSettings> {
       "festiveEndDate",
       "homeSlides",
       "homeBlocks",
+      "heroMobileImage",
+      "heroMobileTitle",
+      "heroMobileText",
     ]);
     const c = data.activeChannel.customFields;
     const text = (v: unknown, fallback: string) => (typeof v === "string" && v.trim() ? v : fallback);
@@ -265,6 +297,9 @@ async function fetchSettings(catalog: Catalog): Promise<SiteSettings> {
       heroEyebrow: text(c.heroEyebrow, base.heroEyebrow),
       heroTitle: text(c.heroTitle, base.heroTitle),
       heroText: text(c.heroText, base.heroText),
+      heroMobileImage: typeof c.heroMobileImage === "string" && isImageAddress(c.heroMobileImage.trim()) ? c.heroMobileImage.trim() : undefined,
+      heroMobileTitle: text(c.heroMobileTitle, base.heroMobileTitle ?? ""),
+      heroMobileText: text(c.heroMobileText, "") || undefined,
       whatsappNumber: text(c.whatsappNumber, base.whatsappNumber),
       contactEmail: text(c.contactEmail, ""),
       businessHours: text(c.businessHours, ""),

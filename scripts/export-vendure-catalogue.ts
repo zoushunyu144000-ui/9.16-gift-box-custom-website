@@ -48,6 +48,7 @@ const CATEGORY_FACET: Record<CategorySlug, string> = {
   festive: CATEGORIES.festive.name,
   "fixed-gifts": CATEGORIES["fixed-gifts"].name,
   "wine-spirits": CATEGORIES["wine-spirits"].name,
+  "corporate-seasonal": CATEGORIES["corporate-seasonal"].name,
 };
 const festivalName = new Map(seedFestivals.map((f) => [f.id, f.name]));
 
