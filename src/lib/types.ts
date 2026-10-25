@@ -124,8 +124,10 @@ export interface Product {
   optionsLabel?: string;
   /** Fewest sets an order can have (all options together); checked by the backend at checkout. */
   minQuantity?: number;
-  /** The box comes in these leather colours; the customer chooses one. */
+  /** Names for this gift are engraved on leather in these colours; a customer adding a name chooses one. */
   leatherColours?: LeatherColourChoice[];
+  /** Shown without a price and can't be ordered yet. */
+  comingSoon?: boolean;
   containsAlcohol: boolean;
   /** Show in the homepage section for its category. */
   featured: boolean;
@@ -300,7 +302,7 @@ export interface CartLine {
   /** Number of names, charged per name. Only set with `personalisation`. */
   personalisationCount?: number;
   giftMessage?: string;
-  /** Code of the box's leather colour, on gifts that offer a choice. */
+  /** Code of the leather colour the names are engraved on, on gifts that offer a choice. Only with `personalisation`. */
   leatherColour?: string;
   /** Display snapshot taken when added. Prices are always re-validated on the server at checkout. */
   snapshot: {

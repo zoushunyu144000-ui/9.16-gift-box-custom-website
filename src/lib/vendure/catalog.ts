@@ -32,6 +32,7 @@ type VProduct = {
     personalisationNote?: string | null;
     minOrderQuantity?: number | null;
     leatherColourEnabled?: boolean | null;
+    comingSoon?: boolean | null;
     summary?: string | null;
     featured?: boolean | null;
     sortOrder?: number | null;
@@ -64,7 +65,7 @@ const PRODUCTS = /* GraphQL */ `
         optionGroups { name }
         customFields {
           personalisationEnabled personalisationLabel personalisationHelper personalisationMaxLength
-          personalisationFee personalisationNote minOrderQuantity leatherColourEnabled
+          personalisationFee personalisationNote minOrderQuantity leatherColourEnabled comingSoon
           summary featured sortOrder showcase showcaseOrder availabilityNote
         }
         variants {
@@ -175,6 +176,7 @@ function toProduct(p: VProduct, namesFee: number, colours: LeatherColourChoice[]
     optionsLabel: withOptions ? p.optionGroups[0]?.name || undefined : undefined,
     minQuantity: cf.minOrderQuantity && cf.minOrderQuantity > 1 ? cf.minOrderQuantity : undefined,
     leatherColours: cf.leatherColourEnabled && colours.length ? colours : undefined,
+    comingSoon: Boolean(cf.comingSoon) || undefined,
     containsAlcohol: alcohol,
     featured: Boolean(cf.featured),
     sort: cf.sortOrder ?? 100,
@@ -218,6 +220,7 @@ async function fetchCatalog(): Promise<Catalog> {
       "personalisationNote",
       "minOrderQuantity",
       "leatherColourEnabled",
+      "comingSoon",
     ]);
     items.push(...data.products.items);
     if (items.length >= data.products.totalItems || !data.products.items.length) break;

@@ -133,6 +133,7 @@ export function priceRange(p: Product): { min: number; max: number } {
 }
 
 export function priceLabel(p: Product) {
+  if (p.comingSoon) return "Coming soon";
   const { min, max } = priceRange(p);
   return min === max ? formatRM(min) : `From ${formatRM(min)}`;
 }

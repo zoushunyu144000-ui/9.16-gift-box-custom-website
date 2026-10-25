@@ -82,7 +82,7 @@ export function ProductCard({
         </h3>
         <div className="mt-1.5 flex items-baseline justify-between gap-3">
           <p className={`tabular-nums ${soldOut ? "text-ink-3" : "text-ink-2"} ${size === "lg" ? "text-[15px]" : "text-[13px] md:text-[14px]"}`}><CardPrice product={product} /></p>
-          {simple && !soldOut && <QuickAdd product={product} />}
+          {simple && !soldOut && !product.comingSoon && <QuickAdd product={product} />}
         </div>
       </div>
     </article>
@@ -103,6 +103,7 @@ export function ProductCardSkeleton() {
 
 /** One price (crossed-out earlier price when on sale), or "From …" with a Sale mark for a range. */
 function CardPrice({ product }: { product: Parameters<typeof priceLabel>[0] }) {
+  if (product.comingSoon) return <span className="text-bronze">Coming soon</span>;
   const { min, max } = priceRange(product);
   if (min === max) return <Price price={min} compareAt={compareAtPrice(product, product.variants[0]?.id)} />;
   return (

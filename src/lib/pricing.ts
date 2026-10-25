@@ -32,6 +32,7 @@ export async function quoteLines(store: Store, lines: LineInput[], settings?: Si
     if (!p || p.status === "hidden") return { key: line.key, ok: false, problem: "This item is no longer available." };
     if (isSoldOut(p)) return { key: line.key, ok: false, problem: `${p.name} is sold out.` };
     if (p.status !== "active") return { key: line.key, ok: false, problem: `${p.name} is currently unavailable.` };
+    if (p.comingSoon) return { key: line.key, ok: false, problem: `${p.name} is coming soon and can’t be ordered yet.` };
 
     const qty = Math.floor(Number(line.quantity));
     if (!Number.isFinite(qty) || qty < 1 || qty > MAX_QTY) return { key: line.key, ok: false, problem: `Please choose a quantity between 1 and ${MAX_QTY}.` };
@@ -62,11 +63,11 @@ export async function quoteLines(store: Store, lines: LineInput[], settings?: Si
       personalisationFee = pers.fee || 0;
     }
 
-    // A box that comes in leather colours needs one of them; any other takes none.
-    const colours = p.leatherColours ?? [];
+    // Names on a gift with leather colours need one of them; anything else takes none.
+    const colours = text ? (p.leatherColours ?? []) : [];
     const colour = colours.find((c) => c.code === line.leatherColour);
-    if (colours.length && !colour) return { key: line.key, ok: false, problem: `Please choose a leather colour for ${p.name}.` };
-    if (!colours.length && line.leatherColour) return { key: line.key, ok: false, problem: `${p.name} doesn’t come in a choice of leather colour.` };
+    if (colours.length && !colour) return { key: line.key, ok: false, problem: `Please choose a leather colour for the name on ${p.name}.` };
+    if (!colours.length && line.leatherColour) return { key: line.key, ok: false, problem: `A leather colour goes with a personalised name.` };
 
     const message = line.giftMessage?.trim() || undefined;
     if (message && message.length > GIFT_MESSAGE_MAX)

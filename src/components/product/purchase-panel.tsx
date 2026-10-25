@@ -24,7 +24,9 @@ const PATTERN_ERROR = "Please use letters A–Z, numbers and basic punctuation o
 
 export function PurchasePanel({ product, personalisationLive = false }: { product: Product; personalisationLive?: boolean }) {
   const { add } = useCart();
-  const soldOut = isSoldOut(product) || product.status !== "active";
+  // "Coming soon": shown without a price and not orderable yet (back office switch).
+  const comingSoon = Boolean(product.comingSoon);
+  const soldOut = !comingSoon && (isSoldOut(product) || product.status !== "active");
   const hasVariants = product.variants.length > 0;
   // Every product offers a personalised name, charged per name (client, Oct 2026). Admin → Settings
   // can pause the service, which shows it as "Coming soon".
@@ -83,7 +85,7 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
     setError(null);
     if (soldOut) return;
     if (hasVariants && !variant) return setError("Please choose an option.");
-    if (colours.length && !colours.some((c) => c.code === colour)) return setError("Please choose a leather colour.");
+    if (wantsPers && colours.length && !colours.some((c) => c.code === colour)) return setError("Please choose a leather colour for the name.");
     if (wantsPers) {
       if (!persName) return setError("Please enter the name to personalise, or choose “No personalisation”.");
       if (persInvalid) return setError(PATTERN_ERROR);
@@ -97,7 +99,7 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
       personalisation: wantsPers ? persName : undefined,
       personalisationCount: wantsPers ? names : undefined,
       giftMessage: wantsMsg ? message.trim() || undefined : undefined,
-      leatherColour: colours.length ? colour : undefined,
+      leatherColour: wantsPers && colours.length ? colour : undefined,
       snapshot: {
         name: product.name,
         image: product.images[0]?.src,
@@ -105,7 +107,7 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
         unitPrice: price,
         personalisationFee: wantsPers ? pers.fee : undefined,
         personalisationLabel: pers.label,
-        leatherColourName: colours.find((c) => c.code === colour)?.name,
+        leatherColourName: wantsPers ? colours.find((c) => c.code === colour)?.name : undefined,
         containsAlcohol: alcohol,
       },
     });
@@ -117,8 +119,14 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
   return (
     <div>
       <p className="text-[1.35rem] tabular-nums tracking-wide" aria-live="polite">
-        <Price price={price} compareAt={compareAtPrice(product, variantId)} />
-        {hasVariants && product.variants.length > 1 && <span className="ml-2 text-[13px] text-ink-3">{variant?.name}</span>}
+        {comingSoon ? (
+          <span className="text-[13px] font-medium uppercase tracking-[0.16em] text-bronze">Coming soon</span>
+        ) : (
+          <>
+            <Price price={price} compareAt={compareAtPrice(product, variantId)} />
+            {hasVariants && product.variants.length > 1 && <span className="ml-2 text-[13px] text-ink-3">{variant?.name}</span>}
+          </>
+        )}
       </p>
       {/* The one product description sits under the price (client, Oct 2026); what's in the box is
           written into it, so there is no separate contents list. */}
@@ -126,6 +134,15 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
         <p id="description-heading" className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-ink-2">
           {product.description}
         </p>
+      )}
+
+      {comingSoon && (
+        <div className="mt-8 border-t border-line pt-6">
+          <button type="button" disabled aria-disabled="true" className="btn w-full cursor-not-allowed border border-line-strong bg-stone/60 text-ink-2">
+            Coming soon
+          </button>
+          <p className="mt-3 text-[13px] leading-relaxed text-ink-2">This gift will be available to order soon.</p>
+        </div>
       )}
 
       {soldOut && (
@@ -140,7 +157,7 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
         </div>
       )}
 
-      {!soldOut && (
+      {!soldOut && !comingSoon && (
         <form
           className="mt-8 space-y-7"
           onSubmit={(e) => {
@@ -174,34 +191,6 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
             </fieldset>
           )}
 
-          {colours.length > 0 && (
-            <fieldset className="border-t border-line pt-6">
-              <legend className="label mb-4">Leather colour collection</legend>
-              <div className="flex flex-wrap gap-6" role="radiogroup" aria-label="Leather colour">
-                {colours.map((c) => {
-                  const selected = c.code === colour;
-                  return (
-                    <button
-                      key={c.code}
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      onClick={() => setColour(c.code)}
-                      className="group flex w-16 flex-col items-center gap-2 text-center"
-                    >
-                      <span
-                        className={`block h-12 w-12 rounded-full border transition-shadow ${selected ? "border-ink shadow-[0_0_0_2px_var(--color-ivory),0_0_0_3px_var(--color-ink)]" : "border-line-strong group-hover:border-ink/50"}`}
-                        style={{ background: c.swatch }}
-                        aria-hidden="true"
-                      />
-                      <span className={`text-[12px] leading-tight ${selected ? "text-ink" : "text-ink-2"}`}>{c.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </fieldset>
-          )}
-
           {!product.noPersonalisation && (
             <fieldset className="border-t border-line pt-6">
               <legend className="sr-only">{pers.label}</legend>
@@ -223,6 +212,33 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
               {!personalisationLive && <p className="mt-2.5 text-[12px] text-ink-3">Personalised names will be available soon.</p>}
               {personalisationLive && wantsPers && (
                 <div className="mt-5 space-y-5">
+                  {colours.length > 0 && (
+                    <div>
+                      <p className="field-label">Leather colour collection</p>
+                      <div className="mt-1 flex flex-wrap gap-6" role="radiogroup" aria-label="Leather colour">
+                        {colours.map((c) => {
+                          const selected = c.code === colour;
+                          return (
+                            <button
+                              key={c.code}
+                              type="button"
+                              role="radio"
+                              aria-checked={selected}
+                              onClick={() => setColour(c.code)}
+                              className="group flex w-16 flex-col items-center gap-2 text-center"
+                            >
+                              <span
+                                className={`block h-12 w-12 rounded-full border transition-shadow ${selected ? "border-ink shadow-[0_0_0_2px_var(--color-ivory),0_0_0_3px_var(--color-ink)]" : "border-line-strong group-hover:border-ink/50"}`}
+                                style={{ background: c.swatch }}
+                                aria-hidden="true"
+                              />
+                              <span className={`text-[12px] leading-tight ${selected ? "text-ink" : "text-ink-2"}`}>{c.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between gap-4">
                     <div className="min-w-0">
                       <p className="field-label !mb-0.5">Number of names</p>
@@ -324,7 +340,7 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
       )}
 
       {/* Mobile sticky bar */}
-      {!soldOut && (
+      {!soldOut && !comingSoon && (
         <div
           ref={stickyRef}
           className={`fixed inset-x-0 bottom-0 z-30 border-t border-line bg-ivory/95 px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md transition-transform duration-300 lg:hidden ${

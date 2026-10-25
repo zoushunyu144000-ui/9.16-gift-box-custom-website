@@ -56,12 +56,14 @@ const ORDER_RESULT = `... on Order { code state } ... on ErrorResult { errorCode
 /** addItemToOrder can also refuse through an interceptor (e.g. names) or for stock. */
 const ADD_ITEM_RESULT = `${ORDER_RESULT} ... on OrderInterceptorError { interceptorError } ... on InsufficientStockError { quantityAvailable }`;
 
-/** A gift line's own fields: its card message and, where the backend takes one, its leather colour. */
-function giftFields(line: BagLine, caps: { lineFields: Set<string> }) {
-  const fields: Record<string, string> = {};
-  if (line.giftMessage) fields.giftMessage = line.giftMessage;
-  if (line.leatherColour && caps.lineFields.has("leatherColour")) fields.leatherColour = line.leatherColour;
-  return Object.keys(fields).length ? fields : null;
+/** A gift line's own fields: its card message. */
+function giftFields(line: BagLine) {
+  return line.giftMessage ? { giftMessage: line.giftMessage } : null;
+}
+
+/** A names line's fields: the names, the gift they're for and, where the backend takes one, the leather colour. */
+function namesFields(line: BagLine, names: string, giftSku: string, caps: { lineFields: Set<string> }) {
+  return { names, namesFor: giftSku, ...(line.leatherColour && caps.lineFields.has("leatherColour") ? { leatherColour: line.leatherColour } : {}) };
 }
 
 /**
@@ -85,7 +87,7 @@ export async function fillOrder(call: SessionCall, lines: BagLine[]): Promise<Re
     }
     const added = await call<{ addItemToOrder: unknown }>(
       `mutation($id: ID!, $qty: Int!, $cf: OrderLineCustomFieldsInput) { addItemToOrder(productVariantId: $id, quantity: $qty, customFields: $cf) { ${ADD_ITEM_RESULT} } }`,
-      { id: variant.id, qty: line.quantity, cf: giftFields(line, caps) },
+      { id: variant.id, qty: line.quantity, cf: giftFields(line) },
     );
     if (isErrorResult(added.addItemToOrder)) {
       problems[line.key] = errorMessage(added.addItemToOrder);
@@ -99,7 +101,7 @@ export async function fillOrder(call: SessionCall, lines: BagLine[]): Promise<Re
     }
     const withNames = await call<{ addItemToOrder: unknown }>(
       `mutation($id: ID!, $qty: Int!, $cf: OrderLineCustomFieldsInput) { addItemToOrder(productVariantId: $id, quantity: $qty, customFields: $cf) { ${ADD_ITEM_RESULT} } }`,
-      { id: catalog.names.variantId, qty: line.personalisationCount ?? 1, cf: { names, namesFor: variant.sku } },
+      { id: catalog.names.variantId, qty: line.personalisationCount ?? 1, cf: namesFields(line, names, variant.sku, caps) },
     );
     if (isErrorResult(withNames.addItemToOrder)) problems[line.key] = errorMessage(withNames.addItemToOrder);
   }
@@ -219,9 +221,9 @@ export async function orderMatches(
     const product = catalog.products.find((p) => p.id === line.productId);
     const variant = product?.variants.length ? product.variants.find((v) => v.id === line.variantId) : product?.defaultVariant;
     if (!variant?.id || !variant.sku) return false;
-    add(key(variant.id, line.giftMessage, null, null, line.leatherColour), line.quantity);
+    add(key(variant.id, line.giftMessage), line.quantity);
     const names = line.personalisation?.trim().toUpperCase();
-    if (names && catalog.names) add(key(catalog.names.variantId, null, names, variant.sku), line.personalisationCount ?? 1);
+    if (names && catalog.names) add(key(catalog.names.variantId, null, names, variant.sku, line.leatherColour), line.personalisationCount ?? 1);
   }
   const actual = new Map<string, number>();
   for (const l of o.lines) {

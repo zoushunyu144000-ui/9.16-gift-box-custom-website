@@ -57,14 +57,12 @@ export default async function HomePage() {
   return (
     <>
       <Hero
-        eyebrow={settings.heroEyebrow}
         title={settings.heroTitle}
         slides={heroSlides}
         href={season && festive.length > 0 ? festivalHref(season) : "/festive"}
         mobile={{
           image: settings.heroMobileImage ? { src: settings.heroMobileImage, alt: "Moire gift box" } : siteImages.homeHero,
           title: settings.heroMobileTitle || settings.heroTitle,
-          text: settings.heroMobileText || settings.heroText,
         }}
       />
 
