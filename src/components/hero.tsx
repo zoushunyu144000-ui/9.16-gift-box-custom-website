@@ -7,25 +7,22 @@ import { ProductImage } from "./product-image";
 
 /**
  * Homepage opening.
- * Phones (client, Oct 2026): one landscape photograph, then the season, a headline, a line of text and
- * Explore the collection — each with its own back-office setting, the photograph defaulting to the
- * site's ivory gift box.
+ * Phones (client, Oct 2026): one photograph (the back office's, else the site's ivory gift box) with
+ * Explore the collection on it and no words; the headline is there for screen readers only.
  * Tablets and desktops: the slideshow of full-height photographs with a slow push-in, the headline and
  * Shop Now laid over it.
  * " / " in a headline starts a new line; "*" is ignored.
  */
 export function Hero({
-  eyebrow,
   title,
   slides,
   href,
   mobile,
 }: {
-  eyebrow: string;
   title: string;
   slides: Img[];
   href: string;
-  mobile: { image: Img; title: string; text: string };
+  mobile: { image: Img; title: string };
 }) {
   const [index, setIndex] = useState(0);
 
@@ -40,24 +37,14 @@ export function Hero({
 
   return (
     <section className="relative overflow-hidden bg-ivory md:bg-mount" aria-label="Introduction">
-      {/* Phones: the photograph, then the words under it. */}
-      <div className="md:hidden">
-        <ProductImage src={mobile.image.src} alt={mobile.image.alt} ratio={0.625} sizes="100vw" priority imgClassName="object-center" />
-        <div className="shell py-9">
-          <p className="text-[11px] font-medium uppercase tracking-[0.17em] text-bronze">{eyebrow}</p>
-          <h1 className="display mt-4 text-[2.3rem] leading-[1.08]">
-            {linesOf(mobile.title).map((l, i) => (
-              <span key={i} className="block">
-                {l}
-              </span>
-            ))}
-          </h1>
-          <p className="mt-4 max-w-[36ch] text-[15px] leading-[1.65] text-ink-2">{mobile.text}</p>
-          <div className="mt-7">
-            <Link href={href} className="home-cta bg-bronze text-ivory hover:bg-champagne hover:text-ink">
-              Explore the collection
-            </Link>
-          </div>
+      {/* Phones: one photograph with Explore the collection on it, no words (client, Oct 2026). */}
+      <div className="relative md:hidden">
+        <h1 className="sr-only">{linesOf(mobile.title).join(" ")}</h1>
+        <ProductImage src={mobile.image.src} alt={mobile.image.alt} ratio={1} sizes="100vw" priority imgClassName="object-center" />
+        <div className="absolute bottom-[7%] left-0 px-[max(1.25rem,env(safe-area-inset-left))]">
+          <Link href={href} className="home-cta bg-bronze text-ivory hover:bg-champagne hover:text-ink">
+            Explore the collection
+          </Link>
         </div>
       </div>
 

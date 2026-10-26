@@ -65,6 +65,9 @@ export function orderStatus(o: { state: string; payments: { state: string }[] | 
   return last && (last.state === "Declined" || last.state === "Error" || last.state === "Cancelled") ? "payment_failed" : "pending_payment";
 }
 
+/** The leather colour on a line (the names line, or a gift line from before colours moved to the names). */
+const colourOf = (l: VLine) => l.customFields.leatherColour ?? undefined;
+
 /** The backend keeps names as their own line; the storefront shows them with the gift they belong to. */
 function items(lines: VLine[], colourNames: Map<string, string>): OrderItem[] {
   const names = lines.filter((l) => l.productVariant.sku === NAMES_SKU);
@@ -88,8 +91,8 @@ function items(lines: VLine[], colourNames: Map<string, string>): OrderItem[] {
       personalisationLabel: n ? "Personalised name" : undefined,
       personalisationCount: n?.quantity,
       giftMessage: l.customFields.giftMessage ?? undefined,
-      leatherColour: l.customFields.leatherColour ?? undefined,
-      leatherColourName: l.customFields.leatherColour ? (colourNames.get(l.customFields.leatherColour) ?? l.customFields.leatherColour) : undefined,
+      leatherColour: colourOf(n ?? l),
+      leatherColourName: colourOf(n ?? l) ? (colourNames.get(colourOf(n ?? l)!) ?? colourOf(n ?? l)) : undefined,
       containsAlcohol: false,
     };
   });
