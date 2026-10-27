@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { isPurchasable, priceRange, sortProducts } from "@/lib/catalog";
+import { isPurchasable, isSoldOut, priceRange, sortProducts } from "@/lib/catalog";
 import type { Product } from "@/lib/types";
 import { Breadcrumbs } from "./breadcrumbs";
 import { Emph } from "./moire";
@@ -44,7 +44,8 @@ export function CollectionView({
   layout?: "grid" | "list";
 }) {
   const list = sortBy(products, sort);
-  const available = list.filter(isPurchasable).length;
+  const soldOut = list.filter(isSoldOut).length;
+  const available = list.length - soldOut;
   const plainTitle = title.replace(/\*/g, "");
 
   return (
@@ -71,7 +72,7 @@ export function CollectionView({
         <div className="shell flex h-14 items-center justify-between gap-4">
           <p className="text-[13px] text-ink-2">
             {available} {available === 1 ? "gift" : "gifts"}
-            {list.length > available ? <span className="text-ink-3"> · {list.length - available} sold out</span> : null}
+            {soldOut ? <span className="text-ink-3"> · {soldOut} sold out</span> : null}
           </p>
           <SortSelect value={sort} />
         </div>

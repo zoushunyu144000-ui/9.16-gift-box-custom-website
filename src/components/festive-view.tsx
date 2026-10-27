@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { festivalHref, isPurchasable, sortFestivals } from "@/lib/catalog";
+import { festivalHref, isSoldOut, sortFestivals } from "@/lib/catalog";
 import type { Festival, Product, SiteSettings } from "@/lib/types";
 import { Breadcrumbs } from "./breadcrumbs";
 import { sortBy, type SortKey } from "./collection-view";
@@ -108,7 +108,7 @@ export function FestivalView({
   // The current season keeps its campaign title ("Chinese New Year 2027") and intro from Settings.
   const title = isSeason ? settings.festiveTitle : festival.name;
   const intro = isSeason ? settings.festiveIntro : festival.description || "";
-  const available = list.filter(isPurchasable);
+  const available = list.filter((p) => !isSoldOut(p));
   const lead = [...available].filter((p) => p.images.length > 1).sort((a, b) => b.price - a.price)[0] ?? list[0];
   const campaign = festival.coverImage ?? lead?.images[0];
 
