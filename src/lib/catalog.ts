@@ -102,13 +102,15 @@ export function tracksStock(p: Product) {
 /**
  * Sold out = still shown everywhere and the product page still opens, but it can't be added to the bag.
  * Either set manually (status "sold_out", e.g. "Season ended") or because stock reached 0.
+ * A coming-soon product is never sold out: it reads Coming soon, whatever its stock.
  */
 export function isSoldOut(p: Product) {
+  if (p.comingSoon) return false;
   return p.status === "sold_out" || (tracksStock(p) && (p.stock as number) <= 0);
 }
 
 export function isPurchasable(p: Product) {
-  return p.status === "active" && !isSoldOut(p);
+  return p.status === "active" && !p.comingSoon && !isSoldOut(p);
 }
 
 /** Label for sold-out products. Stock-based sell-outs always read "Sold Out". */
