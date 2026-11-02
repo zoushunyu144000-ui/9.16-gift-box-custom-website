@@ -2,7 +2,7 @@
 import { seedSettings } from "@/data/seed";
 import { CATEGORIES, DEFAULT_PERSONALISATION } from "@/lib/catalog";
 import type { CategorySlug, Festival, LeatherColourChoice, Product, ProductImage, SiteSettings } from "@/lib/types";
-import { isImageAddress, parseHomeBlocks, parseHomeSlides } from "@/lib/home-layout";
+import { isImageAddress, parseCorporateImages, parseHomeBlocks, parseHomeSlides } from "@/lib/home-layout";
 import { getCapabilities } from "./capabilities";
 import { shopApi } from "./client";
 
@@ -92,7 +92,7 @@ const CHANNEL_CONTENT = /* GraphQL */ `
     activeChannel {
       customFields {
         heroEyebrow heroTitle heroText heroMobileImage heroMobileTitle heroMobileText featuredCollectionSlug featuredTitle featuredIntro
-        festiveSectionEnabled festiveStartDate festiveEndDate homeSlides homeBlocks
+        festiveSectionEnabled festiveStartDate festiveEndDate homeSlides homeBlocks corporateImages
         whatsappNumber contactEmail businessHours showPreviewNotice
       }
     }
@@ -283,6 +283,7 @@ async function fetchSettings(catalog: Catalog): Promise<SiteSettings> {
       "heroMobileImage",
       "heroMobileTitle",
       "heroMobileText",
+      "corporateImages",
     ]);
     const c = data.activeChannel.customFields;
     const text = (v: unknown, fallback: string) => (typeof v === "string" && v.trim() ? v : fallback);
@@ -294,6 +295,7 @@ async function fetchSettings(catalog: Catalog): Promise<SiteSettings> {
       festiveEnd: typeof c.festiveEndDate === "string" && c.festiveEndDate.trim() ? c.festiveEndDate.trim() : null,
       homeSlides: slides.length ? slides : undefined,
       homeBlocks: parseHomeBlocks(c.homeBlocks),
+      corporateImages: parseCorporateImages(c.corporateImages),
       activeFestivalId: typeof c.featuredCollectionSlug === "string" ? c.featuredCollectionSlug : base.activeFestivalId,
       festiveTitle: text(c.featuredTitle, base.festiveTitle),
       festiveIntro: text(c.featuredIntro, base.festiveIntro),

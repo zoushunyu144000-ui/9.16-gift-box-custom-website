@@ -118,6 +118,22 @@ export function parseHomeBlocks(value: unknown): HomeBlocksSetting | null {
   return { order, blocks };
 }
 
+/** The three ways to order on Corporate Orders, whose photographs the back office can replace. */
+export type CorporateImageKey = "semi" | "bespoke" | "seasonal";
+const CORPORATE_IMAGE_KEYS: CorporateImageKey[] = ["semi", "bespoke", "seasonal"];
+
+/** The Corporate Orders photographs (Channel custom field `corporateImages`); a key left out = the built-in photograph. */
+export function parseCorporateImages(value: unknown): Partial<Record<CorporateImageKey, { src: string; alt: string }>> {
+  const raw = readJson(value);
+  const images: Partial<Record<CorporateImageKey, { src: string; alt: string }>> = {};
+  if (!isRecord(raw)) return images;
+  for (const key of CORPORATE_IMAGE_KEYS) {
+    const item = raw[key];
+    if (isRecord(item) && isImageAddress(item.src)) images[key] = { src: item.src, alt: text(item.alt, 120) };
+  }
+  return images;
+}
+
 /** What one block shows: the saved text where there is some, the built-in copy otherwise. */
 export function resolveBlock(key: BlockKey, setting: HomeBlockSetting | undefined, builtInImage: ProductImage) {
   const copy = BLOCK_COPY[key];
