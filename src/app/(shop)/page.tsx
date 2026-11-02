@@ -61,7 +61,7 @@ export default async function HomePage() {
         slides={heroSlides}
         href={season && festive.length > 0 ? festivalHref(season) : "/festive"}
         mobile={{
-          image: settings.heroMobileImage ? { src: settings.heroMobileImage, alt: "Moire gift box" } : siteImages.homeHero,
+          image: settings.heroMobileImage ? { src: settings.heroMobileImage, alt: "Moire gift box" } : undefined,
           title: settings.heroMobileTitle || settings.heroTitle,
         }}
       />

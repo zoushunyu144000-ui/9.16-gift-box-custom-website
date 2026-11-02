@@ -7,8 +7,9 @@ import { ProductImage } from "./product-image";
 
 /**
  * Homepage opening.
- * Phones (client, Oct 2026): one photograph (the back office's, else the site's ivory gift box) with
- * Explore the collection on it and no words; the headline is there for screen readers only.
+ * Phones (client, Nov 2026): a landscape photograph with Explore the collection on it and no words; the
+ * headline is there for screen readers only. It is the back office's phone photograph when one is set,
+ * else the same slideshow as on computers, so changing the slideshow changes the phone too.
  * Tablets and desktops: the slideshow of full-height photographs with a slow push-in, the headline and
  * Shop Now laid over it.
  * " / " in a headline starts a new line; "*" is ignored.
@@ -22,9 +23,10 @@ export function Hero({
   title: string;
   slides: Img[];
   href: string;
-  mobile: { image: Img; title: string };
+  mobile: { image?: Img; title: string };
 }) {
   const [index, setIndex] = useState(0);
+  const phoneSlides = mobile.image ? [mobile.image] : slides;
 
   useEffect(() => {
     if (slides.length < 2) return;
@@ -37,10 +39,17 @@ export function Hero({
 
   return (
     <section className="relative overflow-hidden bg-ivory md:bg-mount" aria-label="Introduction">
-      {/* Phones: one photograph with Explore the collection on it, no words (client, Oct 2026). */}
-      <div className="relative md:hidden">
+      {/* Phones: a 16:9 photograph with Explore the collection on it, no words (client, Nov 2026). */}
+      <div className="relative aspect-[16/9] md:hidden">
         <h1 className="sr-only">{linesOf(mobile.title).join(" ")}</h1>
-        <ProductImage src={mobile.image.src} alt={mobile.image.alt} ratio={1} sizes="100vw" priority imgClassName="object-center" />
+        {phoneSlides.map((s, i) => {
+          const active = phoneSlides.length < 2 || i === index;
+          return (
+            <div key={s.src} className={`absolute inset-0 transition-opacity duration-[1400ms] ease-in-out ${active ? "opacity-100" : "opacity-0"}`} aria-hidden={!active}>
+              <ProductImage src={s.src} alt={s.alt} className="!absolute inset-0 h-full w-full" sizes="100vw" priority={i === 0} imgClassName="object-center" />
+            </div>
+          );
+        })}
         <div className="absolute bottom-[7%] left-0 px-[max(1.25rem,env(safe-area-inset-left))]">
           <Link href={href} className="home-cta bg-bronze text-ivory hover:bg-champagne hover:text-ink">
             Explore the collection

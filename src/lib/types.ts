@@ -153,6 +153,8 @@ export interface SiteSettings {
   homeSlides?: { src: string; alt: string }[];
   /** The three blocks under the Festive section. Undefined = the built-in blocks. */
   homeBlocks?: import("./home-layout").HomeBlocksSetting | null;
+  /** Photographs for the three ways to order on Corporate Orders. A key left out = the built-in photograph. */
+  corporateImages?: Partial<Record<import("./home-layout").CorporateImageKey, { src: string; alt: string }>>;
   festiveTitle: string;
   festiveIntro: string;
   /** Hero copy */

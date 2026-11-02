@@ -4,6 +4,8 @@ import { ArrowRight } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { ProductImage } from "@/components/product-image";
 import { siteImages } from "@/data/seed";
+import type { CorporateImageKey } from "@/lib/home-layout";
+import { getStore } from "@/lib/store";
 import type { ProductImage as Img } from "@/lib/types";
 
 export const metadata: Metadata = {
@@ -14,9 +16,16 @@ export const metadata: Metadata = {
 /**
  * Corporate Orders — three ways to order, side by side (client, Oct 2026): Semi-curated goes straight
  * to the Fixed Gift Collection, Fully customise to /corporate/bespoke, and Corporate Seasonal Gifting
- * to its own short list of sets. Photographs sit full-bleed, without a mount.
+ * to its own short list of sets. Photographs sit full-bleed, without a mount; the shop can replace each one
+ * (back office → Homepage → Corporate Orders photographs).
  */
-export default function CorporatePage() {
+export default async function CorporatePage() {
+  const settings = await (await getStore()).getSettings();
+  const photo = (key: CorporateImageKey, builtIn: Img): Img => {
+    const chosen = settings.corporateImages?.[key];
+    return chosen ? { ...builtIn, src: chosen.src, alt: chosen.alt || builtIn.alt } : builtIn;
+  };
+
   return (
     <div className="shell pt-6 md:pt-10">
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Corporate Orders" }]} />
@@ -33,16 +42,16 @@ export default function CorporatePage() {
           title="Semi-curated"
           text="Choose from our collection and add your brand touch."
           href="/fixed-gifts"
-          image={siteImages.corporateSemi}
+          image={photo("semi", siteImages.corporateSemi)}
           priority
         />
-        <Entry number="02" title="Fully customise" text="A gift built around your brand, from packaging to product." href="/corporate/bespoke" image={siteImages.corporateBespoke} />
+        <Entry number="02" title="Fully customise" text="A gift built around your brand, from packaging to product." href="/corporate/bespoke" image={photo("bespoke", siteImages.corporateBespoke)} />
         <Entry
           number="03"
           title="Corporate Seasonal Gifting"
           text="Thoughtful gifts from teams, celebrations and bulk orders."
           href="/corporate/seasonal"
-          image={siteImages.festiveCampaign}
+          image={photo("seasonal", siteImages.festiveCampaign)}
         />
       </section>
     </div>
