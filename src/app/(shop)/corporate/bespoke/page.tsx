@@ -14,6 +14,9 @@ export const metadata: Metadata = {
 
 export default async function BespokePage() {
   const settings = await (await getStore()).getSettings();
+  // The back office can replace the photograph; without one, the built-in one.
+  const chosen = settings.corporateImages?.bespokePage;
+  const photo = chosen ? { ...siteImages.bespokeDetail, src: chosen.src, alt: chosen.alt || siteImages.bespokeDetail.alt } : siteImages.bespokeDetail;
 
   return (
     <div className="shell pt-6 md:pt-10">
@@ -28,7 +31,7 @@ export default async function BespokePage() {
         </div>
         {/* Full-bleed on phones: the photograph runs edge to edge, no frame. */}
         <div className="-mx-5 md:mx-0 lg:col-span-5 lg:col-start-8">
-          <ProductImage src={siteImages.bespokeDetail.src} alt={siteImages.bespokeDetail.alt} ratio={1.15} sizes="(min-width: 1024px) 40vw, 100vw" priority />
+          <ProductImage src={photo.src} alt={photo.alt} ratio={1.15} sizes="(min-width: 1024px) 40vw, 100vw" priority />
         </div>
       </header>
 
