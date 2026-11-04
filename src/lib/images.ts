@@ -38,6 +38,10 @@ export function sizedSrc(src: string, width: number, ratio?: number) {
     if (ratio) {
       params.set("h", String(Math.round(width * ratio)));
       params.set("mode", "crop");
+      // Crop around the middle: without a focal point the asset server keeps the busiest part of the
+      // photograph, which cut product shots down to their lower half (client, Nov 2026).
+      params.set("fpx", "0.5");
+      params.set("fpy", "0.5");
     }
     return `${src}?${params.toString()}`;
   }

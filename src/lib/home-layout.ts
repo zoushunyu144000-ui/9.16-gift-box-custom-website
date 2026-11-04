@@ -118,9 +118,9 @@ export function parseHomeBlocks(value: unknown): HomeBlocksSetting | null {
   return { order, blocks };
 }
 
-/** The three ways to order on Corporate Orders, whose photographs the back office can replace. */
-export type CorporateImageKey = "semi" | "bespoke" | "seasonal";
-const CORPORATE_IMAGE_KEYS: CorporateImageKey[] = ["semi", "bespoke", "seasonal"];
+/** The three ways to order on Corporate Orders, and the Fully customised page, whose photographs the back office can replace. */
+export type CorporateImageKey = "semi" | "bespoke" | "seasonal" | "bespokePage";
+const CORPORATE_IMAGE_KEYS: CorporateImageKey[] = ["semi", "bespoke", "seasonal", "bespokePage"];
 
 /** The Corporate Orders photographs (Channel custom field `corporateImages`); a key left out = the built-in photograph. */
 export function parseCorporateImages(value: unknown): Partial<Record<CorporateImageKey, { src: string; alt: string }>> {
