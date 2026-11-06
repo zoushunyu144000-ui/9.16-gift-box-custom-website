@@ -9,8 +9,11 @@ import { ProductImage } from "../product-image";
 /**
  * Product gallery.
  * Mobile: swipeable, full-width, with a counter. Desktop: thumbnails + main image, click to zoom.
- * Handles 1–10+ images. The main image is never cropped: the frame takes the proportions most of
- * the photographs share, and every photograph is shown whole inside it.
+ * Handles 1–10+ images. The main image is never cropped: every photograph is shown whole and centred
+ * in its frame. On phones the frame has the same size for every product and photograph (mobileRatio,
+ * at most 62% of the screen), so the product's name shows under it and nothing moves while swiping,
+ * whether a photograph is tall, square or wide (client, Nov 2026). On desktop the frame takes the
+ * proportions most of the photographs share.
  */
 export function Gallery({ images, name, soldOut, mobileRatio = 1.25 }: { images: Img[]; name: string; soldOut?: boolean; mobileRatio?: number }) {
   const [active, setActive] = useState(0);
@@ -59,7 +62,7 @@ export function Gallery({ images, name, soldOut, mobileRatio = 1.25 }: { images:
         <div ref={scroller} className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto" aria-label={`${name} images`}>
           {list.map((img, i) => (
             <div key={img.src + i} className="w-full flex-none snap-center">
-              <ProductImage src={img.src} alt={img.alt} ratio={frameRatio} contain sizes="100vw" priority={i === 0} imgClassName={`object-top ${soldOut ? "grade-muted" : ""}`} />
+              <ProductImage src={img.src} alt={img.alt} ratio={mobileRatio} contain className="max-h-[62svh]" sizes="100vw" priority={i === 0} imgClassName={soldOut ? "grade-muted" : ""} />
             </div>
           ))}
         </div>
@@ -108,7 +111,7 @@ export function Gallery({ images, name, soldOut, mobileRatio = 1.25 }: { images:
               className="max-h-[calc(100vh-9rem)]"
               sizes="(min-width: 1280px) 48vw, 55vw"
               priority
-              imgClassName={`object-top ${soldOut ? "grade-muted" : ""}`}
+              imgClassName={soldOut ? "grade-muted" : ""}
             />
           </button>
           {soldOut && <span className="pointer-events-none absolute left-4 top-4 bg-ivory/95 px-2.5 py-1.5 text-[11px] font-medium uppercase leading-none tracking-[0.18em] text-ink">Sold Out</span>}
