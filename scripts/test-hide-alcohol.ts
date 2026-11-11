@@ -32,11 +32,13 @@ const box = (slug: string, lower: string): Product => ({
 const real = check([
   box("rui", "1 × MONTES Red Wine (700ml) 2 × Premium Mount Fuji Whisky Glasses"),
   box("zen", "1 × Johnnie Walker Golden Label Whiskey (700ml) 2 x Premium Mount Fuji Whisky Glasses"),
-  box("ram-royal", "2 x Premium Mount Fuji Whisky Glasses"),
+  box("zhun", "1 × MARTEL VSOP Red Wine (700ml)"),
+  box("ram-royal", "2 x Premium Mount Fuji Whisky Glasses"), // taken off by hand: Hennessy in the photos
+  box("glasses-only", "2 x Premium Mount Fuji Whisky Glasses"),
 ]);
 const shown = real.map((p) => p.slug).join(",");
-if (shown !== "ram-royal") {
-  console.log("REAL-SHAPED BOXES: expected only ram-royal shown, got", shown);
+if (shown !== "glasses-only") {
+  console.log("REAL-SHAPED BOXES: expected only glasses-only shown, got", shown);
   failed++;
 }
 if (!real[0]?.description.includes("Whisky Glasses")) {

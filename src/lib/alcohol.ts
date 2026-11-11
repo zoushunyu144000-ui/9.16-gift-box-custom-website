@@ -10,10 +10,17 @@ import type { Product } from "./types";
 export const ALCOHOL_ON_SALE = false;
 
 // "Whisky Glasses" in a box is glassware, not a drink, so a word followed by "glass" does not count.
-const ALCOHOL_WORDS = /\b(wines?|champagnes?|prosecco|whisk(?:e)?y|spirits|liquors?|alcohol(?:ic)?|beers?|sake|cognac|brandy|vodka|gin|rum|baijiu)\b(?!\s*glass)/i;
+const ALCOHOL_WORDS = /\b(wines?|champagnes?|prosecco|whisk(?:e)?y|spirits|liquors?|alcohol(?:ic)?|beers?|sake|cognac|brandy|vodka|gin|rum|baijiu|hennessy|martell?|vsop)\b(?!\s*glass)/i;
+
+/**
+ * Gifts the shop asked to take off by hand because the bottle is in the photos but not in the text
+ * (11-11: RAM ROYAL is photographed with Hennessy XO). Tagging "Contains alcohol" in the back office
+ * does the same; remove a slug here once that gift is sold without the bottle.
+ */
+const TAKEN_OFF = new Set(["ram-royal"]);
 
 function isAlcoholProduct(p: Product) {
-  return p.category === "wine-spirits" || Boolean(p.containsAlcohol);
+  return p.category === "wine-spirits" || Boolean(p.containsAlcohol) || TAKEN_OFF.has(p.slug);
 }
 
 /** A gift whose own contents list a bottle (e.g. "1 × MONTES Red Wine") even though nobody tagged it. */
