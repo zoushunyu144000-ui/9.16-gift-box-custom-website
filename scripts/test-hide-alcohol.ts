@@ -2,18 +2,47 @@
 // Run: npx tsx scripts/test-hide-alcohol.ts
 import { withoutAlcohol } from "../src/lib/alcohol";
 import { seedProducts } from "../src/data/seed";
+import type { Product } from "../src/lib/types";
 
-const out = withoutAlcohol(seedProducts);
-const words = /\b(wines?|champagnes?|whisk(?:e)?y|alcohol)\b/i;
+const words = /\b(wines?|champagnes?|whisk(?:e)?y|alcohol)\b(?!\s*glass)/i;
 let failed = 0;
-for (const p of out) {
-  const text = JSON.stringify({ n: p.name, s: p.summary, d: p.description, c: p.contents, sp: p.specs, v: p.variants });
-  if (p.category === "wine-spirits" || p.containsAlcohol || p.variants.some((v) => v.containsAlcohol) || words.test(text)) {
-    console.log("STILL SHOWS ALCOHOL:", p.slug, text.match(words)?.[0]);
-    failed++;
+function check(products: Product[]) {
+  const out = withoutAlcohol(products);
+  for (const p of out) {
+    const text = JSON.stringify({ n: p.name, s: p.summary, d: p.description, c: p.contents, sp: p.specs, v: p.variants });
+    if (p.category === "wine-spirits" || p.containsAlcohol || p.variants.some((v) => v.containsAlcohol) || words.test(text)) {
+      console.log("STILL SHOWS ALCOHOL:", p.slug, text.match(words)?.[0]);
+      failed++;
+    }
   }
+  return out;
 }
+
+const out = check(seedProducts);
 const tea = out.find((p) => p.slug === "reunion-tea-box");
-console.log(`${seedProducts.length} products in, ${out.length} shown; tea box price ${tea?.price}, options ${tea?.variants.map((v) => v.name).join(", ")}`);
+console.log(`${seedProducts.length} sample products in, ${out.length} shown; tea box price ${tea?.price}, options ${tea?.variants.map((v) => v.name).join(", ")}`);
+
+// Shaped like the shop's real CNY boxes (Nov 2026): untagged, with the bottle listed only in the description.
+const base = seedProducts.find((p) => !p.variants.length && !p.containsAlcohol)!;
+const box = (slug: string, lower: string): Product => ({
+  ...base,
+  slug,
+  description: `CONSIST: 1 × Premium Gift Box\nUpper Layer: 1 × Premium Grade 5A Bird's Nest\nLower Layer: ${lower}\n6 × MOIRE 2027 Red Packets`,
+});
+const real = check([
+  box("rui", "1 × MONTES Red Wine (700ml) 2 × Premium Mount Fuji Whisky Glasses"),
+  box("zen", "1 × Johnnie Walker Golden Label Whiskey (700ml) 2 x Premium Mount Fuji Whisky Glasses"),
+  box("ram-royal", "2 x Premium Mount Fuji Whisky Glasses"),
+]);
+const shown = real.map((p) => p.slug).join(",");
+if (shown !== "ram-royal") {
+  console.log("REAL-SHAPED BOXES: expected only ram-royal shown, got", shown);
+  failed++;
+}
+if (!real[0]?.description.includes("Whisky Glasses")) {
+  console.log("ram-royal lost its glasses line:", real[0]?.description);
+  failed++;
+}
+console.log(`real-shaped boxes shown: ${shown}`);
 console.log(failed ? `FAILED: ${failed}` : "OK");
 process.exit(failed ? 1 : 0);

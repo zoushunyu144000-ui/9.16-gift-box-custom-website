@@ -9,11 +9,17 @@ import type { Product } from "./types";
  */
 export const ALCOHOL_ON_SALE = false;
 
+// "Whisky Glasses" in a box is glassware, not a drink, so a word followed by "glass" does not count.
+const ALCOHOL_WORDS = /\b(wines?|champagnes?|prosecco|whisk(?:e)?y|spirits|liquors?|alcohol(?:ic)?|beers?|sake|cognac|brandy|vodka|gin|rum|baijiu)\b(?!\s*glass)/i;
+
 function isAlcoholProduct(p: Product) {
   return p.category === "wine-spirits" || Boolean(p.containsAlcohol);
 }
 
-const ALCOHOL_WORDS = /\b(wines?|champagnes?|prosecco|whisk(?:e)?y|spirits|liquors?|alcohol(?:ic)?|beers?|sake|cognac|brandy|vodka|gin|rum|baijiu)\b/i;
+/** A gift whose own contents list a bottle (e.g. "1 × MONTES Red Wine") even though nobody tagged it. */
+function listsAlcohol(p: Product) {
+  return [p.name, p.summary, p.description, ...(p.contents ?? [])].some((t) => t && ALCOHOL_WORDS.test(t));
+}
 
 /** Sentences of a text that do not mention alcohol (a gift's description may describe its wine version). */
 function withoutAlcoholSentences(text: string) {
@@ -40,6 +46,9 @@ export function withoutAlcohol(products: Product[]): Product[] {
     const variants = (p.variants ?? []).filter((v) => !v.containsAlcohol && !ALCOHOL_WORDS.test(`${v.name} ${v.note ?? ""}`));
     if (p.variants?.length && variants.length === 0) return [];
     const changedVariants = variants.length !== (p.variants?.length ?? 0);
+    // Only a gift that also comes without alcohol keeps its page (its wine edition's lines are cut below);
+    // one whose box itself holds a bottle is off the shop entirely.
+    if (!changedVariants && listsAlcohol(p)) return [];
     return [
       {
         ...p,
