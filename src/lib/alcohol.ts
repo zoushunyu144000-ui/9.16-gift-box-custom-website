@@ -13,15 +13,44 @@ function isAlcoholProduct(p: Product) {
   return p.category === "wine-spirits" || Boolean(p.containsAlcohol);
 }
 
+const ALCOHOL_WORDS = /\b(wines?|champagnes?|prosecco|whisk(?:e)?y|spirits|liquors?|alcohol(?:ic)?|beers?|sake|cognac|brandy|vodka|gin|rum|baijiu)\b/i;
+
+/** Sentences of a text that do not mention alcohol (a gift's description may describe its wine version). */
+function withoutAlcoholSentences(text: string) {
+  if (!text || !ALCOHOL_WORDS.test(text)) return text;
+  // Line by line, so the paragraphs of the description stay as the shop wrote them.
+  return text
+    .split("\n")
+    .map((line) =>
+      line
+        .split(/(?<=[.!?])\s+/)
+        .filter((s) => !ALCOHOL_WORDS.test(s))
+        .join(" "),
+    )
+    .filter((line, i, lines) => line.trim() !== "" || (i > 0 && lines[i - 1].trim() !== ""))
+    .join("\n")
+    .trim();
+}
+
 /** The catalogue as customers may see it: alcohol products dropped, alcohol versions of other gifts removed. */
 export function withoutAlcohol(products: Product[]): Product[] {
   if (ALCOHOL_ON_SALE) return products;
   return products.flatMap((p) => {
     if (isAlcoholProduct(p)) return [];
-    if (!p.variants?.some((v) => v.containsAlcohol)) return [p];
-    const variants = p.variants.filter((v) => !v.containsAlcohol);
-    if (variants.length === 0) return [];
-    // The base price follows the first option, so it moves with it when that option was the alcohol one.
-    return [{ ...p, variants, price: variants[0].price, compareAt: variants[0].compareAt }];
+    const variants = (p.variants ?? []).filter((v) => !v.containsAlcohol && !ALCOHOL_WORDS.test(`${v.name} ${v.note ?? ""}`));
+    if (p.variants?.length && variants.length === 0) return [];
+    const changedVariants = variants.length !== (p.variants?.length ?? 0);
+    return [
+      {
+        ...p,
+        variants,
+        // The base price follows the first option, so it moves with it when that option was the alcohol one.
+        ...(changedVariants && variants[0] ? { price: variants[0].price, compareAt: variants[0].compareAt } : {}),
+        summary: withoutAlcoholSentences(p.summary),
+        description: withoutAlcoholSentences(p.description),
+        contents: (p.contents ?? []).filter((c) => !ALCOHOL_WORDS.test(c)),
+        specs: (p.specs ?? []).filter((s) => !ALCOHOL_WORDS.test(`${s.label} ${s.value}`)),
+      },
+    ];
   });
 }
