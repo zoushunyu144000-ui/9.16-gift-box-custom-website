@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { SiteSettings } from "@/lib/types";
 import { Logo } from "./logo";
+import { ALCOHOL_ON_SALE } from "@/lib/alcohol";
 
 export function Footer({ settings }: { settings: SiteSettings }) {
   const year = new Date().getFullYear();
@@ -19,7 +20,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
             links={[
               ["Festive", "/festive"],
               ["Fixed Gifts", "/fixed-gifts"],
-              ["Wine Gift Boxes", "/wine-gift-boxes"],
+              ...(ALCOHOL_ON_SALE ? [["Wine Gift Boxes", "/wine-gift-boxes"] as [string, string]] : []),
             ]}
           />
           <FooterCol

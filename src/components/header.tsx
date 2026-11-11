@@ -7,11 +7,12 @@ import { Menu, Search, User, X } from "lucide-react";
 import { Logo } from "./logo";
 import { useCart } from "./cart/cart-context";
 import { SearchOverlay } from "./search-overlay";
+import { ALCOHOL_ON_SALE } from "@/lib/alcohol";
 
 export const NAV = [
   { href: "/festive", label: "Festive" },
   { href: "/fixed-gifts", label: "Fixed Gift Collection" },
-  { href: "/wine-gift-boxes", label: "Wine Gift Boxes" },
+  ...(ALCOHOL_ON_SALE ? [{ href: "/wine-gift-boxes", label: "Wine Gift Boxes" }] : []),
   { href: "/corporate", label: "Corporate Orders" },
 ];
 

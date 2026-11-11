@@ -8,6 +8,7 @@ import { siteImages } from "@/data/seed";
 import { festivalHref, sortFestivals, sortProducts } from "@/lib/catalog";
 import { BLOCK_KEYS, festiveWindowOpen, resolveBlock, type BlockKey } from "@/lib/home-layout";
 import { getStore } from "@/lib/store";
+import { ALCOHOL_ON_SALE } from "@/lib/alcohol";
 import type { Product, ProductImage as ProductImageData } from "@/lib/types";
 
 function pick(list: Product[], n: number) {
@@ -52,7 +53,7 @@ export default async function HomePage() {
   const festivalNames = shown.length > 1 ? `${shown.slice(0, -1).map((f) => f.name).join(", ")} and ${shown.at(-1)!.name}` : shown[0]?.name ?? "every festival";
   const blocks = (settings.homeBlocks?.order ?? BLOCK_KEYS)
     .map((key) => ({ key, ...resolveBlock(key, settings.homeBlocks?.blocks[key], BLOCK_IMAGE[key]) }))
-    .filter((block) => block.enabled);
+    .filter((block) => block.enabled && (ALCOHOL_ON_SALE || block.key !== "wine"));
 
   return (
     <>

@@ -3,6 +3,7 @@ import "@fontsource-variable/jost";
 import "@fontsource-variable/lora";
 import "@fontsource-variable/lora/wght-italic.css";
 import "./globals.css";
+import { ALCOHOL_ON_SALE } from "@/lib/alcohol";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -12,7 +13,9 @@ export const metadata: Metadata = {
     default: "Moire — Premium gift boxes, Kuala Lumpur",
     template: "%s · Moire",
   },
-  description: "Festive gift boxes, everyday gifts, wine gift boxes and corporate gifting from Kuala Lumpur.",
+  description: ALCOHOL_ON_SALE
+    ? "Festive gift boxes, everyday gifts, wine gift boxes and corporate gifting from Kuala Lumpur."
+    : "Festive gift boxes, everyday gifts and corporate gifting from Kuala Lumpur.",
   icons: { icon: "/icon.svg" },
   other: { google: "notranslate" },
   openGraph: {

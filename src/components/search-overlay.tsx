@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Search, X } from "lucide-react";
 import { sizedSrc } from "@/lib/images";
+import { ALCOHOL_ON_SALE } from "@/lib/alcohol";
 
 interface Hit {
   slug: string;
@@ -18,7 +19,7 @@ interface Hit {
 const SUGGESTIONS = [
   { label: "Festive Collection", href: "/festive" },
   { label: "Personalised gifts", href: "/search?q=personalised" },
-  { label: "Wine Gift Boxes", href: "/wine-gift-boxes" },
+  ...(ALCOHOL_ON_SALE ? [{ label: "Wine Gift Boxes", href: "/wine-gift-boxes" }] : []),
   { label: "Corporate orders", href: "/corporate" },
 ];
 

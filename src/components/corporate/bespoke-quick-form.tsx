@@ -3,10 +3,11 @@
 import { DateSelect } from "../date-select";
 import { useState } from "react";
 import { whatsappLink } from "@/lib/catalog";
+import { ALCOHOL_ON_SALE } from "@/lib/alcohol";
 import { formatDate } from "@/lib/dates";
 import { Field } from "../form-field";
 
-const STYLES = ["Festive hamper", "Gift box", "Wine gift box", "Keepsake / engraved gift", "Not sure yet"];
+const STYLES = ["Festive hamper", "Gift box", ...(ALCOHOL_ON_SALE ? ["Wine gift box"] : []), "Keepsake / engraved gift", "Not sure yet"];
 
 /**
  * Fully customised: three quick fields (style, approximate date, quantity) plus an optional note.

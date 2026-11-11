@@ -5,6 +5,7 @@ import { ProductCard } from "@/components/product-card";
 import { festivalName } from "@/lib/catalog";
 import { searchProducts } from "@/lib/search";
 import { getStore } from "@/lib/store";
+import { ALCOHOL_ON_SALE } from "@/lib/alcohol";
 
 export const metadata: Metadata = { title: "Search", robots: { index: false } };
 
@@ -35,7 +36,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link href="/festive" className="btn btn-outline">Festive</Link>
             <Link href="/fixed-gifts" className="btn btn-outline">Fixed Gift Collection</Link>
-            <Link href="/wine-gift-boxes" className="btn btn-outline">Wine Gift Boxes</Link>
+            {ALCOHOL_ON_SALE && <Link href="/wine-gift-boxes" className="btn btn-outline">Wine Gift Boxes</Link>}
           </div>
         </div>
       )}

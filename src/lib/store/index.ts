@@ -5,6 +5,8 @@ import { demoStore } from "./demo";
 import { supabaseStore } from "./supabase";
 import { vendureStore } from "./vendure";
 import type { Store } from "./types";
+import { ALCOHOL_ON_SALE, withoutAlcohol } from "@/lib/alcohol";
+import type { Product } from "@/lib/types";
 
 export const isSupabaseConfigured = Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 export { isVendureConfigured };
@@ -16,8 +18,19 @@ export { isVendureConfigured };
  */
 export async function getStore(): Promise<Store> {
   await connection();
-  if (isVendureConfigured) return vendureStore;
-  return isSupabaseConfigured ? supabaseStore : demoStore;
+  return withAlcoholHidden(isVendureConfigured ? vendureStore : isSupabaseConfigured ? supabaseStore : demoStore);
+}
+
+/** Every page reads products through here, so wine gift boxes disappear everywhere at once (see lib/alcohol). */
+function withAlcoholHidden(store: Store): Store {
+  if (ALCOHOL_ON_SALE) return store;
+  const visible = async (p: Product | null) => (p && withoutAlcohol([p])[0]) ?? null;
+  return {
+    ...store,
+    listProducts: async () => withoutAlcohol(await store.listProducts()),
+    getProductBySlug: async (slug) => visible(await store.getProductBySlug(slug)),
+    getProductById: async (id) => visible(await store.getProductById(id)),
+  };
 }
 
 export type { Store };
