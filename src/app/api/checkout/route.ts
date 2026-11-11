@@ -9,6 +9,7 @@ import { getStore, isVendureConfigured } from "@/lib/store";
 import type { Order } from "@/lib/types";
 import { earliestDeliveryDate } from "@/lib/dates";
 import { placeVendureOrder } from "@/lib/vendure/checkout";
+import { ORDER_ON_WHATSAPP } from "@/lib/whatsapp-order";
 import { publicOrigin } from "@/lib/vendure/payments";
 
 const phone = z
@@ -42,7 +43,7 @@ const Body = z.object({
   /** With the commerce backend: a discount code, and a member's points to use. */
   couponCode: z.string().max(60).optional(),
   loyaltyPoints: z.number().int().min(0).max(10_000_000).optional(),
-  paymentMethod: z.enum(["fpx", "card", "ewallet"]),
+  paymentMethod: z.enum(["fpx", "card", "ewallet", "whatsapp"]),
   ageConfirmed: z.boolean(),
   termsAccepted: z.literal(true, { message: "Please accept the terms of sale" }),
   lines: z
@@ -74,6 +75,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Please check the highlighted fields.", fieldErrors }, { status: 422 });
   }
   const body = parsed.data;
+  // While the shop takes orders on WhatsApp, every order goes that way, whatever an old checkout page sent.
+  if (ORDER_ON_WHATSAPP) body.paymentMethod = "whatsapp";
   const store = await getStore();
   const settings = await store.getSettings();
 

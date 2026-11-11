@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { SiteSettings } from "@/lib/types";
 import { Logo } from "./logo";
 import { ALCOHOL_ON_SALE } from "@/lib/alcohol";
+import { ORDER_ON_WHATSAPP } from "@/lib/whatsapp-order";
 
 export function Footer({ settings }: { settings: SiteSettings }) {
   const year = new Date().getFullYear();
@@ -45,7 +46,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
       <div className="border-t border-line">
         <div className="shell flex flex-wrap items-center gap-x-4 gap-y-1 py-4 text-[11px] leading-relaxed text-ink-3 md:gap-x-6">
           <p>© {year} Moire</p>
-          <p>FPX · Card · E-wallet</p>
+          <p>{ORDER_ON_WHATSAPP ? "Orders confirmed on WhatsApp" : "FPX · Card · E-wallet"}</p>
           {settings.whatsappNumber && <a href={`https://wa.me/${settings.whatsappNumber}`}>{localPhone(settings.whatsappNumber)}</a>}
           {settings.contactEmail && <a href={`mailto:${settings.contactEmail}`}>{settings.contactEmail}</a>}
           {settings.businessHours && <p>{settings.businessHours}</p>}

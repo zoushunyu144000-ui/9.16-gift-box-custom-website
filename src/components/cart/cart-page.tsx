@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { formatRM } from "@/lib/catalog";
+import { ORDER_ON_WHATSAPP } from "@/lib/whatsapp-order";
 import { useCart } from "./cart-context";
 import { CartLineRow } from "./cart-line";
 import { useQuote } from "./use-quote";
@@ -80,7 +81,9 @@ export function CartPageClient() {
                   Checkout
                 </Link>
               )}
-              <p className="mt-4 text-center text-[12px] text-ink-3">Pay securely by FPX, card or e-wallet</p>
+              <p className="mt-4 text-center text-[12px] text-ink-3">
+                {ORDER_ON_WHATSAPP ? "Place your order, then confirm it and pay with us on WhatsApp" : "Pay securely by FPX, card or e-wallet"}
+              </p>
             </div>
           </aside>
         </div>

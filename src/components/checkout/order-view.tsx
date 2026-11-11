@@ -4,21 +4,40 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { formatRM, ORDER_STATUS, paymentMethodName, personalisationHeading } from "@/lib/catalog";
 import { formatDate } from "@/lib/dates";
+import { whatsappOrderLink } from "@/lib/whatsapp-order";
 import { useCart } from "../cart/cart-context";
 import { Star } from "../logo";
 import { ProductImage } from "../product-image";
 import { useOrder } from "./use-order";
 
-/** `backend`: orders live in the commerce backend, which opens a new payment page to retry. */
-export function OrderView({ orderId, token, backend = false }: { orderId: string; token: string; backend?: boolean }) {
+/**
+ * `backend`: orders live in the commerce backend, which opens a new payment page to retry.
+ * `openWhatsApp`: just placed on WhatsApp — open WhatsApp with the order written out.
+ */
+export function OrderView({
+  orderId,
+  token,
+  backend = false,
+  whatsappNumber = "",
+  openWhatsApp = false,
+}: {
+  orderId: string;
+  token: string;
+  backend?: boolean;
+  whatsappNumber?: string;
+  openWhatsApp?: boolean;
+}) {
   const { order, state, token: t, reload } = useOrder(orderId, token);
   const { clear } = useCart();
   const cleared = useRef(false);
   const polls = useRef(0);
+  // Placed on WhatsApp, not yet confirmed paid by the shop: nothing to pay here, so no polling or retry.
+  const onWhatsApp = order?.payment.method === "whatsapp" && order.status === "pending_payment";
+  const waLink = order && onWhatsApp && whatsappNumber ? whatsappOrderLink(whatsappNumber, order, typeof window === "undefined" ? `/order/${order.id}` : `${window.location.origin}/order/${order.id}`) : "";
 
   // Back from the payment page before the gateway has confirmed: look again for a couple of minutes.
   useEffect(() => {
-    if (order?.status !== "pending_payment" || polls.current >= 30) return;
+    if (order?.status !== "pending_payment" || order.payment.method === "whatsapp" || polls.current >= 30) return;
     const timer = setTimeout(() => {
       polls.current += 1;
       reload();
@@ -26,9 +45,22 @@ export function OrderView({ orderId, token, backend = false }: { orderId: string
     return () => clearTimeout(timer);
   }, [order, reload]);
 
-  // Empty the bag once payment is confirmed (not before — a failed payment keeps the bag).
+  // Just placed on WhatsApp: open the chat once (not again when the customer comes back to this page).
   useEffect(() => {
-    if (order?.status === "paid" && !cleared.current) {
+    if (!openWhatsApp || !waLink || !order) return;
+    const key = `moire.wa.opened.${order.id}`;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, "1");
+    } catch {
+      /* ignore */
+    }
+    window.location.assign(waLink);
+  }, [openWhatsApp, waLink, order]);
+
+  // Empty the bag once payment is confirmed, or once the order is placed on WhatsApp (not before — a failed payment keeps the bag).
+  useEffect(() => {
+    if ((order?.status === "paid" || onWhatsApp) && !cleared.current) {
       cleared.current = true;
       clear();
       try {
@@ -37,7 +69,7 @@ export function OrderView({ orderId, token, backend = false }: { orderId: string
         /* ignore */
       }
     }
-  }, [order?.status, clear]);
+  }, [order?.status, onWhatsApp, clear]);
 
   if (state === "loading") {
     return (
@@ -67,23 +99,32 @@ export function OrderView({ orderId, token, backend = false }: { orderId: string
 
   const paid = !["pending_payment", "payment_failed", "cancelled"].includes(order.status);
   const failed = order.status === "payment_failed";
-  const pending = order.status === "pending_payment";
+  const pending = order.status === "pending_payment" && !onWhatsApp;
 
   return (
     <div className="shell max-w-4xl pt-10 md:pt-16">
       <header className="border-b border-line pb-10 text-center">
-        {paid && <Star className="mx-auto h-5 w-5 text-champagne animate-twinkle [animation-delay:200ms]" />}
+        {(paid || onWhatsApp) && <Star className="mx-auto h-5 w-5 text-champagne animate-twinkle [animation-delay:200ms]" />}
         <p className="eyebrow mt-5">Order {order.id}</p>
         <h1 className="display mt-4 text-[2.4rem] leading-[1.05] md:text-[3.4rem]">
-          {paid ? `Thank you, ${order.customer.name}.` : failed ? "Payment unsuccessful" : pending ? "Awaiting payment" : "Order cancelled"}
+          {paid ? `Thank you, ${order.customer.name}.` : onWhatsApp ? "Send your order on WhatsApp" : failed ? "Payment unsuccessful" : pending ? "Awaiting payment" : "Order cancelled"}
         </h1>
         <p className="mx-auto mt-4 max-w-[52ch] text-[15px] leading-relaxed text-ink-2">
           {paid &&
             `Your payment was received and your order is confirmed. We’ll contact you at ${order.customer.phone} or ${order.customer.email} about delivery. Please keep your order number for reference.`}
+          {onWhatsApp &&
+            "Your order details are written out for you on WhatsApp — just press send. We’ll confirm your order and send you payment details there."}
           {failed && `${order.payment.failureReason ?? "Your payment didn’t go through"}. Your bag has been kept — you can try again or choose another payment method.`}
           {pending && "We haven’t received confirmation of your payment yet. If you’ve just paid, this page will update shortly."}
           {order.status === "cancelled" && "This order has been cancelled. Please contact us if you have questions."}
         </p>
+        {onWhatsApp && waLink && (
+          <div className="mt-8 flex justify-center">
+            <a href={waLink} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+              Send order on WhatsApp
+            </a>
+          </div>
+        )}
         {(failed || pending) && <PayAgain orderId={order.id} token={t} backend={backend} />}
       </header>
 

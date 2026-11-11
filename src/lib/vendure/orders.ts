@@ -55,11 +55,16 @@ function orderFields(caps: Capabilities) {
 
 const PAID_STATES = new Set(["PaymentAuthorized", "PaymentSettled", "Modifying", "ArrangingAdditionalPayment"]);
 
+/** The backend's payment method for orders placed on WhatsApp: placed without money, confirmed by staff. */
+export const WHATSAPP_ORDER_METHOD = "whatsapp-order";
+
 /** The storefront's status for a backend order. */
-export function orderStatus(o: { state: string; payments: { state: string }[] | null }): OrderStatus {
+export function orderStatus(o: { state: string; payments: { state: string; method?: string }[] | null }): OrderStatus {
   if (o.state === "Cancelled") return "cancelled";
   if (o.state === "Delivered" || o.state === "PartiallyDelivered") return "completed";
   if (o.state === "Shipped" || o.state === "PartiallyShipped") return "out_for_delivery";
+  // Placed on WhatsApp and not yet confirmed paid by the shop.
+  if (o.state === "PaymentAuthorized" && o.payments?.some((p) => p.method === WHATSAPP_ORDER_METHOD && p.state === "Authorized")) return "pending_payment";
   if (PAID_STATES.has(o.state)) return "paid";
   const last = o.payments?.[o.payments.length - 1];
   return last && (last.state === "Declined" || last.state === "Error" || last.state === "Cancelled") ? "payment_failed" : "pending_payment";
@@ -102,9 +107,11 @@ function items(lines: VLine[], colourNames: Map<string, string>): OrderItem[] {
 export function toStorefrontOrder(o: VOrder, colourNames = new Map<string, string>()): Order {
   const a = o.shippingAddress;
   const customerName = [o.customer?.firstName, o.customer?.lastName].filter(Boolean).join(" ");
-  const paid = o.payments?.find((p) => p.state === "Settled" || p.state === "Authorized");
+  const whatsapp = o.payments?.find((p) => p.method === WHATSAPP_ORDER_METHOD && p.state !== "Cancelled" && p.state !== "Declined" && p.state !== "Error");
+  // A WhatsApp order counts as paid only once the shop has confirmed the money (Settled).
+  const paid = o.payments?.find((p) => p.state === "Settled" || (p.state === "Authorized" && p.method !== WHATSAPP_ORDER_METHOD));
   const last = o.payments?.[o.payments.length - 1];
-  const chosen = (paid ?? last)?.metadata?.preferredMethod;
+  const chosen = whatsapp ? "whatsapp" : (paid ?? last)?.metadata?.preferredMethod;
   return {
     id: o.code,
     status: orderStatus(o),
@@ -126,7 +133,7 @@ export function toStorefrontOrder(o: VOrder, colourNames = new Map<string, strin
       provider: (paid ?? last)?.method ?? "",
       reference: paid?.transactionId ?? undefined,
       paidAt: paid?.createdAt,
-      failureReason: !paid && last && last.state !== "Settled" ? last.errorMessage || "The payment didn’t go through" : undefined,
+      failureReason: !paid && !whatsapp && last && last.state !== "Settled" ? last.errorMessage || "The payment didn’t go through" : undefined,
     },
     ageConfirmed: Boolean(o.customFields.ageConfirmed),
   };

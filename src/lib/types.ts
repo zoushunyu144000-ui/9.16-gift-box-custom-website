@@ -185,7 +185,8 @@ export interface SiteSettings {
   personalisationLive?: boolean;
 }
 
-export type PaymentMethod = "fpx" | "card" | "ewallet";
+/** "whatsapp": the order is placed without paying; the shop confirms it and sends payment details on WhatsApp. */
+export type PaymentMethod = "fpx" | "card" | "ewallet" | "whatsapp";
 
 export type OrderStatus =
   | "pending_payment"

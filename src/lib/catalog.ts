@@ -54,6 +54,7 @@ export const PAYMENT_METHODS: Record<PaymentMethod, { name: string; detail: stri
   fpx: { name: "FPX online banking", detail: "Pay directly from your Malaysian bank account" },
   card: { name: "Credit / debit card", detail: "Visa and Mastercard" },
   ewallet: { name: "E-wallet", detail: "Pay with a supported Malaysian e-wallet" },
+  whatsapp: { name: "Order on WhatsApp", detail: "We confirm your order and send payment details on WhatsApp" },
 };
 
 export const ORDER_STATUS: Record<OrderStatus, { label: string; tone: "neutral" | "good" | "warn" | "bad" }> = {

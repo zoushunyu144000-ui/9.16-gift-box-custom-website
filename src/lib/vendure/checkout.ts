@@ -17,6 +17,7 @@ import {
 import { getCapabilities } from "./capabilities";
 import { errorMessage, isErrorResult } from "./client";
 import { deliveryPromiseFor, quoteDelivery } from "./delivery";
+import { WHATSAPP_ORDER_METHOD } from "./orders";
 import { paymentPageUrl } from "./payments";
 
 export interface CheckoutInput {
@@ -127,6 +128,22 @@ async function placeOrder(call: SessionCall, save: () => Promise<void>, input: C
 
   // Keep the session first, so the customer can still reach the order if opening the payment page fails.
   await save();
+
+  // Ordered on WhatsApp: the order is placed with a payment for the shop to confirm, and no money now.
+  // The order page then opens WhatsApp with the order written out.
+  if (input.paymentMethod === "whatsapp") {
+    const placed = await call<{ addPaymentToOrder: unknown }>(
+      `mutation($input: PaymentInput!) { addPaymentToOrder(input: $input) { ${ORDER_RESULT} } }`,
+      { input: { method: WHATSAPP_ORDER_METHOD, metadata: {} } },
+    );
+    await save();
+    if (isErrorResult(placed.addPaymentToOrder)) {
+      console.error("[checkout] WhatsApp order not placed", placed.addPaymentToOrder);
+      return fail(502, "We couldn’t place your order just now. Please try again, or message us on WhatsApp.");
+    }
+    return { ok: true, orderCode, redirectUrl: `/order/${orderCode}?wa=1` };
+  }
+
   // Pay through a hosted gateway when the shop has one; otherwise the test page stands in for it.
   const page = await paymentPageUrl(call, orderCode, origin, input.paymentMethod);
   await save();

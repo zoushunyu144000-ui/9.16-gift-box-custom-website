@@ -11,6 +11,7 @@ import { useCart } from "../cart/cart-context";
 import { rememberOrder, useQuote } from "../cart/use-quote";
 import { ProductImage } from "../product-image";
 import { Monogram } from "../logo";
+import { ORDER_ON_WHATSAPP } from "@/lib/whatsapp-order";
 
 type Errors = Record<string, string>;
 
@@ -195,7 +196,7 @@ export function CheckoutForm({
           deliveryOptionId: delivery?.selectedId,
           couponCode: couponCode || undefined,
           loyaltyPoints: pointsWanted || undefined,
-          paymentMethod: d.paymentMethod,
+          paymentMethod: ORDER_ON_WHATSAPP ? "whatsapp" : d.paymentMethod === "whatsapp" ? "fpx" : d.paymentMethod,
           ageConfirmed: age,
           termsAccepted: terms,
           lines: lines.map(({ key, productId, variantId, quantity, personalisation, personalisationCount, giftMessage, leatherColour }) => ({
@@ -425,11 +426,18 @@ export function CheckoutForm({
             <p className="mt-4 text-[13px] text-ink-2">{deliveryNote}</p>
           </Section>
 
+          {ORDER_ON_WHATSAPP ? (
+          <Section n={3} title="Order on WhatsApp">
+            <p className="text-[15px] leading-relaxed text-ink-2">
+              No payment online. When you place your order, WhatsApp opens with your order details written out — just press send. We’ll confirm your order and send you payment details there.
+            </p>
+          </Section>
+          ) : (
           <Section n={3} title="Payment">
             <fieldset>
               <legend className="sr-only">Payment method</legend>
               <div className="divide-y divide-line border border-line-strong">
-                {(Object.keys(PAYMENT_METHODS) as PaymentMethod[]).map((m) => (
+                {(Object.keys(PAYMENT_METHODS) as PaymentMethod[]).filter((m) => m !== "whatsapp").map((m) => (
                   <label key={m} className={`flex items-start gap-3 px-4 py-4 transition-colors ${d.paymentMethod === m ? "bg-cream/70" : "hover:bg-cream/40"}`}>
                     <input type="radio" name="payment" className="check" checked={d.paymentMethod === m} onChange={() => set("paymentMethod", m)} />
                     <span>
@@ -449,6 +457,7 @@ export function CheckoutForm({
               </p>
             )}
           </Section>
+          )}
 
           <div className="mt-10 space-y-4 border-t border-line pt-8">
             {quote?.containsAlcohol && (
@@ -490,10 +499,12 @@ export function CheckoutForm({
           <button type="submit" disabled={submitting || !quote || quote.hasProblems || delivery?.status === "unavailable"} className="btn btn-primary mt-8 w-full !min-h-14">
             {submitting ? (
               <span className="flex items-center gap-3">
-                <span className="h-4 w-4 animate-spin rounded-full border border-ivory/40 border-t-ivory" /> Creating your order…
+                <span className="h-4 w-4 animate-spin rounded-full border border-ivory/40 border-t-ivory" /> {ORDER_ON_WHATSAPP ? "Placing your order…" : "Creating your order…"}
               </span>
             ) : (
-              <>Continue to payment · {quote ? formatRM(quote.total, { decimals: true }) : "—"}</>
+              <>
+                {ORDER_ON_WHATSAPP ? "Place order on WhatsApp" : "Continue to payment"} · {quote ? formatRM(quote.total, { decimals: true }) : "—"}
+              </>
             )}
           </button>
         </form>
