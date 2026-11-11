@@ -1,13 +1,14 @@
 import type { Product } from "./types";
 
 /**
- * Wine gift boxes are off the shop for now (Nov 2026): the payment provider (CHIP) does not accept
- * merchants that sell alcohol online. Products stay in the back office untouched; the storefront
- * simply does not show them, their page, menu links or the homepage block.
+ * Whether wine and spirits are shown on the shop. 11-11: back on sale, at the shop's request — orders are
+ * placed on WhatsApp and paid there, so no online payment provider is involved.
  *
- * Do not switch this back on while CHIP is the payment provider.
+ * false hides every alcohol gift, its page, menu links and the homepage block (products stay in the back
+ * office). Switch it off again before applying to an online payment provider such as CHIP, which does not
+ * accept merchants that sell alcohol online.
  */
-export const ALCOHOL_ON_SALE = false;
+export const ALCOHOL_ON_SALE = true;
 
 // "Whisky Glasses" in a box is glassware, not a drink, so a word followed by "glass" does not count.
 const ALCOHOL_WORDS = /\b(wines?|champagnes?|prosecco|whisk(?:e)?y|spirits|liquors?|alcohol(?:ic)?|beers?|sake|cognac|brandy|vodka|gin|rum|baijiu|hennessy|martell?|vsop)\b(?!\s*glass)/i;

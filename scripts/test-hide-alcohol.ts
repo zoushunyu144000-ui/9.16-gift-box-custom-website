@@ -1,8 +1,15 @@
 // Checks that nothing about alcohol reaches customers while ALCOHOL_ON_SALE is false.
 // Run: npx tsx scripts/test-hide-alcohol.ts
-import { withoutAlcohol } from "../src/lib/alcohol";
+import { ALCOHOL_ON_SALE, withoutAlcohol } from "../src/lib/alcohol";
 import { seedProducts } from "../src/data/seed";
 import type { Product } from "../src/lib/types";
+
+if (ALCOHOL_ON_SALE) {
+  // Alcohol is on sale: everything shows, nothing to check.
+  const all = withoutAlcohol(seedProducts).length === seedProducts.length;
+  console.log(all ? "ALCOHOL_ON_SALE is on: every product shows. OK" : "ALCOHOL_ON_SALE is on but products were hidden. FAILED");
+  process.exit(all ? 0 : 1);
+}
 
 const words = /\b(wines?|champagnes?|whisk(?:e)?y|alcohol)\b(?!\s*glass)/i;
 let failed = 0;
