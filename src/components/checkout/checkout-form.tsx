@@ -259,7 +259,7 @@ export function CheckoutForm({
             <div className="min-w-0 flex-1 text-[14px]">
               <p className="leading-snug">{i.name}</p>
               {i.variantName && <p className="text-[12px] text-ink-2">{i.variantName}</p>}
-              {i.leatherColourName && <p className="text-[12px] text-ink-2">Leather colour: {i.leatherColourName}</p>}
+              {i.leatherColourName && <p className="text-[12px] text-ink-2">Name tag: {i.leatherColourName}</p>}
               {i.personalisation && (
                 <p className="whitespace-pre-line text-[12px] text-ink-2">
                   {personalisationHeading(i.personalisationLabel, i.personalisationCount)}: “{i.personalisation}”

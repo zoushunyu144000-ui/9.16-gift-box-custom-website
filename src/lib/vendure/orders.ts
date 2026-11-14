@@ -1,5 +1,5 @@
 import "server-only";
-import { PAYMENT_METHODS } from "@/lib/catalog";
+import { nameTagName, PAYMENT_METHODS } from "@/lib/catalog";
 import type { Order, OrderItem, OrderStatus, PaymentMethod } from "@/lib/types";
 import { getCapabilities, type Capabilities } from "./capabilities";
 import { getCatalog, NAMES_SKU } from "./catalog";
@@ -70,7 +70,7 @@ export function orderStatus(o: { state: string; payments: { state: string; metho
   return last && (last.state === "Declined" || last.state === "Error" || last.state === "Cancelled") ? "payment_failed" : "pending_payment";
 }
 
-/** The leather colour on a line (the names line, or a gift line from before colours moved to the names). */
+/** The name tag on a line, acrylic or a leather colour (the names line, or a gift line from before colours moved to the names). */
 const colourOf = (l: VLine) => l.customFields.leatherColour ?? undefined;
 
 /** The backend keeps names as their own line; the storefront shows them with the gift they belong to. */
@@ -97,7 +97,7 @@ function items(lines: VLine[], colourNames: Map<string, string>): OrderItem[] {
       personalisationCount: n?.quantity,
       giftMessage: l.customFields.giftMessage ?? undefined,
       leatherColour: colourOf(n ?? l),
-      leatherColourName: colourOf(n ?? l) ? (colourNames.get(colourOf(n ?? l)!) ?? colourOf(n ?? l)) : undefined,
+      leatherColourName: nameTagName(colourOf(n ?? l), [...colourNames].map(([code, name]) => ({ code, name }))),
       containsAlcohol: false,
     };
   });

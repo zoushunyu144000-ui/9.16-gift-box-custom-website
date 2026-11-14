@@ -1,14 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { Check } from "lucide-react";
 import {
+  ACRYLIC,
   compareAtPrice,
   formatRM,
   GIFT_MESSAGE_MAX,
   isSoldOut,
   lineContainsAlcohol,
   MAX_NAMES,
+  nameTagName,
+  nameTagPhotos,
   PERSONALISATION_PATTERN,
   personalisationFor,
   personalisationLimit,
@@ -35,10 +39,17 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
   // A gift with a minimum order starts there; the backend checks it again at checkout (all options together).
   const minQty = Math.min(product.minQuantity ?? 1, maxQty);
   const colours = product.leatherColours ?? [];
+  // Names go on acrylic or leather (client, 14 Nov 2026): the customer picks one by its photo; leather then takes a colour.
+  const tagChoice = colours.length > 0 && Boolean(product.acrylicNameTags);
+  const tagPhotos = nameTagPhotos(product.category);
 
   const [variantId, setVariantId] = useState<string | undefined>(hasVariants ? product.variants[0].id : undefined);
   const [qty, setQty] = useState(minQty);
+  const [material, setMaterial] = useState<"acrylic" | "leather" | undefined>(undefined);
   const [colour, setColour] = useState<string | undefined>(colours[0]?.code);
+  const showColours = colours.length > 0 && (!tagChoice || material === "leather");
+  // What goes on the names line: acrylic, or the leather colour's code.
+  const tag = !colours.length ? undefined : tagChoice && material === "acrylic" ? ACRYLIC : tagChoice && !material ? undefined : colour;
   const [wantsPers, setWantsPers] = useState(false);
   // Typed text is shown in capitals by CSS and stored in capitals (names are taken in capitals only).
   const [persText, setPersText] = useState("");
@@ -85,7 +96,8 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
     setError(null);
     if (soldOut) return;
     if (hasVariants && !variant) return setError("Please choose an option.");
-    if (wantsPers && colours.length && !colours.some((c) => c.code === colour)) return setError("Please choose a leather colour for the name.");
+    if (wantsPers && tagChoice && !material) return setError("Please choose acrylic or leather for the name.");
+    if (wantsPers && colours.length && tag !== ACRYLIC && !colours.some((c) => c.code === colour)) return setError("Please choose a leather colour for the name.");
     if (wantsPers) {
       if (!persName) return setError("Please enter the name to personalise, or choose “No personalisation”.");
       if (persInvalid) return setError(PATTERN_ERROR);
@@ -99,7 +111,7 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
       personalisation: wantsPers ? persName : undefined,
       personalisationCount: wantsPers ? names : undefined,
       giftMessage: wantsMsg ? message.trim() || undefined : undefined,
-      leatherColour: wantsPers && colours.length ? colour : undefined,
+      leatherColour: wantsPers ? tag : undefined,
       snapshot: {
         name: product.name,
         image: product.images[0]?.src,
@@ -107,7 +119,7 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
         unitPrice: price,
         personalisationFee: wantsPers ? pers.fee : undefined,
         personalisationLabel: pers.label,
-        leatherColourName: wantsPers ? colours.find((c) => c.code === colour)?.name : undefined,
+        leatherColourName: wantsPers ? nameTagName(tag, colours) : undefined,
         containsAlcohol: alcohol,
       },
     });
@@ -212,7 +224,39 @@ export function PurchasePanel({ product, personalisationLive = false }: { produc
               {!personalisationLive && <p className="mt-2.5 text-[12px] text-ink-3">Personalised names will be available soon.</p>}
               {personalisationLive && wantsPers && (
                 <div className="mt-5 space-y-5">
-                  {colours.length > 0 && (
+                  {tagChoice && (
+                    <div>
+                      <p className="field-label">Name tag</p>
+                      <div className="mt-1 grid grid-cols-2 gap-3" role="radiogroup" aria-label="Name tag">
+                        {(["acrylic", "leather"] as const).map((m) => {
+                          const selected = material === m;
+                          return (
+                            <button
+                              key={m}
+                              type="button"
+                              role="radio"
+                              aria-checked={selected}
+                              onClick={() => setMaterial(m)}
+                              className={`group block border p-1.5 text-left transition-colors ${selected ? "border-ink bg-ivory" : "border-line-strong hover:border-ink/50"}`}
+                            >
+                              <Image
+                                src={tagPhotos[m]}
+                                alt={m === "acrylic" ? "Acrylic name tag" : "Leather name tags in New Year Red, Black and Light Grey"}
+                                width={800}
+                                height={800}
+                                sizes="(min-width: 1024px) 220px, 45vw"
+                                className="aspect-square w-full object-cover"
+                              />
+                              <span className={`mt-2 mb-0.5 block text-center text-[14px] ${selected ? "text-ink" : "text-ink-2"}`}>
+                                {m === "acrylic" ? "Acrylic" : "Leather"}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  {showColours && (
                     <div>
                       <p className="field-label">Leather colour collection</p>
                       <div className="mt-1 flex flex-wrap gap-6" role="radiogroup" aria-label="Leather colour">

@@ -126,6 +126,8 @@ export interface Product {
   minQuantity?: number;
   /** Names for this gift are engraved on leather in these colours; a customer adding a name chooses one. */
   leatherColours?: LeatherColourChoice[];
+  /** Names can also go on an acrylic tag: the customer chooses acrylic or leather (then a colour). */
+  acrylicNameTags?: boolean;
   /** Shown without a price and can't be ordered yet. */
   comingSoon?: boolean;
   containsAlcohol: boolean;

@@ -179,11 +179,33 @@ export function whatsappLink(number: string, text: string) {
   return `https://wa.me/${n}?text=${encodeURIComponent(text)}`;
 }
 
-/** Personalised name offered on every product (client, Oct 2026): capital letters only, RM 8 per name,
- * no choice of material. A product's own settings (label, help text, length, fee) win when enabled. */
+/** Personalised name offered on every product (client, Oct 2026): capital letters only, RM 8 per name.
+ * A product's own settings (label, help text, length, fee) win when enabled. */
 export const DEFAULT_PERSONALISATION: Personalisation = { enabled: true, label: "Personalised name", maxLength: 20, fee: 8 };
 export function personalisationFor(p: Product): Personalisation {
   return p.personalisation?.enabled ? p.personalisation : DEFAULT_PERSONALISATION;
+}
+
+/**
+ * Names go on an acrylic tag or a leather one (client, 14 Nov 2026; same price). The names line stores the
+ * leather colour's code, or this value for acrylic.
+ */
+export const ACRYLIC = "acrylic";
+
+/** How the tag reads on the bag, order and WhatsApp message: "Acrylic", "Black leather". */
+export function nameTagName(code: string | null | undefined, colours: { code: string; name: string }[]): string | undefined {
+  if (!code) return undefined;
+  if (code === ACRYLIC) return "Acrylic";
+  const name = colours.find((c) => c.code === code)?.name ?? code;
+  return /leather/i.test(name) ? name : `${name} leather`;
+}
+
+/** The client's photos of each tag: corporate gifts use the round acrylic tag, everything else the bar. */
+export function nameTagPhotos(category: CategorySlug) {
+  return {
+    acrylic: category === "corporate-seasonal" ? "/images/name-tags/acrylic-corporate.webp" : "/images/name-tags/acrylic-festive.webp",
+    leather: "/images/name-tags/leather.webp",
+  };
 }
 
 /** Capital letters, numbers, spaces and line breaks, plus the punctuation a list of names needs ("1. JASON 2. EMILY"). */

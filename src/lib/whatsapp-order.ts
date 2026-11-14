@@ -22,7 +22,7 @@ export function whatsappOrderMessage(order: Order, orderUrl: string) {
   for (const i of order.items) {
     const name = i.variantName ? `${i.name} (${i.variantName})` : i.name;
     out.push(`${i.quantity} × ${name} — ${money(i.lineTotal)}`);
-    if (i.leatherColourName) out.push(`   Leather colour: ${i.leatherColourName}`);
+    if (i.leatherColourName) out.push(`   Name tag: ${i.leatherColourName}`);
     if (i.personalisation) {
       const names = i.personalisation.length > MAX_NAMES_CHARS ? `${i.personalisation.slice(0, MAX_NAMES_CHARS)}… (full list on the order page)` : i.personalisation;
       out.push(`   ${personalisationHeading(i.personalisationLabel, i.personalisationCount)}: ${names}`);

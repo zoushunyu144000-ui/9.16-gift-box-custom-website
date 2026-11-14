@@ -124,7 +124,7 @@ function image(a: NonNullable<Asset>, alt: string): ProductImage {
 
 const hasFacet = (values: { facet: { code: string } }[], code: string) => values.some((v) => v.facet.code === code);
 
-function toProduct(p: VProduct, namesFee: number, colours: LeatherColourChoice[]): Product | null {
+function toProduct(p: VProduct, namesFee: number, colours: LeatherColourChoice[], acrylic: boolean): Product | null {
   const categoryName = p.facetValues.find((v) => v.facet.code === "category")?.name;
   const category = categoryName ? CATEGORY_BY_NAME.get(categoryName) : undefined;
   if (!category || !p.variants.length) return null;
@@ -176,6 +176,7 @@ function toProduct(p: VProduct, namesFee: number, colours: LeatherColourChoice[]
     optionsLabel: withOptions ? p.optionGroups[0]?.name || undefined : undefined,
     minQuantity: cf.minOrderQuantity && cf.minOrderQuantity > 1 ? cf.minOrderQuantity : undefined,
     leatherColours: cf.leatherColourEnabled && colours.length ? colours : undefined,
+    acrylicNameTags: cf.leatherColourEnabled && colours.length && acrylic ? true : undefined,
     comingSoon: Boolean(cf.comingSoon) || undefined,
     containsAlcohol: alcohol,
     featured: Boolean(cf.featured),
@@ -227,19 +228,22 @@ async function fetchCatalog(): Promise<Catalog> {
   }
   const namesVariant = items.flatMap((p) => p.variants).find((v) => v.sku === NAMES_SKU);
   const names = namesVariant ? { variantId: namesVariant.id, fee: namesVariant.priceWithTax / 100 } : null;
-  const leatherColours = await fetchLeatherColours();
+  const { colours: leatherColours, acrylic } = await fetchNameTags();
   const products = items
-    .map((p) => toProduct(p, names?.fee ?? DEFAULT_PERSONALISATION.fee, leatherColours))
+    .map((p) => toProduct(p, names?.fee ?? DEFAULT_PERSONALISATION.fee, leatherColours, acrylic))
     .filter((p): p is Product => Boolean(p));
   return { products, names, leatherColours };
 }
 
-/** The backend's leather colours, when it has the leather-colour plugin. */
-async function fetchLeatherColours(): Promise<LeatherColourChoice[]> {
+/** The backend's leather colours, and whether it also takes acrylic tags (an older backend doesn't). */
+async function fetchNameTags(): Promise<{ colours: LeatherColourChoice[]; acrylic: boolean }> {
   const caps = await getCapabilities().catch(() => null);
-  if (!caps?.queries.has("leatherColours")) return [];
-  const { data } = await shopApi<{ leatherColours: LeatherColourChoice[] }>(`{ leatherColours { code name swatch } }`);
-  return data.leatherColours;
+  if (!caps?.queries.has("leatherColours")) return { colours: [], acrylic: false };
+  const acrylic = caps.queries.has("acrylicNameTags");
+  const { data } = await shopApi<{ leatherColours: LeatherColourChoice[]; acrylicNameTags?: boolean }>(
+    `{ leatherColours { code name swatch }${acrylic ? " acrylicNameTags" : ""} }`,
+  );
+  return { colours: data.leatherColours, acrylic: Boolean(data.acrylicNameTags) };
 }
 
 async function fetchFestivals(): Promise<Festival[]> {

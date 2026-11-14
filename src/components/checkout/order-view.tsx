@@ -185,7 +185,7 @@ export function OrderView({
                 <p className="display text-[1.15rem]">{i.name}</p>
                 <p className="text-[13px] text-ink-2">
                   {i.variantName ? `${i.variantName} · ` : ""}
-                  {i.leatherColourName ? `${i.leatherColourName} leather · ` : ""}Qty {i.quantity}
+                  {i.leatherColourName ? `Name tag: ${i.leatherColourName} · ` : ""}Qty {i.quantity}
                 </p>
                 {i.personalisation && (
                   <p className="mt-1 whitespace-pre-line text-[13px] text-ink-2">

@@ -1,6 +1,8 @@
 import "server-only";
 import {
+  ACRYLIC,
   findVariant,
+  nameTagName,
   GIFT_MESSAGE_MAX,
   isSoldOut,
   tracksStock,
@@ -63,11 +65,18 @@ export async function quoteLines(store: Store, lines: LineInput[], settings?: Si
       personalisationFee = pers.fee || 0;
     }
 
-    // Names on a gift with leather colours need one of them; anything else takes none.
+    // Names on a gift with leather colours need one of them (or acrylic, where offered); anything else takes none.
     const colours = text ? (p.leatherColours ?? []) : [];
+    const acrylic = colours.length > 0 && Boolean(p.acrylicNameTags) && line.leatherColour === ACRYLIC;
     const colour = colours.find((c) => c.code === line.leatherColour);
-    if (colours.length && !colour) return { key: line.key, ok: false, problem: `Please choose a leather colour for the name on ${p.name}.` };
+    if (colours.length && !colour && !acrylic)
+      return {
+        key: line.key,
+        ok: false,
+        problem: p.acrylicNameTags ? `Please choose acrylic or a leather colour for the name on ${p.name}.` : `Please choose a leather colour for the name on ${p.name}.`,
+      };
     if (!colours.length && line.leatherColour) return { key: line.key, ok: false, problem: `A leather colour goes with a personalised name.` };
+    const tag = acrylic ? ACRYLIC : colour?.code;
 
     const message = line.giftMessage?.trim() || undefined;
     if (message && message.length > GIFT_MESSAGE_MAX)
@@ -89,8 +98,8 @@ export async function quoteLines(store: Store, lines: LineInput[], settings?: Si
       personalisationLabel: text ? personalisationFor(p).label : undefined,
       personalisationCount: names,
       giftMessage: message,
-      leatherColour: colour?.code,
-      leatherColourName: colour?.name,
+      leatherColour: tag,
+      leatherColourName: nameTagName(tag, colours),
       containsAlcohol: lineContainsAlcohol(p, line.variantId),
     };
     return { key: line.key, ok: true, item };
